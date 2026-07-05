@@ -411,3 +411,105 @@ Unresolved / Risks:
 - Recommend next: (a) wire IntersectionObserver reveal into home sections, (b) add og:image
   with new branding, (c) test OCR with real scan, (d) add keyboard shortcuts (e.g. / to
   focus search in FAQ/glossary), (e) add contract-comparison feature (diff two analyses).
+
+---
+Task ID: 7
+Agent: webDevReview cron (Z.ai Code) — Forensic Blueprint Redesign
+Task: User feedback — current warm-cream-serif-amber design too familiar/generic.
+Avoid warm-cream-serif AND dark-mode+single-neon-accent patterns. Think like a pro
+designer: brainstorm 3 concepts, evaluate, pick strongest+rarest, execute fully.
+
+CONCEPTS EVALUATED (internal):
+A. "Forensic Blueprint" — cool off-white + near-black ink + steel-blue authority +
+   signal red as SOLE chromatic danger. Space Grotesk + JetBrains Mono. Signature:
+   audit dossier terminal with mono contract text + red bracket markers + dossier
+   number stamp. EVAL: Presisi klinis builds trust without fake warmth; red-only-
+   for-danger makes risk genuinely pop (waspada); mono-for-contract-text conceptually
+   perfect. RAREST among competitors (majority use warm-friendly or blue-trust).
+   → CHOSEN.
+B. "Notarial Red Stamp" — grey paper + burgundy/oxblood + forest. Stamp motif.
+   EVAL: Strong authority but burgundy feels traditional; red-for-everything dilutes
+   risk distinction. Medium.
+C. "Signal Traffic Earthy" — terracotta/gold/forest traffic-light. EVAL: Clever but
+   fundamentally still traffic-light → reads as generic risk-grader. Medium.
+
+EXECUTED CONCEPT A — "Forensic Blueprint" (full reskin):
+
+FONTS:
+- Replaced Fraunces (warm serif) → Space Grotesk (technical, precise, geometric).
+  "Engineering blueprint" feel for display headlines.
+- Added JetBrains Mono as --font-mono for contract text excerpts, dossier numbers,
+  data readouts, terminal labels. Reinforces "document forensics" identity.
+- Body stays Geist Sans (clean, neutral).
+
+PALETTE (globals.css full rewrite):
+- Background: cool neutral off-white oklch(0.965 0.003 255) — faintest blue-grey,
+  NOT warm. Subtle technical grid (48px) as body background = blueprint feel.
+- Foreground/ink: near-black with blue cast oklch(0.16 0.012 255) — authoritative.
+- Primary: steel/slate blue oklch(0.42 0.045 255) — structural authority, NOT warm,
+  NOT neon. Used for buttons/links/structural elements.
+- Destructive/signal: precise red oklch(0.52 0.22 27) — the SOLE chromatic danger
+  color. Red = risk, and nothing else is red. Maximizes "waspada" signal.
+- Success: deep muted teal-green oklch(0.4 0.05 165) — ONLY for verified/safe states.
+- Near-monochrome by design: only red grabs the eye.
+- Dark mode: deep slate-black oklch(0.14 0.013 255), lighter steel-blue primary —
+  NOT a neon accent, a semantic system.
+
+SIGNATURE VISUAL — Audit Terminal (home hero right side):
+- Replaced warm annotation card → "audit_terminal" mock interface:
+  * Dossier number stamp "KP-AUDIT-2024-0042" (rotated, bordered, mono)
+  * Floating risk-score readout (75/TINGGI) in ink+signal-red block
+  * Terminal header bar with [SCANNING] status + signal-red dot
+  * Contract excerpt in JetBrains Mono with risk-bracket markers ⟨2% per hari⟩
+    and marker-signal highlight on "memutuskan kontrak sepihak"
+  * // FINDINGS LOG with severity-coded rows (KRITIS/TINGGI)
+  * // REKOMENDASI suggestion block
+  * Scanline overlay texture (technical CRT feel)
+  * Bottom status strip: pulsing signal dot + "6 klausul berisiko terdeteksi"
+- Scan-line animation sweeps down the hero section (animate-scan).
+- Corner brackets (.corner-brackets) on disclaimer card — technical drawing motif.
+
+NEW CSS UTILITIES:
+- .bg-blueprint / .bg-blueprint-fine / .bg-crosshair (multi-scale technical grids)
+- .corner-brackets (L-shaped corner marks, signature element)
+- .marker-signal (red highlight bg + bottom border for risky text)
+- .risk-bracket (⟨ ⟩ angle brackets around flagged terms, red)
+- .risk-underline (wavy red underline)
+- .scanline-overlay (CRT scanline texture for terminal)
+- .animate-scan (sweeping scan line), .animate-signal (red blink pulse)
+- .text-signal (signal red text)
+
+LOGO + NAV + FOOTER + AUTH:
+- New logo: dark ink rounded-sm square with Crosshair icon + signal-red dot corner.
+  Replaces serif "K" mark. "Audit Engine" mono subtitle.
+- Footer: dark ink, mono uppercase tracking section headers, mono contact text.
+- Auth view: new technical mark on AuthShell.
+
+HERO COPY (direct, not "elegant"):
+- "Kontrak itu punya risiko tersembunyi. Kami bantu temukan."
+- (was: "Baca kontrak seperti ahli hukum dalam 60 detik")
+- CTA: "Mulai Audit" (was "Analisis Kontrak Sekarang")
+- Eyebrow: "SYS · KontrakPaham v2 · Audit Engine"
+- CTAs use rounded-sm (sharp, technical) not rounded-full (soft).
+
+VERIFICATION:
+- Clean compile (no errors). `bun run lint` → 0 errors, 3 pre-existing warnings.
+- Browser render-verified: title "KontrakPaham — Audit Risiko Kontrak dalam 60
+  Detik", hero "Kontrak itu punya risiko tersembunyi", audit terminal with
+  "KP-AUDIT" dossier + "TINGGI" risk readout all render. Screenshot saved (134KB).
+- All views inherit new identity via global h1/h2/h3 font-display rule + CSS vars.
+- No functionality changes — pure design layer (7th identity iteration).
+
+Stage Summary:
+- Complete departure from warm-cream-serif-amber → cool near-monochrome "forensic
+  audit" aesthetic. Steel-blue authority + signal-red danger + Space Grotesk +
+  JetBrains Mono + dossier/terminal signature visual.
+- Deliberately avoids both banned patterns (warm-cream-serif AND dark+neon-accent).
+- Browser-verified rendering. Dev server running for preview (200).
+
+Unresolved / Risks:
+- Other views (dashboard/result/history/etc.) inherit new palette via CSS vars but
+  haven't been individually re-styled for the forensic aesthetic — they'll look
+  consistent but could be enhanced with dossier numbers / mono accents per view.
+- Recommend next: apply mono dossier numbers to result/history headers, add
+  corner-brackets to key cards across views, refine mobile hero spacing.

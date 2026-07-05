@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono, Fraunces } from "next/font/google";
+import { Geist, Geist_Mono, Space_Grotesk, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "@/components/ui/toaster";
 import { ThemeProvider } from "@/components/theme-provider";
@@ -14,25 +14,35 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-// Fraunces — characterful variable serif for editorial display headlines.
-const fraunces = Fraunces({
+// Space Grotesk — technical, precise, geometric. "Engineering blueprint" feel
+// for display headlines. Pairs with the forensic/audit identity.
+const spaceGrotesk = Space_Grotesk({
   variable: "--font-display",
   subsets: ["latin"],
-  style: ["normal", "italic"],
-  weight: ["400", "500", "600", "700", "900"],
+  weight: ["400", "500", "600", "700"],
+  display: "swap",
+});
+
+// JetBrains Mono — for contract text excerpts, dossier numbers, data readouts.
+// Reinforces the "document forensics" identity.
+const jetbrainsMono = JetBrains_Mono({
+  variable: "--font-mono",
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
   display: "swap",
 });
 
 export const metadata: Metadata = {
-  title: "KontrakPaham — Baca Kontrak Seperti Ahli, dalam 60 Detik",
+  title: "KontrakPaham — Audit Risiko Kontrak dalam 60 Detik",
   description:
-    "Unggah kontrak (PDF/DOCX/teks) berbahasa Indonesia. AI mendeteksi klausul bermasalah, menjelaskan risiko dalam bahasa awam, dan memberi saran tindakan sebelum Anda tanda tangan.",
+    "Unggah kontrak (PDF/DOCX/teks) berbahasa Indonesia. Sistem mendeteksi klausul bermasalah, menjelaskan risiko dalam bahasa awam, dan memberi saran tindakan sebelum Anda tanda tangan.",
   keywords: [
     "analisis kontrak",
     "klausul kontrak",
     "hukum indonesia",
     "pahami kontrak",
     "risiko kontrak",
+    "audit kontrak",
   ],
   authors: [{ name: "KontrakPaham" }],
   icons: { icon: "/logo.svg" },
@@ -46,7 +56,7 @@ export default function RootLayout({
   return (
     <html lang="id" suppressHydrationWarning>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} ${fraunces.variable} antialiased bg-background text-foreground`}
+        className={`${geistSans.variable} ${geistMono.variable} ${spaceGrotesk.variable} ${jetbrainsMono.variable} antialiased bg-background text-foreground`}
       >
         <ThemeProvider
           attribute="class"
