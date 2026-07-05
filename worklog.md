@@ -666,3 +666,56 @@ Unresolved / Risks:
 - Recommend next: (a) capture dashboard/result/history screenshots, (b) apply scroll-reveal
   to home sections, (c) add hand-drawn circle accents to result findings, (d) README with
   screenshot index.
+
+---
+Task ID: 10
+Agent: main (Z.ai Code) — Revert to v2 Editorial (d342fd0)
+Task: User chose v2 "Editorial" design (commit d342fd0: Fraunces serif, warm parchment,
+forest green, amber accent). Revert visual/styling files to d342fd0 while preserving
+all logic/backend fixes made after.
+
+WORK LOG:
+- Reverted 7 visual files to d342fd0 (git checkout d342fd0 -- ...):
+  * src/app/globals.css (v2 palette: forest green oklch(0.36 0.075 158), parchment
+    oklch(0.975 0.014 75), amber accent, Fraunces font rule, warm shadows, ink vars)
+  * src/app/layout.tsx (Fraunces + Geist + Geist_Mono, v2 metadata/title)
+  * src/components/app/site-nav.tsx (editorial "K" logo mark)
+  * src/components/app/site-footer.tsx (dark ink footer, amber hovers)
+  * src/components/app/views/auth-view.tsx (editorial logo on AuthShell)
+  * src/components/app/views/home-view.tsx (asymmetric editorial hero + annotation visual)
+  * src/components/app/views/result-view.tsx (v2 result styling, NO scroll-reveal)
+- Detected 2 additional files with v4-only visual deps (CompanionFigure, var(--terra))
+  that would break with v2 globals.css: empty-state.tsx + dashboard-view.tsx.
+  Reverted both to d342fd0 too (purely visual changes, d342fd0 has all logic fixes).
+- custom-svg.tsx now orphan (nothing imports it) — left in place, harmless.
+
+LOGIC FIXES PRESERVED (verified all intact):
+- page.tsx: protectedViews includes "insights" + "checklist" ✓
+- store.ts: insights logout redirect ✓
+- analyze-view.tsx: timer leak fix (timersRef + useEffect cleanup, 9 refs) ✓
+- samples-view.tsx: UX fix (loading overlay, no empty-form-during-async) ✓
+- documents.ts: PDF single-open refactor (OCR path no longer opens doc 3×) ✓
+- app/error.tsx, global-error.tsx, not-found.tsx, loading.tsx: all present ✓
+- checklist-view.tsx, insights API: both present ✓
+
+VERIFICATION:
+- `bun run lint` → 0 errors, 3 pre-existing warnings.
+- Clean compile. Title = "KontrakPaham — Baca Kontrak Seperti Ahli, dalam 60 Detik" (v2).
+- 7 v2 screenshots captured (v2-01-home 297KB through v2-08-signin 58KB).
+- Dev server running for preview (200).
+
+Stage Summary:
+- v2 "Editorial" design fully restored: Fraunces serif headlines, warm parchment
+  background, deep forest-green primary, amber accents, asymmetric editorial hero
+  with contract-annotation visual. All v3 (Forensic) + v4 (Teman Baca) visual
+  changes reverted.
+- All engineering/logic fixes from Tasks 2-9 preserved (auth gates, timer leak,
+  PDF refactor, error boundaries, checklist feature, insights API, samples UX).
+- 7 screenshots in /screenshots/v2-*.png documenting the restored design.
+
+Unresolved / Risks:
+- custom-svg.tsx is now an orphan file (unused). Could delete for cleanliness, left
+  harmless for now.
+- result-view no longer has scroll-reveal (Reveal wrappers were v4 addition). If
+  desired, could re-add Reveal with v2-compatible styling — but user asked for pure
+  d342fd0 visual, so left as-is.

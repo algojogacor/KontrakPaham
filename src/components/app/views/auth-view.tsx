@@ -10,7 +10,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Separator } from "@/components/ui/separator";
 import { Eye, EyeOff, Loader2, ArrowLeft, KeyRound, Mail, CheckCircle2 } from "lucide-react";
-import { CompanionLogo } from "@/components/app/custom-svg";
 import { toast } from "@/hooks/use-toast";
 
 export function AuthView() {
@@ -321,9 +320,10 @@ function AuthShell({ title, subtitle, children }: { title: string; subtitle: str
   return (
     <div className="mx-auto flex min-h-[calc(100vh-4rem)] max-w-md flex-col justify-center px-4 py-10">
       <div className="mb-6 flex flex-col items-center text-center">
-        <button onClick={() => setView("home")} className="mb-4 flex items-center gap-2 transition-opacity hover:opacity-80">
-          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-ink shadow-soft">
-            <CompanionLogo size={32} className="text-primary" />
+        <button onClick={() => setView("home")} className="mb-4 flex items-center gap-2.5 transition-opacity hover:opacity-80">
+          <div className="relative flex h-10 w-10 items-center justify-center rounded-xl bg-ink text-background shadow-soft">
+            <span className="font-display text-lg font-bold leading-none">K</span>
+            <span className="absolute -bottom-0.5 left-2 right-2 h-0.5 rounded-full bg-amber-400" />
           </div>
         </button>
       </div>

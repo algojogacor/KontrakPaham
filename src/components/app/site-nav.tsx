@@ -6,7 +6,6 @@ import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger, SheetTitle, SheetHeader } from "@/components/ui/sheet";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Menu, LayoutDashboard, FileSearch, History, Settings, LogOut, Sparkles, HelpCircle, BookOpen, BarChart3, FileText } from "lucide-react";
-import { CompanionLogo } from "@/components/app/custom-svg";
 import { api } from "@/lib/api-client";
 import { toast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
@@ -55,15 +54,16 @@ export function SiteNav() {
     <header className="sticky top-0 z-40 w-full border-b border-border/60 bg-background/85 backdrop-blur-xl supports-[backdrop-filter]:bg-background/70">
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4">
         <button onClick={() => setView(user ? "dashboard" : "home")} className="flex items-center gap-2.5 transition-opacity hover:opacity-80">
-          {/* Custom companion logo — document + warm leaf, hand-drawn */}
-          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-ink text-primary shadow-soft">
-            <CompanionLogo size={26} className="text-primary" />
+          {/* Custom editorial logo mark — a stylized "K" with an annotation underline */}
+          <div className="relative flex h-9 w-9 items-center justify-center rounded-xl bg-ink text-background shadow-soft">
+            <span className="font-display text-lg font-bold leading-none">K</span>
+            <span className="absolute -bottom-0.5 left-1.5 right-1.5 h-0.5 rounded-full bg-amber-400" />
           </div>
           <div className="flex flex-col leading-none">
             <span className="font-display text-base font-semibold tracking-tight text-ink">
               Kontrak<span className="text-primary">Paham</span>
             </span>
-            <span className="mt-0.5 text-[10px] font-medium text-muted-foreground">Teman baca kontrak</span>
+            <span className="mt-0.5 text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground">Baca sebelum tanda tangan</span>
           </div>
         </button>
 

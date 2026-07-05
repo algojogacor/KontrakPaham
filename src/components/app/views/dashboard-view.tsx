@@ -10,7 +10,6 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { RiskPill } from "@/components/app/badges";
 import { ConsultationCard } from "@/components/app/consultation-card";
-import { CompanionFigure } from "@/components/app/custom-svg";
 import { FileSearch, FileText, Plus, History, Clock, Sparkles, TrendingUp, Loader2, BarChart3 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { id as idLocale } from "date-fns/locale";
@@ -64,7 +63,7 @@ export function DashboardView() {
     <div className="mx-auto max-w-6xl px-4 py-8">
       <div className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
         <div>
-          <h1 className="font-display text-2xl font-bold tracking-tight text-ink sm:text-3xl">
+          <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">
             Halo, {user?.displayName || user?.username} 👋
           </h1>
           <p className="mt-1 text-muted-foreground">
@@ -169,14 +168,16 @@ export function DashboardView() {
           ) : items && items.length === 0 ? (
             <Card className="border-dashed">
               <CardContent className="flex flex-col items-center justify-center gap-3 p-10 text-center">
-                <CompanionFigure size={64} className="animate-float" />
+                <div className="flex h-14 w-14 items-center justify-center rounded-full bg-primary/10 text-primary">
+                  <FileSearch className="h-7 w-7" />
+                </div>
                 <div>
-                  <h3 className="font-display font-semibold text-ink">Belum ada analisis</h3>
+                  <h3 className="font-semibold">Belum ada analisis</h3>
                   <p className="mt-1 text-sm text-muted-foreground">
                     Mulai analisis kontrak pertama Anda. Cukup unggah PDF/DOCX atau tempel teks.
                   </p>
                 </div>
-                <Button onClick={() => setView("analyze")} className="gap-2 rounded-full">
+                <Button onClick={() => setView("analyze")} className="gap-2">
                   <Plus className="h-4 w-4" /> Analisis sekarang
                 </Button>
               </CardContent>
