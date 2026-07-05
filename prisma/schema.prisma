@@ -1,0 +1,111 @@
+// KontrakPaham — Contract analysis platform (Bahasa Indonesia)
+// Prisma schema (SQLite)
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String   @id @default(cuid())
+  username     String   @unique
+  email        String   @unique
+  passwordHash String
+  displayName  String?
+  plan         String   @default("FREE") // FREE | PRO
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  analyses         Analysis[]
+  quotas           Quota[]
+  passwordResets   PasswordResetToken[]
+  auditLogs        AuditLog[]
+}
+
+model Analysis {
+  id           String   @id @default(cuid())
+  userId       String
+  title        String
+  sourceType   String // TEXT | PDF | DOCX
+  fileName     String?
+  language     String   @default("id")
+  charCount    Int      @default(0)
+  summary      String?
+  overallRisk  String?  // RENDAH | SEDANG | TINGGI | KRITIS
+  riskScore    Int?     // 0-100
+  status       String   @default("COMPLETED") // PENDING | COMPLETED | FAILED
+  errorMessage String?
+  modelUsed    String?
+  createdAt    DateTime @default(now())
+
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  findings Finding[]
+
+  @@index([userId, createdAt])
+}
+
+model Finding {
+  id              String  @id @default(cuid())
+  analysisId      String
+  category        String // e.g. JANGKA_WAKTU, DENDA, KLAUSUL_SEPIHAK, etc.
+  categoryLabel   String
+  severity        String // RENDAH | SEDANG | TINGGI | KRITIS
+  confidence      Int    // 0-100
+  urgency         String // INFO | PERHATIAN | PERLU_TINDAKAN
+  originalClause  String
+  plainTranslation String
+  explanation     String
+  recommendation  String
+  actionType      String // INFO_UMUM | BUTUH_NASIHAT
+  location        String?
+
+  analysis Analysis @relation(fields: [analysisId], references: [id], onDelete: Cascade)
+
+  @@index([analysisId])
+}
+
+model Quota {
+  id             String   @id @default(cuid())
+  userId         String
+  month          Int
+  year           Int
+  analysesUsed   Int      @default(0)
+  analysesLimit  Int      @default(3)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, month, year])
+}
+
+model PasswordResetToken {
+  id        String   @id @default(cuid())
+  userId    String
+  token     String   @unique
+  expiresAt DateTime
+  used      Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  userId    String?
+  action    String
+  ip        String?
+  meta      String?
+  createdAt DateTime @default(now())
+
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([createdAt])
+  @@index([userId])
+}

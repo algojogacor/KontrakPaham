@@ -1,0 +1,172 @@
+"use client";
+
+import { useState } from "react";
+import { useApp } from "@/lib/store";
+import { Button } from "@/components/ui/button";
+import { Sheet, SheetContent, SheetTrigger, SheetTitle, SheetHeader } from "@/components/ui/sheet";
+import { ThemeToggle } from "@/components/theme-toggle";
+import { Menu, ShieldCheck, LayoutDashboard, FileSearch, History, Settings, LogOut, Sparkles } from "lucide-react";
+import { api } from "@/lib/api-client";
+import { toast } from "@/hooks/use-toast";
+import { cn } from "@/lib/utils";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+
+export function SiteNav() {
+  const { user, view, setView, setAuth } = useApp();
+  const [open, setOpen] = useState(false);
+
+  const logout = async () => {
+    try {
+      await api.signout();
+    } catch {
+      /* ignore */
+    }
+    setAuth(null, null);
+    setView("home");
+    toast({ title: "Anda telah keluar." });
+  };
+
+  const navItem = (label: string, target: any, icon?: React.ReactNode) => (
+    <button
+      onClick={() => {
+        setView(target);
+        setOpen(false);
+      }}
+      className={cn(
+        "inline-flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium transition-colors hover:bg-muted",
+        view === target ? "text-foreground" : "text-muted-foreground"
+      )}
+    >
+      {icon}
+      {label}
+    </button>
+  );
+
+  return (
+    <header className="sticky top-0 z-40 w-full border-b border-border/80 bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4">
+        <button onClick={() => setView(user ? "dashboard" : "home")} className="flex items-center gap-2">
+          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-sm">
+            <ShieldCheck className="h-5 w-5" />
+          </div>
+          <div className="flex flex-col leading-none">
+            <span className="font-bold tracking-tight">KontrakPaham</span>
+            <span className="text-[10px] text-muted-foreground">Pahami sebelum tanda tangan</span>
+          </div>
+        </button>
+
+        {/* Desktop nav */}
+        <nav className="hidden items-center gap-1 md:flex">
+          {user ? (
+            <>
+              {navItem("Dashboard", "dashboard", <LayoutDashboard className="h-4 w-4" />)}
+              {navItem("Analisis", "analyze", <FileSearch className="h-4 w-4" />)}
+              {navItem("Riwayat", "history", <History className="h-4 w-4" />)}
+              {navItem("Harga", "pricing", <Sparkles className="h-4 w-4" />)}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" className="ml-1 gap-2 px-2">
+                    <Avatar className="h-7 w-7">
+                      <AvatarFallback className="bg-primary/10 text-xs text-primary">
+                        {(user.displayName || user.username).slice(0, 2).toUpperCase()}
+                      </AvatarFallback>
+                    </Avatar>
+                    <span className="max-w-[100px] truncate text-sm">{user.displayName || user.username}</span>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-52">
+                  <DropdownMenuLabel className="flex flex-col">
+                    <span className="text-sm font-medium">{user.displayName || user.username}</span>
+                    <span className="text-xs font-normal text-muted-foreground">{user.email}</span>
+                    <span className="mt-1 inline-flex w-fit rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-semibold uppercase text-primary">
+                      {user.plan}
+                    </span>
+                  </DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={() => setView("settings")}>
+                    <Settings className="mr-2 h-4 w-4" /> Pengaturan
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => setView("consultation")}>
+                    <Sparkles className="mr-2 h-4 w-4" /> Konsultasi
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={logout} className="text-destructive focus:text-destructive">
+                    <LogOut className="mr-2 h-4 w-4" /> Keluar
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </>
+          ) : (
+            <>
+              {navItem("Cara Kerja", "home")}
+              {navItem("Harga", "pricing")}
+              <Button variant="ghost" onClick={() => setView("signin")} className="ml-1">
+                Masuk
+              </Button>
+              <Button onClick={() => setView("signup")} className="gap-1">
+                Daftar Gratis
+              </Button>
+              <ThemeToggle />
+            </>
+          )}
+        </nav>
+
+        {/* Mobile */}
+        <div className="flex items-center gap-1 md:hidden">
+          <ThemeToggle />
+          <Sheet open={open} onOpenChange={setOpen}>
+            <SheetTrigger asChild>
+              <Button variant="ghost" size="icon" aria-label="Menu">
+                <Menu className="h-5 w-5" />
+              </Button>
+            </SheetTrigger>
+            <SheetContent side="right" className="w-[280px]">
+              <SheetHeader>
+                <SheetTitle className="text-left">Menu</SheetTitle>
+              </SheetHeader>
+              <div className="mt-4 flex flex-col gap-1">
+                {user ? (
+                  <>
+                    <div className="mb-2 rounded-lg bg-muted p-3">
+                      <p className="text-sm font-medium">{user.displayName || user.username}</p>
+                      <p className="text-xs text-muted-foreground">{user.email}</p>
+                    </div>
+                    {navItem("Dashboard", "dashboard", <LayoutDashboard className="h-4 w-4" />)}
+                    {navItem("Analisis Kontrak", "analyze", <FileSearch className="h-4 w-4" />)}
+                    {navItem("Riwayat", "history", <History className="h-4 w-4" />)}
+                    {navItem("Harga", "pricing", <Sparkles className="h-4 w-4" />)}
+                    {navItem("Pengaturan", "settings", <Settings className="h-4 w-4" />)}
+                    {navItem("Konsultasi", "consultation", <Sparkles className="h-4 w-4" />)}
+                    <Button variant="outline" onClick={logout} className="mt-2 justify-start gap-2">
+                      <LogOut className="h-4 w-4" /> Keluar
+                    </Button>
+                  </>
+                ) : (
+                  <>
+                    {navItem("Cara Kerja", "home")}
+                    {navItem("Harga", "pricing", <Sparkles className="h-4 w-4" />)}
+                    {navItem("Konsultasi", "consultation", <Sparkles className="h-4 w-4" />)}
+                    <Button variant="outline" onClick={() => { setView("signin"); setOpen(false); }} className="mt-2">
+                      Masuk
+                    </Button>
+                    <Button onClick={() => { setView("signup"); setOpen(false); }} className="gap-1">
+                      Daftar Gratis
+                    </Button>
+                  </>
+                )}
+              </div>
+            </SheetContent>
+          </Sheet>
+        </div>
+      </div>
+    </header>
+  );
+}
