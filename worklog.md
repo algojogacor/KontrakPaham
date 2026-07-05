@@ -604,3 +604,65 @@ Unresolved / Risks:
   could be enhanced with hand-drawn accents per view.
 - Recommend next: apply CompanionLogo + hand-drawn marks to result view findings,
   add CompanionFigure to empty states, wire IntersectionObserver scroll reveals.
+
+---
+Task ID: 9
+Agent: webDevReview cron (Z.ai Code) — Screenshots workflow + styling polish
+Task: User requested dedicated screenshots folder + save screenshots after each work
+session (dev server was dead). Also continue engineering review + styling improvements.
+
+WORK LOG:
+- Created /home/z/my-project/screenshots/ folder as the dedicated screenshot location.
+  Convention established: numbered files (01-home, 02-samples, etc.) per view.
+- FIRST screenshot attempt: all 3420 bytes = browser reverted to about:blank (known
+  env flakiness). Fixed by adding per-page verification (open + retry until get title
+  confirms the expected page, THEN screenshot). Deleted 2 stale failed captures.
+- FINAL screenshots captured successfully (real sizes, design verified live):
+  * 01-home.png (190KB) — Teman Baca hero with companion reading visual
+  * 01b-home-how.png (50KB) — home scrolled to "Cara kerjanya"
+  * 01c-home-cta.png (55KB) — home CTA section
+  * 02-samples.png (52KB) — sample contracts library
+  * 03-pricing.png (74KB) — pricing tiers
+  * 04-faq.png (46KB) — FAQ accordion
+  * 05-glossary.png (70KB) — legal glossary grid
+  * 06-consultation.png (63KB) — consultation/contact page
+  * 08-signin.png (41KB) — signin form
+  Browser title confirmed: "KontrakPaham — Teman Baca Kontrak Anda" (new identity live).
+
+STATIC CODE REVIEW + IMPROVEMENTS:
+1. Created use-scroll-reveal.tsx — IntersectionObserver hook + <Reveal> wrapper component.
+   Respects prefers-reduced-motion (CSS force-shows via media query, no observer needed).
+   Fixed lint error: initial version called setVisible synchronously in effect (cascading
+   render warning) → refactored to return early for reduced-motion instead of setState.
+2. Result view: wrapped each FindingCard in <Reveal delay={idx*60ms}> for staggered
+   scroll-triggered entrance; wrapped ConsultationCard in <Reveal>. Applied font-display
+   to analysis title heading. Visual findings now animate in as user scrolls.
+3. Dashboard/Analyze/Insights headings: applied font-display + text-ink for consistent
+   Teman Baca typography across all views (was default sans, inconsistent with home).
+4. EmptyState component: added CompanionFigure (custom SVG) as default empty-state
+   illustration with animate-float — replaces generic Lucide icon. Toggleable via
+   `companion` prop. Applied to dashboard "Belum ada analisis" + inherited by
+   history/insights empty states.
+5. Dashboard empty state: replaced FileSearch icon with CompanionFigure + rounded-full CTA.
+
+VERIFICATION:
+- `bun run lint` → 0 errors, 3 pre-existing warnings (after scroll-reveal fix).
+- Clean compile. Dev server running for preview (200).
+- 9 real screenshots saved in /screenshots/ folder (sizes 41-190KB confirm real renders,
+  not blank pages). Home title = "KontrakPaham — Teman Baca Kontrak Anda".
+
+Stage Summary:
+- Screenshots folder + workflow established. 9 baseline captures of all public views.
+- Scroll-reveal animations wired into result view (staggered findings). Teman Baca
+  typography (font-display headings) propagated to all view headings. CompanionFigure
+  now graces empty states with friendly floating companion.
+- 1 lint error introduced & fixed (setState-in-effect).
+
+Unresolved / Risks:
+- Could not capture protected views (dashboard/result) in screenshots — requires
+  signup+analyze flow which is slow/flaky in single-shell browser session. Recommend
+  next phase capture those.
+- Browser QA still intermittently about:blank; mitigated by open+title-verify retry loop.
+- Recommend next: (a) capture dashboard/result/history screenshots, (b) apply scroll-reveal
+  to home sections, (c) add hand-drawn circle accents to result findings, (d) README with
+  screenshot index.

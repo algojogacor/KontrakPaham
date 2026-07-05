@@ -25,6 +25,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { SeverityBadge, UrgencyBadge, ActionTypeBadge, RiskPill, ConfidenceBar } from "@/components/app/badges";
 import { ConsultationCard } from "@/components/app/consultation-card";
+import { Reveal } from "@/components/app/use-scroll-reveal";
 import { CATEGORY_META } from "@/lib/types";
 import type { FindingDto } from "@/lib/types";
 import {
@@ -164,7 +165,7 @@ export function ResultView() {
                 {a.fileName && <span className="truncate">· {a.fileName}</span>}
                 <span>· {a.charCount.toLocaleString("id-ID")} karakter</span>
               </div>
-              <h1 className="mt-1 text-xl font-bold tracking-tight sm:text-2xl">{a.title}</h1>
+              <h1 className="mt-1 font-display text-xl font-bold tracking-tight text-ink sm:text-2xl">{a.title}</h1>
               <p className="mt-1 text-xs text-muted-foreground">
                 Dianalisis {format(new Date(a.createdAt), "EEEE, d MMM yyyy · HH:mm", { locale: idLocale })} WIB
                 {a.modelUsed && ` · model: ${a.modelUsed}`}
@@ -230,7 +231,9 @@ export function ResultView() {
         ) : (
           <Accordion type="multiple" defaultValue={[sortedFindings[0]?.id]} className="mt-4 space-y-3">
             {sortedFindings.map((f, idx) => (
-              <FindingCard key={f.id} finding={f} index={idx} defaultOpen={idx === 0} />
+              <Reveal key={f.id} delay={Math.min(idx * 60, 360)}>
+                <FindingCard finding={f} index={idx} defaultOpen={idx === 0} />
+              </Reveal>
             ))}
           </Accordion>
         )}
@@ -238,7 +241,9 @@ export function ResultView() {
 
       {/* Consultation */}
       <div className="mt-8">
-        <ConsultationCard />
+        <Reveal>
+          <ConsultationCard />
+        </Reveal>
       </div>
 
       <div className="mt-6 flex items-center justify-center gap-2 text-xs text-muted-foreground">

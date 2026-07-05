@@ -120,7 +120,7 @@ export function InsightsView() {
           <BarChart3 className="h-6 w-6" />
         </div>
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Insight & Statistik</h1>
+          <h1 className="font-display text-2xl font-bold tracking-tight text-ink">Insight & Statistik</h1>
           <p className="text-sm text-muted-foreground">Pola risiko dari {data.total} analisis kontrak Anda.</p>
         </div>
       </div>

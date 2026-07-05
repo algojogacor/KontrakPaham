@@ -127,7 +127,7 @@ export function AnalyzeView() {
   return (
     <div className="mx-auto max-w-3xl px-4 py-8">
       <div className="text-center">
-        <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Analisis Kontrak</h1>
+        <h1 className="font-display text-2xl font-bold tracking-tight text-ink sm:text-3xl">Analisis Kontrak</h1>
         <p className="mt-1 text-muted-foreground">
           Unggah file atau tempel teks kontrak berbahasa Indonesia. Hasil muncul dalam ~1 menit.
         </p>
