@@ -513,3 +513,94 @@ Unresolved / Risks:
   consistent but could be enhanced with dossier numbers / mono accents per view.
 - Recommend next: apply mono dossier numbers to result/history headers, add
   corner-brackets to key cards across views, refine mobile hero spacing.
+
+---
+Task ID: 8
+Agent: webDevReview cron (Z.ai Code) — "Teman Baca" Redesign
+Task: User feedback — Forensic Blueprint too cold/intimidating (cyber-security vibe).
+Redesign: bold + different from competitors, BUT warm-friendly like a helping friend.
+Avoid: warm-cream-serif, dark+neon-accent, terminal/dev-tool aesthetics (all banned).
+Use CUSTOM SVG visuals (not generic icon library), micro-interactions, custom patterns,
+illustrations depicting "rasa aman setelah paham".
+
+CONCEPT CHOSEN: "Teman Baca" (Reading Companion)
+- Metaphor: patient friend reading contract beside you, hand-marking risky clauses,
+  you feel relief after understanding. NOT a machine auditing you.
+- Palette: warm clay white (peach undertone, NOT cream) + warm brown-black ink (NOT
+  blue-black cold) + terracotta/coral companion accent (warm friendly, NOT aggressive
+  red, NOT neon) + muted sage for "verified safe/relief".
+- Fonts: Bricolage Grotesque (display, warm-modern characterful) + Plus Jakarta Sans
+  (body, Indonesian humanist) + JetBrains Mono ONLY for contract excerpts (functional,
+  not decorative terminal).
+- Mood: warm-but-serious, friend helping, NOT cold/technical.
+
+CUSTOM SVG ELEMENTS (src/components/app/custom-svg.tsx — all hand-drawn, not lucide):
+1. CompanionLogo — document with warm leaf/spark overlapping = "living help on doc".
+   Custom paths, not icon library. Used in nav, footer, auth.
+2. HandDrawnCircle — wobbly hand-drawn ellipse, animates drawing via stroke-dashoffset.
+   Wraps around risky clauses in hero (the signature "friend circled it for you" visual).
+3. HandDrawnArrow — hand-drawn arrow pointing to margin notes, animated draw.
+4. ReliefIllustration — "dari bingung → lega": tangled knot on left → arrow → calm
+   sage circle with checkmark on right. Depicts the emotional journey directly.
+5. WarmSparkle — "aha moment" star, decorative.
+6. WavyDivider — hand-drawn wavy line, section separator.
+7. CompanionFigure — abstract "friend reading" figure (head + body + book), used in
+   hero corner + CTA. Friendly, not technical.
+8. WarmBlob — organic blob shape (not geometric), decorative background warmth.
+
+MICRO-INTERACTIONS (designed, not framework defaults):
+- HandDrawnCircle: SVG path draws around clause (stroke-dashoffset animation, 1.2s)
+- HandDrawnArrow: draws in pointing to margin note (delayed 1.2s)
+- Margin note: slides in with rotation (-1.5deg, hand-drawn sticky feel)
+- Sage checkmark: pops with bounce (cubic-bezier overshoot)
+- CompanionFigure: gentle float (4s ease-in-out)
+- Warm glow: breathing pulse behind annotated clause (diffuse, not neon)
+- ReliefIllustration: sequential draw (knot → arrow → circle → checkmark, staged)
+
+CUSTOM BACKGROUND PATTERN:
+- Body: scattered dots at varied positions/sizes/colors (terra+sage+amber), NOT a grid.
+  Multi-layered radial-gradients with different background-sizes = hand-placed feel.
+- Hero: bg-dots-warm (stronger scattered dots) + bg-warm-glow (radial) + floating
+  WarmBlob shapes (organic, not geometric).
+
+HERO VISUAL — CompanionReadingVisual (signature element):
+- Warm document card (not terminal) with a real clause
+- HandDrawnCircle animating around "denda 2% per hari" (friend circled it)
+- marker-warm highlight on the risky text
+- HandDrawnArrow pointing to a margin-note (hand-drawn sticky, rotated)
+- Margin note: "Catatan teman — 2%/hari itu setara 730%/tahun... negosiasi ke nominal
+  tetap aja, ya." (friendly tone, not clinical)
+- Sage "Sudah dibaca" badge floating (pop-in animation)
+- CompanionFigure peeking at bottom-right (floating)
+- Warm glow breathing behind the annotated clause
+
+COPY (warm, direct, friendly — NOT clinical/technical):
+- Hero: "Kontrak ribet? Biar dibacain dulu." (was: "Kontrak itu punya risiko tersembunyi")
+- CTA: "Baca Kontrak Saya" / "Mulai Gratis" (was "Mulai Audit")
+- Subtitle: "Teman yang bantu baca kontrak"
+- Relief strip: "Dari bingung dan was-was, ke lega dan paham"
+- All rounded-full (soft, friendly) not rounded-sm (sharp, technical)
+- Removed ALL: SYS, AUDIT ENGINE, dossier numbers, [SCANNING], // FINDINGS LOG,
+  corner brackets, scanlines, terminal header bars, mono section labels
+
+VERIFICATION:
+- Clean compile (no errors). `bun run lint` → 0 errors, 3 pre-existing warnings.
+- Fonts loaded: Plus Jakarta Sans + Bricolage Grotesque + JetBrains Mono confirmed.
+- Browser render-verified: "Kontrak ribet? Biar dibacain dulu.", "Teman yang bantu
+  baca kontrak", relief illustration, companion visual all render. Screenshot 191KB.
+- Dev server running for preview (200).
+
+Stage Summary:
+- Complete departure from cold Forensic Blueprint → warm "Teman Baca" companion
+  identity. Warm clay + terracotta + sage + Bricolage Grotesque + hand-drawn custom
+  SVGs (circle/arrow/margin-note/relief/companion figure).
+- 8 custom SVG components created (not generic icons). 6 custom micro-interactions.
+  Custom scattered-dot background pattern. Signature hero = friend annotating document.
+- Deliberately warm-but-serious, avoids all 3 banned patterns.
+- 8th identity iteration. Browser-verified.
+
+Unresolved / Risks:
+- Other views (dashboard/result/history/etc.) inherit warm palette via CSS vars but
+  could be enhanced with hand-drawn accents per view.
+- Recommend next: apply CompanionLogo + hand-drawn marks to result view findings,
+  add CompanionFigure to empty states, wire IntersectionObserver scroll reveals.

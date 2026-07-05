@@ -6,7 +6,7 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
+  --font-sans: var(--font-sans);
   --font-mono: var(--font-mono);
   --font-display: var(--font-display);
   --color-sidebar-ring: var(--sidebar-ring);
@@ -45,94 +45,95 @@
 }
 
 /*
-  KontrakPaham — "Forensic Blueprint" Identity
-  Cool neutral canvas + near-black ink + steel-blue structural authority +
-  signal red as the SOLE chromatic danger color. Near-monochrome by design:
-  the only color that should grab the eye is red — because red = risk.
-  Inspired by forensic audit reports & technical blueprints, not lifestyle SaaS.
+  KontrakPaham — "Teman Baca" Identity
+  Warm clay paper + warm brown-black ink + terracotta companion accent +
+  sage calm. Friendly-but-serious: a patient friend reading with you,
+  not a machine auditing you. Hand-drawn marks, not technical grids.
 */
 :root {
-  --radius: 0.5rem;
-  /* Cool neutral off-white — faintest blue-grey, NOT warm */
-  --background: oklch(0.965 0.003 255);
-  --foreground: oklch(0.16 0.012 255);
-  --card: oklch(0.99 0.001 255);
-  --card-foreground: oklch(0.16 0.012 255);
-  --popover: oklch(0.99 0.001 255);
-  --popover-foreground: oklch(0.16 0.012 255);
-  /* Steel/slate blue — structural authority. NOT warm, NOT neon. */
-  --primary: oklch(0.42 0.045 255);
-  --primary-foreground: oklch(0.985 0.002 255);
-  --secondary: oklch(0.93 0.005 255);
-  --secondary-foreground: oklch(0.2 0.015 255);
-  --muted: oklch(0.95 0.003 255);
-  --muted-foreground: oklch(0.45 0.012 255);
-  /* Neutral slate accent — structural, not colorful */
-  --accent: oklch(0.93 0.005 255);
-  --accent-foreground: oklch(0.2 0.015 255);
-  /* Signal red — the SOLE chromatic danger. Precise, not alarming. */
-  --destructive: oklch(0.52 0.22 27);
-  --border: oklch(0.89 0.004 255);
-  --input: oklch(0.91 0.004 255);
-  --ring: oklch(0.42 0.045 255);
-  /* Deep muted teal-green — ONLY for verified/safe states, sparingly */
-  --success: oklch(0.4 0.05 165);
-  --chart-1: oklch(0.42 0.045 255);
-  --chart-2: oklch(0.52 0.22 27);
-  --chart-3: oklch(0.4 0.05 165);
-  --chart-4: oklch(0.5 0.02 255);
-  --chart-5: oklch(0.6 0.015 255);
-  --sidebar: oklch(0.96 0.003 255);
-  --sidebar-foreground: oklch(0.16 0.012 255);
-  --sidebar-primary: oklch(0.42 0.045 255);
-  --sidebar-primary-foreground: oklch(0.985 0.002 255);
-  --sidebar-accent: oklch(0.93 0.005 255);
-  --sidebar-accent-foreground: oklch(0.2 0.015 255);
-  --sidebar-border: oklch(0.89 0.004 255);
-  --sidebar-ring: oklch(0.42 0.045 255);
-  /* Ink — near-black with blue cast for maximum authority */
-  --ink: oklch(0.13 0.014 255);
-  --ink-soft: oklch(0.32 0.012 255);
-  /* Signal red token for explicit risk UI */
-  --signal: oklch(0.52 0.22 27);
+  --radius: 0.75rem;
+  /* Warm clay white — peach undertone, NOT cream/yellow */
+  --background: oklch(0.975 0.008 50);
+  --foreground: oklch(0.22 0.02 40);
+  --card: oklch(0.995 0.004 50);
+  --card-foreground: oklch(0.22 0.02 40);
+  --popover: oklch(0.995 0.004 50);
+  --popover-foreground: oklch(0.22 0.02 40);
+  /* Terracotta/coral — warm friendly companion, NOT aggressive red, NOT neon */
+  --primary: oklch(0.58 0.13 38);
+  --primary-foreground: oklch(0.99 0.005 50);
+  --secondary: oklch(0.95 0.012 45);
+  --secondary-foreground: oklch(0.3 0.025 38);
+  --muted: oklch(0.96 0.008 50);
+  --muted-foreground: oklch(0.5 0.018 42);
+  /* Warm clay accent */
+  --accent: oklch(0.93 0.02 45);
+  --accent-foreground: oklch(0.3 0.03 38);
+  /* Terracotta — for risk/warning, warm not alarming */
+  --destructive: oklch(0.55 0.16 35);
+  --border: oklch(0.9 0.012 45);
+  --input: oklch(0.92 0.01 45);
+  --ring: oklch(0.58 0.13 38);
+  /* Muted sage — ONLY for "verified safe / relief" states */
+  --sage: oklch(0.5 0.06 155);
+  --chart-1: oklch(0.58 0.13 38);
+  --chart-2: oklch(0.5 0.06 155);
+  --chart-3: oklch(0.6 0.1 60);
+  --chart-4: oklch(0.55 0.16 35);
+  --chart-5: oklch(0.65 0.08 145);
+  --sidebar: oklch(0.97 0.008 50);
+  --sidebar-foreground: oklch(0.22 0.02 40);
+  --sidebar-primary: oklch(0.58 0.13 38);
+  --sidebar-primary-foreground: oklch(0.99 0.005 50);
+  --sidebar-accent: oklch(0.95 0.012 45);
+  --sidebar-accent-foreground: oklch(0.3 0.025 38);
+  --sidebar-border: oklch(0.9 0.012 45);
+  --sidebar-ring: oklch(0.58 0.13 38);
+  /* Warm brown-black ink — NOT cold blue-black */
+  --ink: oklch(0.2 0.018 40);
+  --ink-soft: oklch(0.4 0.015 42);
+  /* Terracotta signal — warm risk marker */
+  --terra: oklch(0.58 0.13 38);
+  --terra-soft: oklch(0.85 0.04 40);
 }
 
 .dark {
-  --background: oklch(0.14 0.013 255);
-  --foreground: oklch(0.95 0.003 255);
-  --card: oklch(0.18 0.012 255);
-  --card-foreground: oklch(0.95 0.003 255);
-  --popover: oklch(0.18 0.012 255);
-  --popover-foreground: oklch(0.95 0.003 255);
-  --primary: oklch(0.66 0.05 255);
-  --primary-foreground: oklch(0.14 0.013 255);
-  --secondary: oklch(0.24 0.012 255);
-  --secondary-foreground: oklch(0.95 0.003 255);
-  --muted: oklch(0.22 0.01 255);
-  --muted-foreground: oklch(0.66 0.01 255);
-  --accent: oklch(0.24 0.012 255);
-  --accent-foreground: oklch(0.95 0.003 255);
-  --destructive: oklch(0.6 0.23 27);
+  --background: oklch(0.17 0.012 40);
+  --foreground: oklch(0.95 0.008 50);
+  --card: oklch(0.21 0.014 40);
+  --card-foreground: oklch(0.95 0.008 50);
+  --popover: oklch(0.21 0.014 40);
+  --popover-foreground: oklch(0.95 0.008 50);
+  --primary: oklch(0.72 0.13 40);
+  --primary-foreground: oklch(0.17 0.012 40);
+  --secondary: oklch(0.26 0.016 40);
+  --secondary-foreground: oklch(0.95 0.008 50);
+  --muted: oklch(0.24 0.012 40);
+  --muted-foreground: oklch(0.7 0.012 48);
+  --accent: oklch(0.28 0.02 40);
+  --accent-foreground: oklch(0.95 0.008 50);
+  --destructive: oklch(0.65 0.17 35);
   --border: oklch(1 0 0 / 10%);
   --input: oklch(1 0 0 / 12%);
-  --ring: oklch(0.66 0.05 255);
-  --success: oklch(0.6 0.07 165);
-  --chart-1: oklch(0.66 0.05 255);
-  --chart-2: oklch(0.6 0.23 27);
-  --chart-3: oklch(0.6 0.07 165);
-  --chart-4: oklch(0.55 0.02 255);
-  --chart-5: oklch(0.7 0.015 255);
-  --sidebar: oklch(0.18 0.012 255);
-  --sidebar-foreground: oklch(0.95 0.003 255);
-  --sidebar-primary: oklch(0.66 0.05 255);
-  --sidebar-primary-foreground: oklch(0.14 0.013 255);
-  --sidebar-accent: oklch(0.24 0.012 255);
-  --sidebar-accent-foreground: oklch(0.95 0.003 255);
+  --ring: oklch(0.72 0.13 40);
+  --sage: oklch(0.62 0.07 155);
+  --chart-1: oklch(0.72 0.13 40);
+  --chart-2: oklch(0.62 0.07 155);
+  --chart-3: oklch(0.7 0.1 60);
+  --chart-4: oklch(0.65 0.17 35);
+  --chart-5: oklch(0.7 0.08 145);
+  --sidebar: oklch(0.21 0.014 40);
+  --sidebar-foreground: oklch(0.95 0.008 50);
+  --sidebar-primary: oklch(0.72 0.13 40);
+  --sidebar-primary-foreground: oklch(0.17 0.012 40);
+  --sidebar-accent: oklch(0.26 0.016 40);
+  --sidebar-accent-foreground: oklch(0.95 0.008 50);
   --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.66 0.05 255);
-  --ink: oklch(0.95 0.003 255);
-  --ink-soft: oklch(0.72 0.01 255);
-  --signal: oklch(0.6 0.23 27);
+  --sidebar-ring: oklch(0.72 0.13 40);
+  --ink: oklch(0.95 0.008 50);
+  --ink-soft: oklch(0.72 0.012 48);
+  --terra: oklch(0.72 0.13 40);
+  --terra-soft: oklch(0.35 0.05 40);
 }
 
 @layer base {
@@ -142,24 +143,27 @@
   body {
     @apply bg-background text-foreground;
     -webkit-font-smoothing: antialiased;
-    /* Subtle technical grid — blueprint feel, not decorative */
+    /* Custom scattered dot pattern — hand-placed feel, not a grid */
     background-image:
-      linear-gradient(oklch(0.42 0.045 255 / 0.025) 1px, transparent 1px),
-      linear-gradient(90deg, oklch(0.42 0.045 255 / 0.025) 1px, transparent 1px);
-    background-size: 48px 48px;
-    background-position: -1px -1px;
+      radial-gradient(circle at 15% 20%, oklch(0.58 0.13 38 / 0.04) 1.5px, transparent 2px),
+      radial-gradient(circle at 85% 15%, oklch(0.5 0.06 155 / 0.05) 1.5px, transparent 2px),
+      radial-gradient(circle at 50% 80%, oklch(0.6 0.1 60 / 0.04) 2px, transparent 2.5px),
+      radial-gradient(circle at 25% 65%, oklch(0.58 0.13 38 / 0.03) 1px, transparent 1.5px),
+      radial-gradient(circle at 75% 50%, oklch(0.5 0.06 155 / 0.04) 1px, transparent 1.5px);
+    background-size: 380px 380px, 420px 420px, 350px 350px, 280px 280px, 320px 320px;
+    background-attachment: fixed;
   }
   html {
     scroll-behavior: smooth;
   }
-  /* Display font for headlines — Space Grotesk (technical, precise) */
+  /* Display font for headlines — Bricolage Grotesque (warm, characterful) */
   h1, h2, h3, .font-display {
-    font-family: var(--font-display), var(--font-geist-sans), system-ui, sans-serif;
-    letter-spacing: -0.02em;
+    font-family: var(--font-display), var(--font-sans), system-ui, sans-serif;
+    letter-spacing: -0.025em;
   }
-  /* Mono for contract text, data, dossier numbers */
+  /* Mono for contract text only */
   .font-mono, code, pre, .mono {
-    font-family: var(--font-mono), var(--font-geist-mono), ui-monospace, monospace;
+    font-family: var(--font-mono), ui-monospace, monospace;
   }
 }
 
@@ -172,39 +176,39 @@
   background: transparent;
 }
 .scroll-area::-webkit-scrollbar-thumb {
-  background: oklch(0.8 0.005 255);
+  background: oklch(0.8 0.015 45);
   border-radius: 999px;
 }
 .scroll-area::-webkit-scrollbar-thumb:hover {
-  background: oklch(0.65 0.01 255);
+  background: oklch(0.7 0.02 40);
 }
 .dark .scroll-area::-webkit-scrollbar-thumb {
-  background: oklch(0.38 0.012 255);
+  background: oklch(0.38 0.014 40);
 }
 
-/* Blueprint grid (stronger, for hero) */
-.bg-blueprint {
-  background-image:
-    linear-gradient(oklch(0.42 0.045 255 / 0.06) 1px, transparent 1px),
-    linear-gradient(90deg, oklch(0.42 0.045 255 / 0.06) 1px, transparent 1px);
-  background-size: 32px 32px;
+/* Warm radial glow — diffuse, not neon */
+.bg-warm-glow {
+  background: radial-gradient(ellipse 60% 50% at 50% 0%, oklch(0.58 0.13 38 / 0.08), transparent 70%);
+}
+.bg-sage-glow {
+  background: radial-gradient(ellipse 50% 40% at 50% 100%, oklch(0.5 0.06 155 / 0.08), transparent 70%);
 }
 
-.bg-blueprint-fine {
+/* Scattered dots (stronger, for hero) */
+.bg-dots-warm {
   background-image:
-    linear-gradient(oklch(0.42 0.045 255 / 0.04) 1px, transparent 1px),
-    linear-gradient(90deg, oklch(0.42 0.045 255 / 0.04) 1px, transparent 1px);
-  background-size: 16px 16px;
+    radial-gradient(circle at 20% 30%, oklch(0.58 0.13 38 / 0.06) 2px, transparent 3px),
+    radial-gradient(circle at 70% 60%, oklch(0.5 0.06 155 / 0.05) 2px, transparent 3px),
+    radial-gradient(circle at 40% 80%, oklch(0.6 0.1 60 / 0.05) 1.5px, transparent 2px),
+    radial-gradient(circle at 90% 20%, oklch(0.58 0.13 38 / 0.04) 1px, transparent 1.5px);
+  background-size: 180px 180px, 220px 220px, 160px 160px, 140px 140px;
 }
 
-/* Crosshair marker (technical drawing feel) */
-.bg-crosshair {
+/* Topographic contour — "navigating terrain" feel, custom */
+.bg-contour {
   background-image:
-    linear-gradient(oklch(0.42 0.045 255 / 0.08) 1px, transparent 1px),
-    linear-gradient(90deg, oklch(0.42 0.045 255 / 0.08) 1px, transparent 1px),
-    linear-gradient(oklch(0.42 0.045 255 / 0.04) 1px, transparent 1px),
-    linear-gradient(90deg, oklch(0.42 0.045 255 / 0.04) 1px, transparent 1px);
-  background-size: 96px 96px, 96px 96px, 24px 24px, 24px 24px;
+    radial-gradient(ellipse 800px 400px at 20% 100%, oklch(0.58 0.13 38 / 0.04), transparent),
+    radial-gradient(ellipse 600px 300px at 80% 0%, oklch(0.5 0.06 155 / 0.05), transparent);
 }
 
 @keyframes shimmer {
@@ -220,36 +224,30 @@
 }
 
 @keyframes pulse-ring {
-  0% { box-shadow: 0 0 0 0 oklch(0.52 0.22 27 / 0.4); }
-  70% { box-shadow: 0 0 0 10px oklch(0.52 0.22 27 / 0); }
-  100% { box-shadow: 0 0 0 0 oklch(0.52 0.22 27 / 0); }
+  0% { box-shadow: 0 0 0 0 oklch(0.58 0.13 38 / 0.3); }
+  70% { box-shadow: 0 0 0 14px oklch(0.58 0.13 38 / 0); }
+  100% { box-shadow: 0 0 0 0 oklch(0.58 0.13 38 / 0); }
 }
 .animate-pulse-ring {
-  animation: pulse-ring 2s infinite;
+  animation: pulse-ring 2.5s infinite;
 }
 
-/* Signal red pulse — for active risk indicators */
-@keyframes signal-blink {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.5; }
+/* Warm breathing glow — for companion elements */
+@keyframes warm-breathe {
+  0%, 100% { opacity: 0.6; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.05); }
 }
-.animate-signal {
-  animation: signal-blink 1.8s ease-in-out infinite;
+.animate-warm-breathe {
+  animation: warm-breathe 3s ease-in-out infinite;
 }
 
-/* Fade-in-up animation for staggered reveals */
+/* Fade-in-up */
 @keyframes fade-in-up {
-  from {
-    opacity: 0;
-    transform: translateY(14px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  from { opacity: 0; transform: translateY(14px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 .animate-fade-in-up {
-  animation: fade-in-up 0.55s cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation: fade-in-up 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
 @keyframes fade-in {
@@ -257,46 +255,61 @@
   to { opacity: 1; }
 }
 .animate-fade-in {
-  animation: fade-in 0.45s ease-out both;
+  animation: fade-in 0.5s ease-out both;
 }
 
 @keyframes scale-in {
-  from {
-    opacity: 0;
-    transform: scale(0.97);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
+  from { opacity: 0; transform: scale(0.96); }
+  to { opacity: 1; transform: scale(1); }
 }
 .animate-scale-in {
   animation: scale-in 0.4s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
 @keyframes slide-in-right {
-  from {
-    opacity: 0;
-    transform: translateX(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
+  from { opacity: 0; transform: translateX(20px); }
+  to { opacity: 1; transform: translateX(0); }
 }
 .animate-slide-in-right {
-  animation: slide-in-right 0.55s cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation: slide-in-right 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
-/* Scan line — moves down the audit terminal visual */
-@keyframes scan-line {
-  0% { transform: translateY(-100%); opacity: 0; }
-  10% { opacity: 1; }
-  90% { opacity: 1; }
-  100% { transform: translateY(2000%); opacity: 0; }
+/* Hand-drawn circle draw animation — SVG signature */
+@keyframes draw-stroke {
+  from { stroke-dashoffset: var(--dash, 300); }
+  to { stroke-dashoffset: 0; }
 }
-.animate-scan {
-  animation: scan-line 3s ease-in-out infinite;
+.animate-draw {
+  stroke-dasharray: var(--dash, 300);
+  animation: draw-stroke 1.2s 0.5s cubic-bezier(0.65, 0, 0.35, 1) both;
+}
+
+/* Bouncy pop — for checkmarks */
+@keyframes pop-in {
+  0% { opacity: 0; transform: scale(0); }
+  60% { opacity: 1; transform: scale(1.15); }
+  100% { transform: scale(1); }
+}
+.animate-pop {
+  animation: pop-in 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+/* Gentle float — for decorative elements */
+@keyframes gentle-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-6px); }
+}
+.animate-float {
+  animation: gentle-float 4s ease-in-out infinite;
+}
+
+/* Margin note slide-in */
+@keyframes note-slide {
+  from { opacity: 0; transform: translate(10px, -5px) rotate(-2deg); }
+  to { opacity: 1; transform: translate(0, 0) rotate(-2deg); }
+}
+.animate-note {
+  animation: note-slide 0.6s 0.8s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
 /* Stagger helpers */
@@ -307,111 +320,105 @@
 .stagger-5 { animation-delay: 0.3s; }
 .stagger-6 { animation-delay: 0.36s; }
 
-/* Glass — technical, not warm */
+/* Glass — warm */
 .glass {
-  background: oklch(0.99 0.001 255 / 0.8);
-  backdrop-filter: blur(14px) saturate(120%);
-  -webkit-backdrop-filter: blur(14px) saturate(120%);
+  background: oklch(0.995 0.004 50 / 0.8);
+  backdrop-filter: blur(14px) saturate(130%);
+  -webkit-backdrop-filter: blur(14px) saturate(130%);
   border: 1px solid oklch(1 0 0 / 0.4);
 }
 .dark .glass {
-  background: oklch(0.18 0.012 255 / 0.8);
+  background: oklch(0.21 0.014 40 / 0.8);
   border: 1px solid oklch(1 0 0 / 0.08);
 }
 
-/* Ink gradient text — near-black, authoritative */
+/* Ink gradient text */
 .text-ink-gradient {
-  background: linear-gradient(135deg, oklch(0.13 0.014 255), oklch(0.42 0.045 255));
+  background: linear-gradient(135deg, oklch(0.2 0.018 40), oklch(0.45 0.03 38));
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
 }
 
-/* Signal red text — for risk emphasis */
-.text-signal {
-  color: var(--signal);
+/* Terracotta gradient text */
+.text-terra-gradient {
+  background: linear-gradient(135deg, oklch(0.55 0.16 35), oklch(0.62 0.12 45));
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
 }
 
-/* Shadows — crisp, not soft/warm */
+/* Shadows — soft, warm */
 .shadow-soft {
-  box-shadow: 0 1px 2px oklch(0.16 0.012 255 / 0.04), 0 2px 8px -2px oklch(0.16 0.012 255 / 0.06);
+  box-shadow: 0 1px 2px oklch(0.22 0.02 40 / 0.04), 0 4px 16px -4px oklch(0.22 0.02 40 / 0.06);
 }
 .shadow-soft-lg {
-  box-shadow: 0 4px 12px -2px oklch(0.16 0.012 255 / 0.08), 0 8px 32px -8px oklch(0.16 0.012 255 / 0.08);
+  box-shadow: 0 4px 12px -2px oklch(0.22 0.02 40 / 0.08), 0 12px 40px -8px oklch(0.22 0.02 40 / 0.08);
 }
-.shadow-ink {
-  box-shadow: 0 16px 48px -12px oklch(0.13 0.014 255 / 0.16);
-}
-
-/* Technical corner brackets — signature element */
-.corner-brackets {
-  position: relative;
-}
-.corner-brackets::before,
-.corner-brackets::after {
-  content: "";
-  position: absolute;
-  width: 14px;
-  height: 14px;
-  border-color: var(--primary);
-  border-style: solid;
-}
-.corner-brackets::before {
-  top: -1px;
-  left: -1px;
-  border-width: 2px 0 0 2px;
-}
-.corner-brackets::after {
-  bottom: -1px;
-  right: -1px;
-  border-width: 0 2px 2px 0;
+.shadow-warm {
+  box-shadow: 0 20px 50px -12px oklch(0.55 0.16 35 / 0.15), 0 8px 24px -8px oklch(0.5 0.06 155 / 0.08);
 }
 
-/* Number tabular for stats */
+/* Number tabular */
 .tabular-nums {
   font-variant-numeric: tabular-nums;
 }
 
-/* Smooth focus ring */
+/* Focus ring — warm */
 :focus-visible {
-  outline: 2px solid oklch(0.42 0.045 255);
+  outline: 2px solid oklch(0.58 0.13 38);
   outline-offset: 2px;
 }
 
-/* Risk markers for contract text */
-.marker-signal {
-  background: oklch(0.52 0.22 27 / 0.1);
-  border-bottom: 2px solid oklch(0.52 0.22 27);
+/* Warm marker highlight — for risky text */
+.marker-warm {
+  background: linear-gradient(transparent 55%, oklch(0.85 0.06 40 / 0.7) 55%);
   padding: 0 2px;
 }
 
-.risk-bracket {
+/* Sage marker — for safe/verified */
+.marker-sage {
+  background: linear-gradient(transparent 55%, oklch(0.85 0.05 155 / 0.5) 55%);
+  padding: 0 2px;
+}
+
+/* Margin note — hand-drawn sticky note feel */
+.margin-note {
   position: relative;
-  color: var(--signal);
-  font-weight: 600;
+  background: oklch(0.96 0.03 60);
+  border: 1px solid oklch(0.88 0.04 55);
+  transform: rotate(-1.5deg);
+  box-shadow: 0 4px 12px -2px oklch(0.3 0.02 40 / 0.1);
 }
-.risk-bracket::before { content: "⟨"; margin-right: 1px; }
-.risk-bracket::after { content: "⟩"; margin-left: 1px; }
-
-/* Strike-through wavy for flagged clauses */
-.risk-underline {
-  text-decoration: underline wavy oklch(0.52 0.22 27);
-  text-decoration-thickness: 1.5px;
-  text-underline-offset: 4px;
-}
-
-/* Audit terminal scanline overlay */
-.scanline-overlay {
-  background-image: linear-gradient(
-    to bottom,
-    transparent 0%,
-    oklch(0.42 0.045 255 / 0.03) 50%,
-    transparent 100%
-  );
-  background-size: 100% 4px;
+.margin-note::before {
+  content: "";
+  position: absolute;
+  top: -6px;
+  left: 50%;
+  transform: translateX(-50%) rotate(-3deg);
+  width: 40px;
+  height: 10px;
+  background: oklch(0.78 0.05 55 / 0.5);
+  border-radius: 2px;
 }
 
-/* Print styles for checklist export */
+/* Hand-drawn underline (wavy, warm) */
+.hand-underline {
+  position: relative;
+  display: inline;
+}
+.hand-underline::after {
+  content: "";
+  position: absolute;
+  left: -2px;
+  right: -2px;
+  bottom: -3px;
+  height: 4px;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 4' preserveAspectRatio='none'%3E%3Cpath d='M0 2 Q 12 0, 25 2 T 50 2 T 75 2 T 100 2' stroke='%23c25a3a' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E") no-repeat;
+  background-size: 100% 100%;
+}
+
+/* Print styles */
 @media print {
   header, footer, .print\:hidden {
     display: none !important;
@@ -421,10 +428,10 @@
     color: black !important;
     background-image: none !important;
   }
-  .bg-blueprint, .bg-blueprint-fine, .bg-crosshair, .scanline-overlay {
+  .bg-dots-warm, .bg-contour, .bg-warm-glow, .bg-sage-glow {
     background: none !important;
   }
-  .shadow-soft, .shadow-soft-lg, .shadow-ink {
+  .shadow-soft, .shadow-soft-lg, .shadow-warm {
     box-shadow: none !important;
   }
   .card {
@@ -433,7 +440,7 @@
   }
 }
 
-/* Scroll-reveal helper */
+/* Scroll-reveal */
 .reveal {
   opacity: 0;
   transform: translateY(20px);
@@ -444,7 +451,7 @@
   transform: translateY(0);
 }
 
-/* Reduced motion preference */
+/* Reduced motion */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
     animation-duration: 0.01ms !important;
