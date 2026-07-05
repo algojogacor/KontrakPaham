@@ -29,7 +29,7 @@ import { CATEGORY_META } from "@/lib/types";
 import type { FindingDto } from "@/lib/types";
 import {
   Download, ArrowLeft, FileText, AlertTriangle, Info, Lightbulb,
-  Languages, ShieldAlert, Loader2, Trash2, History, Sparkles, Copy, CheckCircle2,
+  Languages, ShieldAlert, Loader2, Trash2, History, Sparkles, Copy, CheckCircle2, ListChecks,
 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { format } from "date-fns";
@@ -113,6 +113,9 @@ export function ResultView() {
           <ArrowLeft className="h-4 w-4" /> Riwayat
         </Button>
         <div className="flex flex-wrap items-center gap-2">
+          <Button variant="outline" size="sm" className="gap-1.5" onClick={() => setView("checklist")}>
+            <ListChecks className="h-4 w-4" /> Checklist
+          </Button>
           <Button variant="outline" size="sm" className="gap-1.5" onClick={handleExport} disabled={exporting}>
             {exporting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
             Export PDF

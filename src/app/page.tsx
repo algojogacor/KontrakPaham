@@ -18,6 +18,7 @@ import { FaqView } from "@/components/app/views/faq-view";
 import { GlossaryView } from "@/components/app/views/glossary-view";
 import { SamplesView } from "@/components/app/views/samples-view";
 import { InsightsView } from "@/components/app/views/insights-view";
+import { ChecklistView } from "@/components/app/views/checklist-view";
 import { Loader2 } from "lucide-react";
 
 export default function Home() {
@@ -42,7 +43,7 @@ export default function Home() {
   }, []);
 
   // Gate protected views (require auth)
-  const protectedViews = ["dashboard", "analyze", "result", "history", "settings", "insights"];
+  const protectedViews = ["dashboard", "analyze", "result", "history", "settings", "insights", "checklist"];
   useEffect(() => {
     if (!authLoading && !user && protectedViews.includes(view)) {
       setView("signin");
@@ -82,6 +83,7 @@ export default function Home() {
         {view === "glossary" && <GlossaryView />}
         {view === "samples" && <SamplesView />}
         {view === "insights" && <InsightsView />}
+        {view === "checklist" && <ChecklistView />}
       </main>
       <SiteFooter />
     </div>

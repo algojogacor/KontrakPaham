@@ -48,40 +48,14 @@ export function indonesianScore(text: string): number {
   return Math.min(1, hits / Math.max(15, words.length * 0.08));
 }
 
-async function extractPdfText(
-  data: Uint8Array
-): Promise<{ text: string; numPages: number }> {
-  const loadingTask = pdfjs.getDocument({
-    data,
-    isEvalSupported: false,
-    useSystemFonts: true,
-  });
-  const pdf = await loadingTask.promise;
-  let text = "";
-  for (let i = 1; i <= pdf.numPages; i++) {
-    const page = await pdf.getPage(i);
-    const content = await page.getTextContent();
-    const pageText = content.items
-      .map((it: any) => ("str" in it ? it.str : ""))
-      .join(" ");
-    text += pageText + "\n\n";
-  }
-  return { text: text.trim(), numPages: pdf.numPages };
-}
-
 async function renderPdfPageToPng(
-  data: Uint8Array,
+  pdf: any,
   pageNumber: number,
   scale = 2
 ): Promise<Buffer> {
   // Dynamic import so the native canvas binding only loads for OCR path.
   // Text/digital-PDF analysis works even if canvas is unavailable.
   const { createCanvas } = await import("@napi-rs/canvas");
-  const pdf = await pdfjs.getDocument({
-    data,
-    isEvalSupported: false,
-    useSystemFonts: true,
-  }).promise;
   const page = await pdf.getPage(pageNumber);
   const viewport = page.getViewport({ scale });
   const canvas = createCanvas(Math.ceil(viewport.width), Math.ceil(viewport.height));
@@ -104,18 +78,13 @@ async function renderPdfPageToPng(
   return canvas.toBuffer("image/png");
 }
 
-async function ocrPdf(data: Uint8Array, maxPages = 6): Promise<string> {
+async function ocrPdf(pdf: any, maxPages = 6): Promise<string> {
   const zai = await ZAI.create();
-  const pdf = await pdfjs.getDocument({
-    data,
-    isEvalSupported: false,
-    useSystemFonts: true,
-  }).promise;
   const pages = Math.min(pdf.numPages, maxPages);
   let fullText = "";
   for (let i = 1; i <= pages; i++) {
     try {
-      const png = await renderPdfPageToPng(data, i, 2);
+      const png = await renderPdfPageToPng(pdf, i, 2);
       const dataUrl = `data:image/png;base64,${png.toString("base64")}`;
       const completion = await zai.chat.completions.createVision({
         model: "glm-4.5v",
@@ -154,7 +123,26 @@ export async function parsePdf(
   fileName?: string
 ): Promise<ParsedDocument> {
   const warnings: string[] = [];
-  let { text, numPages } = await extractPdfText(data);
+  // Open the PDF document ONCE and reuse the handle for text extraction + OCR.
+  // Previously this opened the doc up to 3× (text extract, OCR getDocument,
+  // per-page render getDocument) which was wasteful for multi-page scans.
+  const pdf = await pdfjs.getDocument({
+    data,
+    isEvalSupported: false,
+    useSystemFonts: true,
+  }).promise;
+  const numPages = pdf.numPages;
+
+  let text = "";
+  for (let i = 1; i <= numPages; i++) {
+    const page = await pdf.getPage(i);
+    const content = await page.getTextContent();
+    const pageText = content.items
+      .map((it: any) => ("str" in it ? it.str : ""))
+      .join(" ");
+    text += pageText + "\n\n";
+  }
+  text = text.trim();
   let ocrUsed = false;
 
   // Heuristic: if extracted text is too sparse relative to page count, try OCR.
@@ -164,12 +152,12 @@ export async function parsePdf(
       "Teks pada PDF sedikit/tidak terbaca (kemungkinan hasil scan/foto). Mencoba OCR otomatis..."
     );
     try {
-      const ocrText = await ocrPdf(data, 6);
+      const ocrText = await ocrPdf(pdf, 6);
       if (ocrText.replace(/\s/g, "").length > meaningful) {
         text = ocrText;
         ocrUsed = true;
       } else {
-        warnings.push("OCR tidak menemukan teks lebih banyak. Hasik mungkin tidak optimal.");
+        warnings.push("OCR tidak menemukan teks lebih banyak. Hasil mungkin tidak optimal.");
       }
     } catch (e) {
       warnings.push(

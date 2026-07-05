@@ -19,7 +19,8 @@ export type View =
   | "faq"
   | "glossary"
   | "samples"
-  | "insights";
+  | "insights"
+  | "checklist";
 
 interface AppState {
   user: UserDto | null;

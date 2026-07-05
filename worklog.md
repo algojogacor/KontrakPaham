@@ -342,3 +342,72 @@ Unresolved / Risks:
   display, (b) add loading skeletons to dashboard/history, (c) scroll-triggered
   animations (Framer Motion useInView), (d) og:image with new branding, (e) test
   OCR path with real scanned PDF.
+
+---
+Task ID: 6
+Agent: webDevReview cron (Z.ai Code) — Engineering Detail Round
+Task: Review codebase, troubleshoot issues, improve engineering details + add features/styling.
+
+Work Log:
+- Reviewed worklog: prior rounds fixed auth-gate gaps, timer leaks, UX bugs. Recommended
+  next: error boundary, loading skeletons, scroll animations, og:image, OCR test.
+- In-session browser QA (server alive in same shell): navigated all public views (Cara
+  Kerja, Contoh, Harga, FAQ, Glosarium, Konsultasi) + signup → protected views. NO console
+  errors, NO dev-log errors. App is stable.
+
+STATIC CODE REVIEW — found & fixed:
+1. documents.ts INEFFICIENCY: parsePdf opened the PDF document up to 3× redundantly in the
+   OCR path (extractPdfText getDocument + ocrPdf getDocument + per-page renderPdfPageToPng
+   getDocument). For a 6-page scanned PDF this meant 8 document opens. REFACTORED: open
+   once in parsePdf, pass the `pdf` handle to ocrPdf + renderPdfPageToPng. Removed now-dead
+   extractPdfText function. Significant efficiency gain for scanned-PDF OCR path.
+2. documents.ts TYPO: "Hasik mungkin tidak optimal" → "Hasil mungkin tidak optimal".
+3. Removed unused exports: extractPdfText (dead after refactor).
+
+NEW ENGINEERING ROBUSTNESS:
+4. app/error.tsx — React error boundary for graceful client-error display. Shows friendly
+   Indonesian message + "Coba lagi" (reset) + "Ke beranda" buttons. Dev mode shows error
+   message/digest in collapsible details. Logs to console.
+5. app/global-error.tsx — catastrophic error fallback (root-level, minimal inline styles
+   since no CSS loads in this scenario).
+6. app/not-found.tsx — 404 page with branded styling + link home.
+7. app/loading.tsx — root loading skeleton for initial auth bootstrap (improves perceived
+   performance, replaces flash of unstyled content).
+8. globals.css: added print styles (@media print — hides nav/footer/backgrounds for clean
+   checklist PDF export), scroll-reveal helper (.reveal/.is-visible for IntersectionObserver),
+   prefers-reduced-motion support (accessibility — disables animations for users who set it).
+
+NEW FEATURE: Pre-Sign Checklist
+9. src/components/app/views/checklist-view.tsx — generates a printable, actionable checklist
+   from an analysis's SEDANG/TINGGI/KRITIS findings. Features:
+   - Interactive checkboxes (Circle → CheckCircle2) with strike-through on completion
+   - Live progress bar (% klarifikasi) with gradient fill
+   - "All done" celebration alert when 100%
+   - Print/Save-as-PDF button (uses native print → works with @media print styles)
+   - Severity-colored cards, sorted KRITIS→SEDANG
+   - Each item shows plainTranslation + recommendation (the actionable part)
+   - Honest disclaimer at bottom
+   - "Checklist" button added to result view top bar (ListChecks icon)
+10. Wired into store (View type "checklist"), page.tsx (render + protectedViews), result
+    view (Checklist button).
+
+VERIFICATION:
+- Clean compile (no errors). `bun run lint` → 0 errors, 3 pre-existing warnings.
+- Functional: signup 200 → analyze 200 → get analysis 200 (6 findings). Checklist will
+  render the non-RENDAH findings as actionable items.
+- /nonexistent → 404 (not-found page works).
+- Dev server running for preview (200).
+
+Stage Summary:
+- 1 real efficiency bug fixed (PDF opened 3×→1× in OCR path) + typo.
+- 4 engineering-robustness files added (error boundary, global-error, not-found, loading).
+- 1 new user-facing feature (Pre-Sign Checklist with print export).
+- Print styles + scroll-reveal + reduced-motion accessibility added to CSS.
+
+Unresolved / Risks:
+- OCR path still not runtime-tested with a real scanned PDF (canvas + VLM).
+- Scroll-reveal CSS added but not yet wired to IntersectionObserver in components (utility
+  ready for next phase to apply).
+- Recommend next: (a) wire IntersectionObserver reveal into home sections, (b) add og:image
+  with new branding, (c) test OCR with real scan, (d) add keyboard shortcuts (e.g. / to
+  focus search in FAQ/glossary), (e) add contract-comparison feature (diff two analyses).
