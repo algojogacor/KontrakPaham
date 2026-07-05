@@ -31,7 +31,7 @@ export function SamplesView() {
       return;
     }
     setAnalyzing(s.id);
-    setView("analyze");
+    setPreview(null);
     toast({ title: `Menganalisis "${s.title}"…`, description: "Tunggu sebentar, sedang diproses." });
     try {
       const res = await api.analyzeText(s.text);
@@ -43,7 +43,6 @@ export function SamplesView() {
       setView("result");
       toast({ title: "Analisis selesai!", description: `${res.analysis.findings.length} temuan ditemukan.` });
     } catch (e) {
-      setView("samples");
       toast({ title: friendlyError(e), variant: "destructive" });
     } finally {
       setAnalyzing(null);
@@ -104,6 +103,31 @@ export function SamplesView() {
           Lihat klausul berisiko yang terdeteksi.
         </p>
       </div>
+
+      {/* Loading overlay during sample analysis */}
+      {analyzing && (
+        <Card className="mt-6 overflow-hidden border-primary/30">
+          <CardContent className="p-6">
+            <div className="flex items-center gap-3">
+              <Loader2 className="h-5 w-5 animate-spin text-primary" />
+              <div>
+                <p className="font-medium">Menganalisis contoh kontrak…</p>
+                <p className="text-sm text-muted-foreground">Biasanya 30 detik – 2 menit. Jangan tutup halaman ini.</p>
+              </div>
+            </div>
+            <div className="mt-4 grid grid-cols-4 gap-2">
+              {["Membaca", "Memvalidasi", "Menganalisis", "Selesai"].map((step, i) => (
+                <div key={i} className="rounded-md bg-muted/50 p-2 text-center">
+                  <div className="mx-auto mb-1 h-1.5 w-full overflow-hidden rounded-full bg-muted">
+                    <div className="h-full rounded-full bg-primary transition-all" style={{ width: analyzing ? "100%" : "0%", transitionDelay: `${i * 400}ms` }} />
+                  </div>
+                  <p className="text-[10px] text-muted-foreground">{step}</p>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {!user && (
         <Card className="mt-6 border-amber-300/50 bg-amber-50/60 dark:bg-amber-950/20">

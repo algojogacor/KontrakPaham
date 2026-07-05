@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Separator } from "@/components/ui/separator";
-import { Eye, EyeOff, Loader2, ShieldCheck, ArrowLeft, KeyRound, Mail, CheckCircle2 } from "lucide-react";
+import { Eye, EyeOff, Loader2, ArrowLeft, KeyRound, Mail, CheckCircle2 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 
 export function AuthView() {

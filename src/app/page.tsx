@@ -2,7 +2,7 @@
 
 import { useEffect } from "react";
 import { useApp } from "@/lib/store";
-import { api, friendlyError } from "@/lib/api-client";
+import { api } from "@/lib/api-client";
 import { SiteNav } from "@/components/app/site-nav";
 import { SiteFooter } from "@/components/app/site-footer";
 import { HomeView } from "@/components/app/views/home-view";
@@ -41,8 +41,8 @@ export default function Home() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Gate protected views
-  const protectedViews = ["dashboard", "analyze", "result", "history", "settings"];
+  // Gate protected views (require auth)
+  const protectedViews = ["dashboard", "analyze", "result", "history", "settings", "insights"];
   useEffect(() => {
     if (!authLoading && !user && protectedViews.includes(view)) {
       setView("signin");

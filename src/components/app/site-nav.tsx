@@ -5,7 +5,7 @@ import { useApp } from "@/lib/store";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger, SheetTitle, SheetHeader } from "@/components/ui/sheet";
 import { ThemeToggle } from "@/components/theme-toggle";
-import { Menu, ShieldCheck, LayoutDashboard, FileSearch, History, Settings, LogOut, Sparkles, HelpCircle, BookOpen, BarChart3, FileText } from "lucide-react";
+import { Menu, LayoutDashboard, FileSearch, History, Settings, LogOut, Sparkles, HelpCircle, BookOpen, BarChart3, FileText } from "lucide-react";
 import { api } from "@/lib/api-client";
 import { toast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";

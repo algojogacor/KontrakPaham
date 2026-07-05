@@ -279,3 +279,66 @@ Unresolved / Risks:
 - Consider next: apply font-display/text-ink explicitly to more views for consistency,
   add custom og:image with new branding, refine mobile hero spacing, add scroll-triggered
   animations (Framer Motion useInView).
+
+---
+Task ID: 5
+Agent: webDevReview cron (Z.ai Code) — Engineering Review Round
+Task: Review codebase, troubleshoot potential issues, improve engineering details.
+User reported "Error btw" (root cause: dev server died → browser showed "localhost
+refused to connect", NOT an application error — verified home renders 34KB/200 clean).
+
+Work Log:
+- Verified home page renders correctly via agent-browser (server alive in same shell):
+  title "KontrakPaham — Baca Kontrak Seperti Ahli, dalam 60 Detik", hero with Fraunces
+  serif + SVG underline + ContractAnnotationVisual all render. No error boundary,
+  no hydration mismatch, no console errors, /api/auth/me 200. The "error" was the
+  browser's connection-refused page when dev server died between conversations.
+
+STATIC CODE REVIEW — found & fixed 5 engineering issues:
+1. page.tsx: unused `friendlyError` import → removed.
+2. page.tsx: `insights` view missing from protectedViews list → logged-out users
+   could land on InsightsView and get 401 from /api/insights. Added "insights" to
+   protectedViews array.
+3. store.ts: `insights` missing from logout-redirect list → user on insights who
+   logs out would stay on a 401'ing view. Added "insights" to the redirect-home list.
+4. analyze-view.tsx: progress timers (4× setTimeout) leaked if component unmounted
+   mid-analysis — would call setStepIdx on unmounted component. Added timersRef +
+   useEffect cleanup-on-unmount + clear-previous-before-start in startProgress.
+5. samples-view.tsx UX bug: runSample called setView("analyze") before the ~30s API
+   call, showing the EMPTY analyze form (not loading) during analysis. Fixed: stay
+   on samples view with a new 4-step loading overlay card, go straight to result on
+   success. Also clear preview on run + removed redundant setView("samples") on error.
+
+ADDITIONAL CLEANUP:
+6. site-nav.tsx: unused `ShieldCheck` import (leftover from logo redesign) → removed.
+7. auth-view.tsx: unused `ShieldCheck` import → removed.
+
+VERIFICATION:
+- Clean compile (no errors). `bun run lint` → 0 errors, 3 pre-existing warnings.
+- Functional curl test: signup 200, analyze 200, insights 200 (authed), insights 401
+  (unauthed — correct). All fixes verified non-breaking.
+- Browser render-verified: home page hero + nav + footer render correctly.
+
+CRON:
+- Deleted old job 253863 (last run failed: "model glm-5.2 concurrency limit exceeded"
+  — infrastructure concurrency, not config).
+- Created new job 254153 (every 15 min, Asia/Jakarta) with engineering-focus mandate:
+  static code review for unused imports / auth-gate gaps / memory leaks / state-on-
+  -unmounted / UX bugs, plus styling+features improvement. Noted the dev-server-
+  -must-stay-in-same-shell constraint in the cron message.
+
+Stage Summary:
+- 5 real engineering bugs fixed (auth gate gap ×2, timer leak, UX bug, + 2 unused
+  imports). All verified non-breaking.
+- Dev server running for preview (200).
+- Cron re-activated with engineering-review focus.
+
+Unresolved / Risks:
+- Dev server still dies between Bash calls (sandbox limitation) — documented in cron
+  message so future runs start it in-session.
+- Browser QA flaky (about:blank intermittently) — static review + curl used as
+  reliable alternatives.
+- Recommend next phase: (a) add error boundary component for graceful client error
+  display, (b) add loading skeletons to dashboard/history, (c) scroll-triggered
+  animations (Framer Motion useInView), (d) og:image with new branding, (e) test
+  OCR path with real scanned PDF.

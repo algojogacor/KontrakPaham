@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useRef } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 import { useApp } from "@/lib/store";
 import { api, friendlyError } from "@/lib/api-client";
 import { Button } from "@/components/ui/button";
@@ -31,6 +31,15 @@ export function AnalyzeView() {
   const [warnings, setWarnings] = useState<string[]>([]);
   const [stepIdx, setStepIdx] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
+  const timersRef = useRef<ReturnType<typeof setTimeout>[]>([]);
+
+  // Clear any pending progress timers on unmount to prevent state updates on unmounted component
+  useEffect(() => {
+    return () => {
+      timersRef.current.forEach(clearTimeout);
+      timersRef.current = [];
+    };
+  }, []);
 
   const charLimit = 50000;
   const charsLeft = charLimit - text.length;
@@ -62,14 +71,19 @@ export function AnalyzeView() {
 
   const startProgress = () => {
     setStepIdx(0);
-    const timers: ReturnType<typeof setTimeout>[] = [];
+    // Clear any previous timers before starting new ones
+    timersRef.current.forEach(clearTimeout);
+    timersRef.current = [];
     const delay = (i: number, ms: number) =>
-      timers.push(setTimeout(() => setStepIdx(i), ms));
+      timersRef.current.push(setTimeout(() => setStepIdx(i), ms));
     delay(1, 1200);
     delay(2, 2800);
     delay(3, 6000);
     delay(4, 9000);
-    return () => timers.forEach(clearTimeout);
+    return () => {
+      timersRef.current.forEach(clearTimeout);
+      timersRef.current = [];
+    };
   };
 
   const run = async () => {
