@@ -190,3 +190,92 @@ Unresolved / Risks:
 - Recommend next phase: (a) clause-comparison feature (diff two analyses), (b) email-based
   password reset if a mail service becomes available, (c) deeper mobile responsive polish,
   (d) PWA/offline support, (e) multi-language toggle (EN/ID).
+
+---
+Task ID: 4
+Agent: webDevReview cron (Z.ai Code) — Design Overhaul Round
+Task: Complete design overhaul — fonts, hero, coloring, overall identity. Make it bold,
+professional, distinctive (not generic SaaS). User feedback: "terlalu terlihat generic
+dan tidak menarik di mata konsumen."
+
+Work Log:
+- Assessed current design: teal palette + Geist font + centered templated hero = generic
+  SaaS look. Needed a distinctive editorial identity.
+- Design concept: "Hukum dengan Karakter" — warm parchment + deep ink + forest green
+  authority + amber signal. Inspired by legal publications & editorial design.
+
+FONT OVERHAUL:
+- Added Fraunces (characterful variable serif) as --font-display for all headlines.
+  Loaded via next/font/google with weights 400/500/600/700/900 + italic.
+- Global CSS: h1/h2/h3 now use Fraunces by default → editorial identity propagates
+  across ALL views automatically (dashboard, auth, result, etc.).
+- Body/UI stays Geist Sans (clean, readable). Mono stays Geist Mono.
+
+COLOR OVERHAUL (globals.css :root + .dark):
+- Background: warm parchment oklch(0.975 0.014 75) — NOT flat white. Subtle paper
+  texture via layered radial gradients + bg-paper utility.
+- Foreground/ink: deep warm ink oklch(0.2 0.025 55) — high contrast, authoritative.
+- Primary: deep forest green oklch(0.36 0.075 158) — trust/authority, NOT generic teal.
+- Accent: warm amber oklch(0.9 0.06 75) — signal/highlight/CTA hover.
+- New tokens: --ink, --ink-soft for display type; .text-ink-gradient, .text-amber-gradient.
+- Dark mode: deep warm charcoal with bright forest-green primary.
+
+HERO REDESIGN (home-view.tsx — complete rewrite):
+- Asymmetric editorial layout (lg:grid-cols-[1.05fr_0.95fr]) — NOT centered template.
+- Left: eyebrow label with pulsing dot, large display headline "Baca kontrak seperti
+  *ahli hukum* dalam 60 detik" with italic amber-gradient serif emphasis + hand-drawn
+  SVG underline. Lede paragraph with amber marker highlight. Two CTAs (primary pill +
+  ghost "Lihat contoh dulu"). Trust badges row.
+- Right: LIVE ContractAnnotationVisual — a stylized document card showing Pasal 4
+  (denda keterlambatan) with: risk-underline on "2% per hari", amber marker on
+  "hak sepihak", floating rotated risk-score badge (75/TINGGI), annotation callouts
+  (red: denda 2%/hari, amber: pemutusan sepihak), suggestion box, floating "6 klausul
+  berisiko" tag. Pure CSS/HTML, no image.
+- Background: bg-dots + bg-radial-fade + two floating colored blobs (amber + forest).
+
+NEW SECTIONS:
+- Marquee strip (dark ink bg): OCR · 16 kategori · Export PDF · Edukasi badges.
+- Problem section: editorial 3-column with numbered (01/02/03), left-border hover.
+- How it works: cards with large faded step numbers + icon scale on hover.
+- Features: bento grid (varied col-spans) with accent-colored icons.
+- Disclaimer: amber gradient card with Scale icon + Transparan badge.
+- Resources: 4 ResourceCards with hover lift + icon scale + arrow translate.
+- CTA: bold dark ink section with display headline + amber/forest blobs.
+
+LOGO + NAV REDESIGN:
+- New editorial logo mark: dark ink rounded square with serif "K" + amber underline.
+- Nav: "Kontrak" + forest-green "Paham" wordmark, uppercase tracking subtitle.
+- Footer: dark ink background, amber hover links, uppercase tracking section headers.
+
+AUTH VIEW:
+- Updated AuthShell logo to new editorial "K" mark.
+- Card titles now use font-display (Fraunces) via global h1/h2/h3 rule.
+
+NEW CSS UTILITIES:
+- .bg-dots, .bg-paper, .text-ink-gradient, .text-amber-gradient, .shadow-ink,
+  .gradient-border, .divider-ink, .marker-red/amber/green, .risk-underline,
+  .animate-slide-in-right, .bg-ink (dark section utility).
+
+VERIFICATION:
+- Clean compile (no errors). `bun run lint` → 0 errors, 3 pre-existing warnings.
+- Fraunces font loaded (font-display var confirmed in rendered HTML).
+- New palette active (text-ink class confirmed in SSR output).
+- Server running 200 on /.
+- Browser visual QA still blocked by sandbox about:blank issue (documented);
+  verified via compile + SSR HTML + lint instead.
+
+Stage Summary:
+- Complete visual identity change from generic teal SaaS to bold editorial legal
+  publication aesthetic. Fraunces serif headlines + warm parchment + forest green +
+  amber accents + asymmetric hero with live annotation visual.
+- All views inherit new identity automatically via global h1/h2/h3 font rule + CSS vars.
+- No functionality changes — pure design layer.
+
+Unresolved / Risks:
+- Browser visual confirmation still blocked by environment (about:blank). Recommend
+  next phase attempt screenshot verification with a different approach.
+- Fraunces custom axes (opsz/SOFT/WONK) not available via next/font auto-fetch;
+  used standard weights instead. Could add via <link> if needed.
+- Consider next: apply font-display/text-ink explicitly to more views for consistency,
+  add custom og:image with new branding, refine mobile hero spacing, add scroll-triggered
+  animations (Framer Motion useInView).

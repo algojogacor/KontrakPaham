@@ -320,15 +320,16 @@ function AuthShell({ title, subtitle, children }: { title: string; subtitle: str
   return (
     <div className="mx-auto flex min-h-[calc(100vh-4rem)] max-w-md flex-col justify-center px-4 py-10">
       <div className="mb-6 flex flex-col items-center text-center">
-        <button onClick={() => setView("home")} className="mb-4 flex items-center gap-2">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-sm">
-            <ShieldCheck className="h-5 w-5" />
+        <button onClick={() => setView("home")} className="mb-4 flex items-center gap-2.5 transition-opacity hover:opacity-80">
+          <div className="relative flex h-10 w-10 items-center justify-center rounded-xl bg-ink text-background shadow-soft">
+            <span className="font-display text-lg font-bold leading-none">K</span>
+            <span className="absolute -bottom-0.5 left-2 right-2 h-0.5 rounded-full bg-amber-400" />
           </div>
         </button>
       </div>
-      <Card className="shadow-sm">
+      <Card className="border-border/60 shadow-soft-lg">
         <CardHeader>
-          <CardTitle className="text-2xl">{title}</CardTitle>
+          <CardTitle className="font-display text-2xl font-semibold tracking-tight text-ink">{title}</CardTitle>
           {subtitle && <CardDescription>{subtitle}</CardDescription>}
         </CardHeader>
         <CardContent>{children}</CardContent>

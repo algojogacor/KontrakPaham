@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Geist, Geist_Mono, Fraunces } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "@/components/ui/toaster";
 import { ThemeProvider } from "@/components/theme-provider";
@@ -14,10 +14,19 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+// Fraunces — characterful variable serif for editorial display headlines.
+const fraunces = Fraunces({
+  variable: "--font-display",
+  subsets: ["latin"],
+  style: ["normal", "italic"],
+  weight: ["400", "500", "600", "700", "900"],
+  display: "swap",
+});
+
 export const metadata: Metadata = {
-  title: "KontrakPaham — Pahami Kontrak Anda Sebelum Tanda Tangan",
+  title: "KontrakPaham — Baca Kontrak Seperti Ahli, dalam 60 Detik",
   description:
-    "Unggah kontrak (PDF/DOCX/teks) dalam Bahasa Indonesia. Sistem mendeteksi klausul bermasalah, menjelaskan risiko dalam bahasa awam, dan memberi saran tindakan.",
+    "Unggah kontrak (PDF/DOCX/teks) berbahasa Indonesia. AI mendeteksi klausul bermasalah, menjelaskan risiko dalam bahasa awam, dan memberi saran tindakan sebelum Anda tanda tangan.",
   keywords: [
     "analisis kontrak",
     "klausul kontrak",
@@ -37,7 +46,7 @@ export default function RootLayout({
   return (
     <html lang="id" suppressHydrationWarning>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased bg-background text-foreground`}
+        className={`${geistSans.variable} ${geistMono.variable} ${fraunces.variable} antialiased bg-background text-foreground`}
       >
         <ThemeProvider
           attribute="class"
