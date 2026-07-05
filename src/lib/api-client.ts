@@ -114,6 +114,19 @@ export const api = {
   exportUrl(id: string) {
     return `/api/analyses/${id}/export`;
   },
+  async getInsights() {
+    const res = await fetch("/api/insights", { cache: "no-store" });
+    return handle<{
+      total: number;
+      avgRiskScore: number;
+      riskDistribution: Record<string, number>;
+      categoryFrequency: { category: string; label: string; count: number }[];
+      sourceTypeDistribution: Record<string, number>;
+      recentTrend: { id: string; title: string; riskScore: number; overallRisk: string | null; createdAt: string }[];
+      topRiskyCategories: { category: string; label: string; count: number }[];
+      needsActionCount: number;
+    }>(res);
+  },
 };
 
 export function friendlyError(e: unknown): string {

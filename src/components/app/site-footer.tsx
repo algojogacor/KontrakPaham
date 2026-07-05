@@ -27,8 +27,19 @@ export function SiteFooter() {
             <h4 className="mb-3 text-sm font-semibold">Produk</h4>
             <ul className="space-y-2 text-sm text-muted-foreground">
               <li><button onClick={() => setView(user ? "analyze" : "home")} className="hover:text-foreground">Analisis Kontrak</button></li>
+              <li><button onClick={() => setView("samples")} className="hover:text-foreground">Contoh Kontrak</button></li>
+              <li><button onClick={() => setView(user ? "insights" : "signup")} className="hover:text-foreground">Insight & Statistik</button></li>
               <li><button onClick={() => setView("pricing")} className="hover:text-foreground">Harga & Paket</button></li>
               <li><button onClick={() => setView("consultation")} className="hover:text-foreground">Konsultasi Lanjutan</button></li>
+            </ul>
+          </div>
+
+          <div>
+            <h4 className="mb-3 text-sm font-semibold">Belajar</h4>
+            <ul className="space-y-2 text-sm text-muted-foreground">
+              <li><button onClick={() => setView("faq")} className="hover:text-foreground">FAQ</button></li>
+              <li><button onClick={() => setView("glossary")} className="hover:text-foreground">Glosarium Hukum</button></li>
+              <li><button onClick={() => setView("home")} className="hover:text-foreground">Cara Kerja</button></li>
             </ul>
           </div>
 

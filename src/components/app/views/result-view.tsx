@@ -29,7 +29,7 @@ import { CATEGORY_META } from "@/lib/types";
 import type { FindingDto } from "@/lib/types";
 import {
   Download, ArrowLeft, FileText, AlertTriangle, Info, Lightbulb,
-  Languages, ShieldAlert, Loader2, Trash2, History, Sparkles,
+  Languages, ShieldAlert, Loader2, Trash2, History, Sparkles, Copy, CheckCircle2,
 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { format } from "date-fns";
@@ -150,7 +150,7 @@ export function ResultView() {
       </div>
 
       {/* Header card */}
-      <Card className="mt-4 overflow-hidden">
+      <Card className="mt-4 overflow-hidden animate-scale-in">
         <div className={`h-2 w-full bg-gradient-to-r ${riskGradient(a.overallRisk || "SEDANG")}`} />
         <CardContent className="p-6">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
@@ -258,8 +258,36 @@ function SevCount({ label, count, cls }: { label: string; count: number; cls: st
 
 function FindingCard({ finding, index, defaultOpen }: { finding: FindingDto; index: number; defaultOpen?: boolean }) {
   const meta = CATEGORY_META[finding.category] || CATEGORY_META.LAIN_LAIN;
+  const [copied, setCopied] = useState(false);
+
+  const copyFinding = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    const text = `Temuan Analisis KontrakPaham #${index + 1}
+Kategori: ${finding.categoryLabel}
+Tingkat: ${finding.severity} | Yakin: ${finding.confidence}% | ${finding.actionType === "BUTUH_NASIHAT" ? "Butuh nasihat" : "Info umum"}
+
+KLAUSUL ASLI:
+${finding.originalClause}
+
+BAHASA AWAM:
+${finding.plainTranslation}
+
+MENGAPA BERISIKO:
+${finding.explanation}
+
+SARAN TINDAKAN:
+${finding.recommendation}`;
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      /* ignore */
+    }
+  };
+
   return (
-    <Card className="overflow-hidden">
+    <Card className="overflow-hidden transition-shadow hover:shadow-md">
       <AccordionItem value={finding.id} className="border-b-0">
         <AccordionTrigger className="px-4 py-4 hover:no-underline sm:px-5">
           <div className="flex w-full items-start gap-3 pr-2 text-left">
@@ -316,9 +344,27 @@ function FindingCard({ finding, index, defaultOpen }: { finding: FindingDto; ind
 
           {/* Recommendation */}
           <div className="mt-4 rounded-lg border border-primary/30 bg-primary/5 p-4">
-            <p className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-primary">
-              <Lightbulb className="h-3.5 w-3.5" /> Saran tindakan
-            </p>
+            <div className="flex items-center justify-between gap-2">
+              <p className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-primary">
+                <Lightbulb className="h-3.5 w-3.5" /> Saran tindakan
+              </p>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-7 gap-1 px-2 text-xs"
+                onClick={copyFinding}
+              >
+                {copied ? (
+                  <>
+                    <CheckCircle2 className="h-3 w-3 text-emerald-500" /> Tersalin
+                  </>
+                ) : (
+                  <>
+                    <Copy className="h-3 w-3" /> Salin temuan
+                  </>
+                )}
+              </Button>
+            </div>
             <p className="mt-2 text-sm leading-relaxed text-foreground">{finding.recommendation}</p>
           </div>
 

@@ -5,7 +5,7 @@ import { useApp } from "@/lib/store";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger, SheetTitle, SheetHeader } from "@/components/ui/sheet";
 import { ThemeToggle } from "@/components/theme-toggle";
-import { Menu, ShieldCheck, LayoutDashboard, FileSearch, History, Settings, LogOut, Sparkles } from "lucide-react";
+import { Menu, ShieldCheck, LayoutDashboard, FileSearch, History, Settings, LogOut, Sparkles, HelpCircle, BookOpen, BarChart3, FileText } from "lucide-react";
 import { api } from "@/lib/api-client";
 import { toast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
@@ -69,8 +69,31 @@ export function SiteNav() {
             <>
               {navItem("Dashboard", "dashboard", <LayoutDashboard className="h-4 w-4" />)}
               {navItem("Analisis", "analyze", <FileSearch className="h-4 w-4" />)}
+              {navItem("Contoh", "samples", <FileText className="h-4 w-4" />)}
+              {navItem("Insight", "insights", <BarChart3 className="h-4 w-4" />)}
               {navItem("Riwayat", "history", <History className="h-4 w-4" />)}
-              {navItem("Harga", "pricing", <Sparkles className="h-4 w-4" />)}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="sm" className="gap-1 px-2">
+                    <HelpCircle className="h-4 w-4" />
+                    <span className="text-sm">Bantuan</span>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-52">
+                  <DropdownMenuItem onClick={() => setView("faq")}>
+                    <HelpCircle className="mr-2 h-4 w-4" /> FAQ
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => setView("glossary")}>
+                    <BookOpen className="mr-2 h-4 w-4" /> Glosarium Hukum
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => setView("pricing")}>
+                    <Sparkles className="mr-2 h-4 w-4" /> Harga & Paket
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => setView("consultation")}>
+                    <Sparkles className="mr-2 h-4 w-4" /> Konsultasi
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" className="ml-1 gap-2 px-2">
@@ -141,7 +164,11 @@ export function SiteNav() {
                     </div>
                     {navItem("Dashboard", "dashboard", <LayoutDashboard className="h-4 w-4" />)}
                     {navItem("Analisis Kontrak", "analyze", <FileSearch className="h-4 w-4" />)}
+                    {navItem("Contoh Kontrak", "samples", <FileText className="h-4 w-4" />)}
+                    {navItem("Insight & Statistik", "insights", <BarChart3 className="h-4 w-4" />)}
                     {navItem("Riwayat", "history", <History className="h-4 w-4" />)}
+                    {navItem("FAQ", "faq", <HelpCircle className="h-4 w-4" />)}
+                    {navItem("Glosarium Hukum", "glossary", <BookOpen className="h-4 w-4" />)}
                     {navItem("Harga", "pricing", <Sparkles className="h-4 w-4" />)}
                     {navItem("Pengaturan", "settings", <Settings className="h-4 w-4" />)}
                     {navItem("Konsultasi", "consultation", <Sparkles className="h-4 w-4" />)}
@@ -152,7 +179,10 @@ export function SiteNav() {
                 ) : (
                   <>
                     {navItem("Cara Kerja", "home")}
+                    {navItem("Contoh Kontrak", "samples", <FileText className="h-4 w-4" />)}
                     {navItem("Harga", "pricing", <Sparkles className="h-4 w-4" />)}
+                    {navItem("FAQ", "faq", <HelpCircle className="h-4 w-4" />)}
+                    {navItem("Glosarium", "glossary", <BookOpen className="h-4 w-4" />)}
                     {navItem("Konsultasi", "consultation", <Sparkles className="h-4 w-4" />)}
                     <Button variant="outline" onClick={() => { setView("signin"); setOpen(false); }} className="mt-2">
                       Masuk

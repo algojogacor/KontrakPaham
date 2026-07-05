@@ -14,6 +14,10 @@ import { HistoryView } from "@/components/app/views/history-view";
 import { SettingsView } from "@/components/app/views/settings-view";
 import { ConsultationView } from "@/components/app/views/consultation-view";
 import { PricingView } from "@/components/app/views/pricing-view";
+import { FaqView } from "@/components/app/views/faq-view";
+import { GlossaryView } from "@/components/app/views/glossary-view";
+import { SamplesView } from "@/components/app/views/samples-view";
+import { InsightsView } from "@/components/app/views/insights-view";
 import { Loader2 } from "lucide-react";
 
 export default function Home() {
@@ -74,6 +78,10 @@ export default function Home() {
         {view === "settings" && <SettingsView />}
         {view === "consultation" && <ConsultationView />}
         {view === "pricing" && <PricingView />}
+        {view === "faq" && <FaqView />}
+        {view === "glossary" && <GlossaryView />}
+        {view === "samples" && <SamplesView />}
+        {view === "insights" && <InsightsView />}
       </main>
       <SiteFooter />
     </div>

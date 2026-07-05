@@ -178,3 +178,95 @@
 .animate-pulse-ring {
   animation: pulse-ring 2s infinite;
 }
+
+/* Fade-in-up animation for staggered reveals */
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.animate-fade-in-up {
+  animation: fade-in-up 0.5s ease-out both;
+}
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+.animate-fade-in {
+  animation: fade-in 0.4s ease-out both;
+}
+
+@keyframes scale-in {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+.animate-scale-in {
+  animation: scale-in 0.35s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+/* Stagger helper: apply to children with animation-delay via inline style */
+.stagger-1 { animation-delay: 0.05s; }
+.stagger-2 { animation-delay: 0.1s; }
+.stagger-3 { animation-delay: 0.15s; }
+.stagger-4 { animation-delay: 0.2s; }
+.stagger-5 { animation-delay: 0.25s; }
+.stagger-6 { animation-delay: 0.3s; }
+
+/* Glassmorphism card */
+.glass {
+  background: oklch(1 0 0 / 0.7);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid oklch(1 0 0 / 0.3);
+}
+.dark .glass {
+  background: oklch(0.22 0.02 169 / 0.7);
+  border: 1px solid oklch(1 0 0 / 0.08);
+}
+
+/* Gradient text utility */
+.text-gradient {
+  background: linear-gradient(135deg, oklch(0.52 0.11 169), oklch(0.6 0.15 145));
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* Soft shadow */
+.shadow-soft {
+  box-shadow: 0 2px 8px -2px oklch(0.22 0.02 165 / 0.08), 0 4px 16px -4px oklch(0.22 0.02 165 / 0.06);
+}
+.shadow-soft-lg {
+  box-shadow: 0 4px 16px -4px oklch(0.22 0.02 165 / 0.12), 0 8px 32px -8px oklch(0.22 0.02 165 / 0.08);
+}
+
+/* Animated gradient border */
+.gradient-border {
+  position: relative;
+  background: linear-gradient(var(--card), var(--card)) padding-box,
+    linear-gradient(135deg, oklch(0.52 0.11 169 / 0.4), oklch(0.6 0.15 145 / 0.2)) border-box;
+  border: 1px solid transparent;
+}
+
+/* Number tabular for stats */
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Smooth focus ring */
+:focus-visible {
+  outline: 2px solid oklch(0.52 0.11 169);
+  outline-offset: 2px;
+}

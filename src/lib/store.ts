@@ -15,7 +15,11 @@ export type View =
   | "history"
   | "settings"
   | "consultation"
-  | "pricing";
+  | "pricing"
+  | "faq"
+  | "glossary"
+  | "samples"
+  | "insights";
 
 interface AppState {
   user: UserDto | null;

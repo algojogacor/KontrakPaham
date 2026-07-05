@@ -10,7 +10,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { RiskPill } from "@/components/app/badges";
 import { ConsultationCard } from "@/components/app/consultation-card";
-import { FileSearch, FileText, Plus, History, Clock, Sparkles, TrendingUp, Loader2 } from "lucide-react";
+import { FileSearch, FileText, Plus, History, Clock, Sparkles, TrendingUp, Loader2, BarChart3 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { id as idLocale } from "date-fns/locale";
 import type { AnalysisDto, QuotaDto } from "@/lib/types";
@@ -106,17 +106,21 @@ export function DashboardView() {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="cursor-pointer transition-shadow hover:shadow-md" onClick={() => items && items.length > 0 && setView("insights")}>
           <CardContent className="p-5">
             <div className="flex items-center justify-between">
               <span className="text-sm text-muted-foreground">Total analisis</span>
-              <FileText className="h-4 w-4 text-primary" />
+              <BarChart3 className="h-4 w-4 text-primary" />
             </div>
             <div className="mt-2 flex items-baseline gap-1">
               <span className="text-2xl font-bold">{items?.length ?? 0}</span>
               <span className="text-sm text-muted-foreground">tercatat</span>
             </div>
-            <p className="mt-2 text-xs text-muted-foreground">Riwayat tersimpan per akun.</p>
+            <p className="mt-2 text-xs text-muted-foreground">
+              {items && items.length > 0 ? (
+                <span className="inline-flex items-center gap-1 text-primary">Lihat insight & statistik →</span>
+              ) : "Riwayat tersimpan per akun."}
+            </p>
           </CardContent>
         </Card>
 

@@ -7,8 +7,9 @@ import { Badge } from "@/components/ui/badge";
 import {
   ShieldCheck, FileText, Upload, ScanText, Brain, Lightbulb,
   FileDown, History, Clock, Lock, Heart, ArrowRight, Check,
-  AlertTriangle, Scale, MessageSquare,
+  AlertTriangle, Scale, MessageSquare, BookOpen, HelpCircle, BarChart3,
 } from "lucide-react";
+import { LucideIcon } from "lucide-react";
 
 export function HomeView() {
   const { user, setView } = useApp();
@@ -21,23 +22,23 @@ export function HomeView() {
         <div className="absolute inset-0 bg-radial-fade" />
         <div className="relative mx-auto max-w-6xl px-4 py-16 sm:py-24">
           <div className="mx-auto max-w-3xl text-center">
-            <Badge variant="secondary" className="mb-5 gap-1.5 rounded-full px-3 py-1">
+            <Badge variant="secondary" className="mb-5 gap-1.5 rounded-full px-3 py-1 animate-fade-in-up">
               <Heart className="h-3 w-3 text-primary" />
               Untuk Anda yang gaptek pun paham
             </Badge>
-            <h1 className="text-balance text-4xl font-extrabold tracking-tight sm:text-5xl lg:text-6xl">
+            <h1 className="text-balance text-4xl font-extrabold tracking-tight sm:text-5xl lg:text-6xl animate-fade-in-up stagger-1">
               Pahami kontrak Anda{" "}
               <span className="bg-gradient-to-r from-primary to-emerald-500 bg-clip-text text-transparent">
                 sebelum tanda tangan
               </span>
             </h1>
-            <p className="mx-auto mt-6 max-w-2xl text-pretty text-lg text-muted-foreground">
+            <p className="mx-auto mt-6 max-w-2xl text-pretty text-lg text-muted-foreground animate-fade-in-up stagger-2">
               Unggah kontrak dalam Bahasa Indonesia (PDF, DOCX, atau salin teks).
               Sistem mendeteksi klausul yang berpotensi merugikan, menjelaskannya dalam
               bahasa awam, dan memberi saran tindakan — bukan jargon hukum yang membingungkan.
             </p>
-            <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
-              <Button size="lg" className="h-12 gap-2 px-6 text-base" onClick={() => setView(user ? "analyze" : "signup")}>
+            <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row animate-fade-in-up stagger-3">
+              <Button size="lg" className="h-12 gap-2 px-6 text-base shadow-soft" onClick={() => setView(user ? "analyze" : "signup")}>
                 {user ? "Analisis Kontrak Sekarang" : "Mulai Gratis"}
                 <ArrowRight className="h-4 w-4" />
               </Button>
@@ -122,7 +123,7 @@ export function HomeView() {
             { icon: Brain, step: "2", title: "AI analisis klausul", desc: "Sistem memetakan klausul berisiko per kategori: denda, jangka waktu, sepihak, pengalihan risiko, dll." },
             { icon: Lightbulb, step: "3", title: "Pahami & tentukan langkah", desc: "Dapat penjelasan bahasa awam + saran tindakan. Export PDF, atau konsultasi lanjutan." },
           ].map((s, i) => (
-            <Card key={i} className="relative">
+            <Card key={i} className={`relative animate-fade-in-up stagger-${i + 1}`}>
               <CardContent className="p-6">
                 <div className="absolute right-4 top-4 text-5xl font-black text-primary/10">{s.step}</div>
                 <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 text-primary">
@@ -188,6 +189,48 @@ export function HomeView() {
         </Card>
       </section>
 
+      {/* Resources section - new features */}
+      <section className="mx-auto max-w-6xl px-4 py-16">
+        <div className="text-center">
+          <h2 className="text-3xl font-bold tracking-tight">Lebih dari sekadar analisis</h2>
+          <p className="mt-2 text-muted-foreground">Sumber belajar & alat bantu untuk Anda yang ingin paham kontrak lebih dalam.</p>
+        </div>
+        <div className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+          <ResourceCard
+            emoji="📄"
+            icon={FileText}
+            title="Contoh Kontrak"
+            desc="Coba analisis 4 contoh kontrak nyata: sewa kos, freelance, PKWT, renovasi."
+            onClick={() => setView("samples")}
+            cta="Lihat contoh"
+          />
+          <ResourceCard
+            emoji="📚"
+            icon={BookOpen}
+            title="Glosarium Hukum"
+            desc="Istilah hukum (denda, arbitrase, force majeure) dijelaskan bahasa awam."
+            onClick={() => setView("glossary")}
+            cta="Buka glosarium"
+          />
+          <ResourceCard
+            emoji="❓"
+            icon={HelpCircle}
+            title="FAQ"
+            desc="Jawaban pertanyaan umum soal analisis, keamanan, dan keterbatasan."
+            onClick={() => setView("faq")}
+            cta="Baca FAQ"
+          />
+          <ResourceCard
+            emoji="📊"
+            icon={BarChart3}
+            title="Insight & Statistik"
+            desc={user ? "Pola risiko dari riwayat analisis Anda." : "Pola risiko dari analisis Anda (setelah masuk)."}
+            onClick={() => setView(user ? "insights" : "signup")}
+            cta={user ? "Lihat insight" : "Daftar dulu"}
+          />
+        </div>
+      </section>
+
       {/* CTA */}
       <section className="border-t border-border bg-primary text-primary-foreground">
         <div className="mx-auto max-w-4xl px-4 py-16 text-center">
@@ -216,5 +259,42 @@ export function HomeView() {
         </div>
       </section>
     </div>
+  );
+}
+
+function ResourceCard({
+  emoji,
+  icon: Icon,
+  title,
+  desc,
+  onClick,
+  cta,
+}: {
+  emoji: string;
+  icon: LucideIcon;
+  title: string;
+  desc: string;
+  onClick: () => void;
+  cta: string;
+}) {
+  return (
+    <button onClick={onClick} className="group text-left">
+      <Card className="h-full transition-all hover:-translate-y-1 hover:border-primary/40 hover:shadow-lg">
+        <CardContent className="flex h-full flex-col p-5">
+          <div className="flex items-center justify-between">
+            <span className="text-2xl">{emoji}</span>
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 text-primary transition-transform group-hover:scale-110">
+              <Icon className="h-4 w-4" />
+            </div>
+          </div>
+          <h3 className="mt-3 font-semibold">{title}</h3>
+          <p className="mt-1 flex-1 text-sm text-muted-foreground">{desc}</p>
+          <span className="mt-3 inline-flex items-center gap-1 text-sm font-medium text-primary">
+            {cta}
+            <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
+          </span>
+        </CardContent>
+      </Card>
+    </button>
   );
 }

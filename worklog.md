@@ -113,3 +113,80 @@ Unresolved / Risks:
   for this sandbox; production needs an email service.
 - Recommend next phase: browser QA of result/history/settings/consultation/pricing
   views, PDF export download test, and mobile-width responsive check.
+
+---
+Task ID: 3
+Agent: webDevReview cron (Z.ai Code)
+Task: QA assessment, bug fixing, and adding new features + styling improvements (cron round 1).
+
+Work Log:
+- Reviewed worklog: platform complete, backend curl-verified, browser QA blocked by env
+  dev-server instability across Bash calls.
+- Comprehensive curl QA (scripts-level) — ALL PASS:
+  * signup 200, /me 200 with user+quota, /quota 200
+  * analyze 200 in 22s → TINGGI, score 75, 6 findings (proper severity/confidence/actionType)
+  * list 200, get 200, export PDF 200 (24KB, 4-page valid PDF v1.3)
+  * signin 200, rate limiting correct (9×401 then 429 at 10th attempt, 10/15min limit)
+  * validation 400 on short password, delete 200, quota correctly decremented
+- Browser QA still blocked by environment: agent-browser open reports localhost:3000 but
+  get url returns about:blank; snapshot returns empty. Confirmed via multiple diagnostics
+  this is a sandbox browser limitation, not an app defect. Verified new views render via
+  SSR HTML curl (Contoh Kontrak/Glosarium Hukum present in home HTML) + compile checks.
+
+NEW FEATURES ADDED:
+1. FAQ page (/api + view) — 14 Q&A across 4 categories (umum/teknis/hukum/akun), searchable,
+   filterable by category, accordion display. Accessible from nav "Bantuan" dropdown + footer.
+2. Glosarium Hukum — 18 legal terms in plain Bahasa Indonesia (denda, arbitrase, force majeure,
+   wanprestasi, HGB, non-kompetisi, dll), 5 categories, search + filter, example callouts.
+3. Sample Contracts library — 4 ready-to-analyze contracts (sewa kos, freelance, PKWT, renovasi)
+   with difficulty badges (pemula/menengah/lanjutan), preview mode, one-click analyze. Lets new
+   users try the analyzer instantly without their own contract.
+4. Insights & Statistics page (/api/insights + view) — analytics over user's analysis history:
+   total analyses, avg risk score, risk distribution bar chart, top risky categories, 8-point
+   risk trend chart, needs-action count, contextual insight message. Dashboard "Total analisis"
+   card now links to insights.
+5. Copy-to-clipboard on each finding — users can copy a formatted finding summary (klausul asli
+   + bahasa awam + risiko + saran) to share with their lawyer/contacts.
+
+STYLING IMPROVEMENTS:
+6. New CSS animations: fade-in-up, fade-in, scale-in, stagger helpers (stagger-1..6).
+7. Glassmorphism (.glass), gradient text (.text-gradient), soft shadows (.shadow-soft/-lg),
+   animated gradient border (.gradient-border), tabular-nums, smooth focus-visible ring.
+8. Home hero: staggered entrance animations on badge, h1, p, buttons; shadow-soft on primary CTA.
+9. How-it-works cards: staggered fade-in-up entrance.
+10. Result header card: scale-in animation on mount.
+11. FindingCard: hover shadow transition; ResourceCard on home: hover lift + icon scale +
+    arrow translate micro-interaction.
+12. Dashboard: "Total analisis" card now clickable (cursor-pointer, hover shadow) linking to insights.
+
+NAVIGATION:
+- Desktop: added "Contoh", "Insight" nav items + "Bantuan" dropdown (FAQ/Glosarium/Harga/Konsultasi).
+- Mobile sheet: added Contoh Kontrak, Insight, FAQ, Glosarium items.
+- Footer: added "Belajar" column (FAQ, Glosarium, Cara Kerja) + expanded Produk column.
+
+VERIFICATION:
+- `bun run lint` → 0 errors, 3 pre-existing unused-disable warnings.
+- Dev server compiles & serves 200; home SSR HTML contains new content.
+- New /api/insights endpoint: 401 without auth (correct), returns aggregated stats with data
+  (verified with 2 sample analyses: total=2, avg=80, needsAction=11, trend=2pts, top cats).
+- Sample contracts content.ts module exports correctly; analyze of sample → 200 with findings.
+- No runtime/compile errors in dev log.
+
+Stage Summary:
+- Platform now has 4 new user-facing features (FAQ, Glossary, Samples, Insights) + copy-finding
+  utility, all backend-verified via curl.
+- Styling significantly enriched with entrance animations, micro-interactions, and design utilities.
+- All views wired into SPA routing (store.ts View type + page.tsx + nav + footer).
+- Artifacts: src/lib/content.ts (FAQ/glossary/samples data), src/app/api/insights/route.ts,
+  src/components/app/views/{faq,glossary,samples,insights}-view.tsx, updated home/nav/footer/
+  dashboard/result views, expanded globals.css.
+
+Unresolved / Risks:
+- Browser-based visual QA still blocked by sandbox browser instability (about:blank on open).
+  Recommend next phase attempt agent-browser with longer hydration waits or a different browser
+  launch strategy, OR rely on curl + SSR HTML checks (which all pass).
+- OCR (VLM) path not yet runtime-verified with a real scanned PDF — still pending.
+- Password reset remains demo-mode (token in response) — clearly labeled, OK for sandbox.
+- Recommend next phase: (a) clause-comparison feature (diff two analyses), (b) email-based
+  password reset if a mail service becomes available, (c) deeper mobile responsive polish,
+  (d) PWA/offline support, (e) multi-language toggle (EN/ID).
