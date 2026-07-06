@@ -1,13 +1,39 @@
 import * as pdfjs from "pdfjs-dist/legacy/build/pdf.mjs";
+import { readFileSync, existsSync } from "fs";
 import { createRequire } from "module";
+import { resolve } from "path";
 import mammoth from "mammoth";
 import ZAI from "z-ai-web-dev-sdk";
 import { logger } from "@/lib/logger";
 
 const require = createRequire(import.meta.url);
-pdfjs.GlobalWorkerOptions.workerSrc = require.resolve(
-  "pdfjs-dist/legacy/build/pdf.worker.mjs"
-);
+// pdfjs worker resolution under Next.js/Turbopack is extremely fragile: Turbopack
+// rewrites require.resolve(), import.meta.url, and dynamic import() into mangled
+// virtual paths ([project]/node_modules/... [app-route] (ecmascript)) that fail
+// at runtime with ENOENT. The ONLY reliable approach: resolve the worker file via
+// process.cwd() (the project root in dev/prod), read its source, pass as data: URL.
+function setupPdfWorker() {
+  const candidates = [
+    resolve(process.cwd(), "node_modules/pdfjs-dist/legacy/build/pdf.worker.mjs"),
+  ];
+  // Also try require.resolve as a fallback (works when not bundled/externalized cleanly)
+  try {
+    candidates.push(require.resolve("pdfjs-dist/legacy/build/pdf.worker.mjs"));
+  } catch { /* ignore */ }
+  for (const p of candidates) {
+    if (existsSync(p)) {
+      const workerSrc = readFileSync(p, "utf8");
+      pdfjs.GlobalWorkerOptions.workerSrc =
+        "data:application/javascript;base64," + Buffer.from(workerSrc).toString("base64");
+      return;
+    }
+  }
+  logger("error", "pdfjs worker setup failed", {
+    error: "worker file not found in any candidate path",
+    candidates,
+  });
+}
+setupPdfWorker();
 
 export interface ParsedDocument {
   text: string;
