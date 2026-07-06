@@ -107,15 +107,21 @@ async function renderPdfPageToPng(
 /**
  * OCR via MiniMax-M3 multimodal VLM (iamhc.cn endpoint).
  * Reads text from images — works for both scan-PDFs and reconstructed SVG images.
+ * API key & endpoint configured via MINIMAX_API_KEY / MINIMAX_BASE_URL env vars.
  */
 async function ocrImageWithMinimax(png: Buffer): Promise<string> {
+  const apiKey = process.env.MINIMAX_API_KEY;
+  const baseUrl = process.env.MINIMAX_BASE_URL || "https://api.iamhc.cn/v1";
+  if (!apiKey) {
+    throw new Error("MINIMAX_API_KEY env var not set — OCR unavailable");
+  }
   const b64 = png.toString("base64");
   const dataUrl = `data:image/png;base64,${b64}`;
-  const res = await fetch("https://api.iamhc.cn/v1/chat/completions", {
+  const res = await fetch(`${baseUrl}/chat/completions`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      Authorization: `Bearer sk-jMCjpgmh6zmdzA8WEVjaaI33O4IrD8DiWdjtJrXMO3aMa7j4`,
+      Authorization: `Bearer ${apiKey}`,
     },
     body: JSON.stringify({
       model: "MiniMax-M3",
@@ -133,6 +139,7 @@ async function ocrImageWithMinimax(png: Buffer): Promise<string> {
       ],
       max_tokens: 2000,
     }),
+    signal: AbortSignal.timeout(120_000), // 2min timeout — external API
   });
   if (!res.ok) {
     const err = await res.text();

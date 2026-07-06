@@ -105,7 +105,7 @@ export function toAnalysisDto(a: {
   errorMessage?: string | null;
   modelUsed?: string | null;
   createdAt: Date;
-  findings: any[];
+  findings: FindingDto[];
 }): AnalysisDto {
   return {
     id: a.id,
@@ -121,7 +121,7 @@ export function toAnalysisDto(a: {
     errorMessage: a.errorMessage,
     modelUsed: a.modelUsed,
     createdAt: a.createdAt.toISOString(),
-    findings: (a.findings || []).map((f: any) => ({
+    findings: (a.findings || []).map((f: FindingDto) => ({
       id: f.id,
       category: f.category,
       categoryLabel: f.categoryLabel,

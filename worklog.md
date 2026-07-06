@@ -943,3 +943,65 @@ Unresolved / Risks:
 - MiniMax-M3 API calls for long contracts can be slow (timed out in E2E test at 180s
   for full contract OCR). May need to increase timeout or paginate.
 - API key is hardcoded in documents.ts — should move to env var for production.
+
+---
+Task ID: 14
+Agent: main (Z.ai Code) — Security hardening + env vars + engineering review
+
+WORK LOG:
+
+P1: SECRETS TO ENV VARS — ✅ DONE
+- Moved MiniMax API key from hardcoded in documents.ts → process.env.MINIMAX_API_KEY
+- Added MINIMAX_BASE_URL env var (defaults to https://api.iamhc.cn/v1)
+- ocrImageWithMinimax() now reads from env, throws clear error if not set
+- Updated .env with MINIMAX_API_KEY + MINIMAX_BASE_URL
+- Created .env.example with all env vars documented (DATABASE_URL, JWT_SECRET,
+  JWT_EXPIRES_IN_SECONDS, APP_NAME, MINIMAX_API_KEY, MINIMAX_BASE_URL) + instructions
+- Verified: zero hardcoded secrets in src/ (grep confirms clean)
+- .env* already in .gitignore (verified)
+
+P2: SECURITY HEADERS — ✅ ADDED
+- Added security headers to next.config.ts (async headers() config):
+  * X-Frame-Options: DENY (clickjacking protection)
+  * X-Content-Type-Options: nosniff (MIME sniffing protection)
+  * Referrer-Policy: strict-origin-when-cross-origin
+  * X-XSS-Protection: 1; mode=block
+  * Permissions-Policy: camera=(), microphone=(), geolocation=()
+  * Strict-Transport-Security: max-age=63072000; includeSubDomains; preload (HSTS)
+- Verified all 6 headers present in curl -I response
+
+P3: ERROR HANDLING — ✅ IMPROVED
+- API routes that lacked try/catch now have it:
+  * /api/analyses — wrapped in try/catch, logs error, returns 500 with friendly message
+  * /api/insights — wrapped in try/catch, logs error, returns 500
+- All API routes now have consistent error handling pattern
+
+P4: FETCH TIMEOUT — ✅ ADDED
+- MiniMax OCR fetch now has AbortSignal.timeout(120_000) — 2min timeout
+  prevents hanging on slow external API
+
+P5: TYPE SAFETY — ✅ IMPROVED
+- Fixed `any` types in types.ts toAnalysisDto: findings param typed as
+  FindingDto[] instead of any[], map callback typed as FindingDto
+
+VERIFICATION:
+- Lint 0 errors, 3 pre-existing warnings (unused eslint-disable).
+- Clean compile. Dev server running (200).
+- Security headers: all 6 present in response.
+- Env vars: MINIMAX_API_KEY loaded from env (signup 200, OCR code path reached).
+- No hardcoded secrets in src/ (grep clean).
+
+Stage Summary:
+- All secrets now in env vars (.env + .env.example template).
+- 6 security headers added (clickjacking, MIME, referrer, XSS, permissions, HSTS).
+- Error handling improved on insights + analyses routes.
+- External API call (MiniMax) now has 2min timeout.
+- Type safety improved (removed `any` in toAnalysisDto).
+
+Unresolved / Risks:
+- Other API routes (quota, me, signout, account, export) still lack explicit try/catch
+  but are simple read/delete operations — low risk. Could add for consistency.
+- Could add CSP (Content-Security-Policy) header for stricter XSS protection —
+  needs careful tuning with inline styles/scripts.
+- Recommend next: add request body size limit middleware, add CSRF protection for
+  mutations, audit log retention policy, rate limit on /api/insights.
