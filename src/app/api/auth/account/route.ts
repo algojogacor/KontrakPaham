@@ -19,8 +19,13 @@ export async function DELETE(req: NextRequest) {
   }
 
   // Cascade delete removes analyses, findings, quota, resets, logs (per schema).
-  await db.user.delete({ where: { id: user.id } });
-  await audit("account_deleted", { ip, meta: { username: user.username } });
-  await clearSessionCookie();
-  return NextResponse.json({ message: "Akun dan seluruh data berhasil dihapus." });
+  try {
+    await db.user.delete({ where: { id: user.id } });
+    await audit("account_deleted", { ip, meta: { username: user.username } });
+    await clearSessionCookie();
+    return NextResponse.json({ message: "Akun dan seluruh data berhasil dihapus." });
+  } catch (e) {
+    audit("account_delete_failed", { userId: user.id, ip, meta: { error: (e as Error).message }, level: "error" });
+    return NextResponse.json({ error: "Gagal menghapus akun. Silakan coba lagi." }, { status: 500 });
+  }
 }

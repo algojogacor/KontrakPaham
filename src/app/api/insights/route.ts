@@ -2,10 +2,20 @@ import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
 import { logger } from "@/lib/logger";
+import { rateLimit } from "@/lib/rate-limit";
 
 export async function GET() {
   const user = await getCurrentUser();
   if (!user) return NextResponse.json({ error: "Belum masuk." }, { status: 401 });
+
+  // Rate limit: 20 req/jam per user (insights is an aggregation query)
+  const rl = rateLimit(`insights:${user.id}`, 20, 60 * 60 * 1000);
+  if (!rl.ok) {
+    return NextResponse.json(
+      { error: "Terlalu banyak permintaan. Coba lagi nanti." },
+      { status: 429 }
+    );
+  }
 
   try {
     const analyses = await db.analysis.findMany({

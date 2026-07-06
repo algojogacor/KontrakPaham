@@ -40,7 +40,6 @@ export default function Home() {
     return () => {
       cancelled = true;
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Gate protected views (require auth)
@@ -49,7 +48,6 @@ export default function Home() {
     if (!authLoading && !user && protectedViews.includes(view)) {
       setView("signin");
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [authLoading, user, view]);
 
   if (authLoading) {

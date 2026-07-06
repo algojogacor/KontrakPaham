@@ -59,7 +59,7 @@ export const TERMS_DOC: LegalDoc = {
         "Mendapatkan penjelasan yang jelas soal batasan layanan",
       ],
       bodyAfterList: ["Kewajiban Anda:", "Memberikan informasi akun yang benar, menjaga keamanan akun, dan menggunakan layanan dengan iktikad baik."],
-    } as any,
+    },
     {
       heading: "5. Hak Kekayaan Intelektual",
       body: [

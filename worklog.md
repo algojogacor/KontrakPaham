@@ -1005,3 +1005,49 @@ Unresolved / Risks:
   needs careful tuning with inline styles/scripts.
 - Recommend next: add request body size limit middleware, add CSRF protection for
   mutations, audit log retention policy, rate limit on /api/insights.
+
+---
+Task ID: 15
+Agent: main (Z.ai Code) — Engineering polish round
+
+WORK LOG:
+
+STATIC REVIEW FINDINGS & FIXES:
+1. Removed 3 unused eslint-disable directives (page.tsx ×2, history-view.tsx ×1).
+   Lint now FULLY CLEAN: 0 errors, 0 warnings (was 3 warnings).
+2. Removed leftover `as any` in legal-content.ts (from earlier sed migration).
+3. Added try/catch error handling to 4 API routes that lacked it:
+   - /api/quota — wrapped, logs error, returns 500 friendly
+   - /api/auth/me — wrapped, logs error, returns 500
+   - /api/auth/account — wrapped, logs to audit, returns 500
+   - /api/auth/signout — wrapped, still clears cookie even if audit fails
+   ALL API routes now have consistent try/catch error handling.
+4. Added rate limiting to /api/insights (20 req/jam per user) — was recommended
+   in prior worklog, insights is an aggregation query that shouldn't be spammed.
+5. Created src/proxy.ts (Next 16 proxy convention, replaces middleware):
+   - Request body size limit for /api/analyze: rejects Content-Length > 25MB
+     early at edge (before body fully read) — defense against memory exhaustion.
+   - Defense-in-depth security headers (X-Frame-Options, X-Content-Type-Options,
+     Referrer-Policy) on all /api/* routes.
+   - NOTE: Next 16 deprecated "middleware" → renamed to "proxy" + export function
+     must be named `proxy` (not `middleware`). Fixed after initial 500 error.
+
+VERIFICATION:
+- Lint: 0 errors, 0 warnings (FULLY CLEAN for first time).
+- Compile: clean. Home 200, signup 200, preview 200.
+- All API routes have try/catch (verified via grep — none missing).
+- Proxy active (security headers present, body size guard works).
+
+Stage Summary:
+- Lint fully clean (0/0) — all 3 prior warnings resolved.
+- All API routes now have consistent error handling (was 4 missing, now 0).
+- Rate limiting extended to /api/insights.
+- Request body size guard added via proxy.ts (25MB hard cap on analyze).
+- Next 16 proxy convention adopted (middleware → proxy).
+
+Unresolved / Risks:
+- Could add CSP header (needs careful tuning with inline styles).
+- Could add CSRF protection for mutation endpoints.
+- Audit log retention policy not implemented (logs grow indefinitely).
+- Recommend next: add request ID for tracing, add health check with dependency
+  status, add structured error response format (error code + message).
