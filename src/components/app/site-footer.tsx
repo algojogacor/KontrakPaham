@@ -5,11 +5,18 @@ import { ThemeToggle } from "@/components/theme-toggle";
 
 export function SiteFooter() {
   const setView = useApp((s) => s.setView);
+  const setLegalDocSlug = useApp((s) => s.setLegalDocSlug);
   const user = useApp((s) => s.user);
+
+  const openLegal = (slug: string) => {
+    setLegalDocSlug(slug);
+    setView("legal");
+  };
+
   return (
     <footer className="mt-auto border-t border-border bg-ink text-background/80">
       <div className="mx-auto max-w-6xl px-4 py-12">
-        <div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-5">
+        <div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-6">
           <div className="space-y-3 lg:col-span-2">
             <div className="flex items-center gap-2.5">
               <div className="relative flex h-9 w-9 items-center justify-center rounded-xl bg-background/10 text-background">
@@ -45,6 +52,17 @@ export function SiteFooter() {
               <li><button onClick={() => setView("faq")} className="text-background/70 transition-colors hover:text-amber-400">FAQ</button></li>
               <li><button onClick={() => setView("glossary")} className="text-background/70 transition-colors hover:text-amber-400">Glosarium Hukum</button></li>
               <li><button onClick={() => setView("home")} className="text-background/70 transition-colors hover:text-amber-400">Cara Kerja</button></li>
+            </ul>
+          </div>
+
+          <div>
+            <h4 className="mb-3 font-display text-xs font-semibold uppercase tracking-[0.15em] text-background/50">Legal</h4>
+            <ul className="space-y-2 text-sm">
+              <li><button onClick={() => openLegal("terms")} className="text-background/70 transition-colors hover:text-amber-400">Syarat & Ketentuan</button></li>
+              <li><button onClick={() => openLegal("privacy")} className="text-background/70 transition-colors hover:text-amber-400">Kebijakan Privasi</button></li>
+              <li><button onClick={() => openLegal("disclaimer")} className="text-background/70 transition-colors hover:text-amber-400">Disclaimer Hukum</button></li>
+              <li><button onClick={() => openLegal("liability")} className="text-background/70 transition-colors hover:text-amber-400">Batasan Tanggung Jawab</button></li>
+              <li><button onClick={() => openLegal("content-policy")} className="text-background/70 transition-colors hover:text-amber-400">Kebijakan Konten</button></li>
             </ul>
           </div>
 

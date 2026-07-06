@@ -19,6 +19,7 @@ import { GlossaryView } from "@/components/app/views/glossary-view";
 import { SamplesView } from "@/components/app/views/samples-view";
 import { InsightsView } from "@/components/app/views/insights-view";
 import { ChecklistView } from "@/components/app/views/checklist-view";
+import { LegalView } from "@/components/app/views/legal-view";
 import { Loader2 } from "lucide-react";
 
 export default function Home() {
@@ -84,6 +85,7 @@ export default function Home() {
         {view === "samples" && <SamplesView />}
         {view === "insights" && <InsightsView />}
         {view === "checklist" && <ChecklistView />}
+        {view === "legal" && <LegalView />}
       </main>
       <SiteFooter />
     </div>

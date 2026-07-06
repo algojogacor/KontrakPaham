@@ -104,34 +104,71 @@ async function renderPdfPageToPng(
   return canvas.toBuffer("image/png");
 }
 
-async function ocrPdf(pdf: any, maxPages = 6): Promise<string> {
+async function ocrWithVlm(png: Buffer): Promise<string> {
+  // Primary OCR: z-ai VLM (glm-4.5v). Multimodal — reads text from images.
+  // Quality is limited but returns actual text content.
   const zai = await ZAI.create();
+  const dataUrl = `data:image/png;base64,${png.toString("base64")}`;
+  const completion = await zai.chat.completions.createVision({
+    model: "glm-4.5v",
+    messages: [
+      {
+        role: "system",
+        content:
+          "Anda adalah mesin OCR untuk dokumen hukum berbahasa Indonesia. " +
+          "Transkripsi SELURUH teks yang terlihat pada gambar halaman secara akurat dan apa adanya. " +
+          "Pertahankan struktur paragraf dan penomoran. Jangan tambahkan komentar. " +
+          "Jika ada bagian tidak terbaca, tulis [tidak terbaca]. Hanya keluarkan teks hasil transkripsi.",
+      },
+      {
+        role: "user",
+        content: [
+          { type: "text", text: "Transkripsi teks pada halaman ini." },
+          { type: "image_url", image_url: { url: dataUrl } },
+        ],
+      },
+    ],
+    thinking: { type: "disabled" },
+  });
+  const out = completion?.choices?.[0]?.message?.content ?? "";
+  return typeof out === "string" ? out : JSON.stringify(out);
+}
+
+async function ocrWithTesseract(png: Buffer): Promise<string> {
+  // Fallback OCR: Tesseract.js (local, no API cost).
+  // NOTE: Tesseract has poor results reading @napi-rs/canvas-rendered text due to
+  // glyph anti-aliasing incompatibility. Kept as fallback for non-canvas images.
+  const { createWorker } = await import("tesseract.js");
+  const worker = await createWorker(["ind", "eng"], 1, { logger: () => {} });
+  try {
+    const { data: { text } } = await worker.recognize(png);
+    return text || "";
+  } finally {
+    await worker.terminate();
+  }
+}
+
+async function ocrPdf(pdf: any, maxPages = 6): Promise<string> {
   const pages = Math.min(pdf.numPages, maxPages);
   let fullText = "";
   for (let i = 1; i <= pages; i++) {
     try {
       const png = await renderPdfPageToPng(pdf, i, 2);
-      const dataUrl = `data:image/png;base64,${png.toString("base64")}`;
-      const completion = await zai.chat.completions.createVision({
-        model: "glm-4.5v",
-        messages: [
-          {
-            role: "system",
-            content:
-              "Anda adalah mesin OCR untuk dokumen hukum berbahasa Indonesia. " +
-              "Transkripsi SELURUH teks yang terlihat pada gambar halaman secara akurat dan apa adanya. " +
-              "Pertahankan struktur paragraf dan penomoran. Jangan tambahkan komentar. " +
-              "Jika ada bagian tidak terbaca, tulis [tidak terbaca]. Hanya keluarkan teks hasil transkripsi.",
-          },
-          {
-            role: "user",
-            content: [{ type: "text", text: "Transkripsi teks pada halaman ini." }, { type: "image_url", image_url: { url: dataUrl } }],
-          },
-        ],
-        thinking: { type: "disabled" },
-      });
-      const out = completion?.choices?.[0]?.message?.content ?? "";
-      fullText += (typeof out === "string" ? out : JSON.stringify(out)) + "\n\n";
+      // Primary: VLM (works with canvas-rendered images)
+      let pageText = await ocrWithVlm(png);
+      // Fallback: Tesseract if VLM returns very little
+      if (pageText.replace(/\s/g, "").length < 20) {
+        logger("info", "vlm sparse, trying tesseract", { page: i });
+        try {
+          const tessText = await ocrWithTesseract(png);
+          if (tessText.replace(/\s/g, "").length > pageText.replace(/\s/g, "").length) {
+            pageText = tessText;
+          }
+        } catch (e) {
+          logger("warn", "tesseract ocr failed", { page: i, error: (e as Error).message });
+        }
+      }
+      fullText += pageText + "\n\n";
     } catch (e) {
       logger("warn", "ocr page failed", { page: i, error: (e as Error).message });
     }
@@ -173,12 +210,14 @@ export async function parsePdf(
 
   // Heuristic: if extracted text is too sparse relative to page count, try OCR.
   const meaningful = text.replace(/\s/g, "").length;
+  logger("info", "pdf text extraction result", { numPages, meaningful, threshold: 40 * numPages });
   if (meaningful < 40 * numPages) {
     warnings.push(
       "Teks pada PDF sedikit/tidak terbaca (kemungkinan hasil scan/foto). Mencoba OCR otomatis..."
     );
     try {
       const ocrText = await ocrPdf(pdf, 6);
+      logger("info", "ocr completed", { ocrLen: ocrText.replace(/\s/g, "").length, prevLen: meaningful });
       if (ocrText.replace(/\s/g, "").length > meaningful) {
         text = ocrText;
         ocrUsed = true;

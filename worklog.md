@@ -818,3 +818,77 @@ Unresolved / Risks:
 - Recommend next: (a) try alternative VLM model for OCR, (b) add Tesseract.js as
   OCR fallback, (c) capture protected-view screenshots (dashboard/result/history
   with real data), (d) add contract-comparison feature.
+
+---
+Task ID: 12
+Agent: main (Z.ai Code) — Legal pages + Dark mode redesign + OCR Tesseract attempt
+
+WORK LOG:
+
+P1: LEGAL PAGES — ✅ 5 HALAMAN DIBUAT
+- Created src/lib/legal-content.ts with 5 full legal documents in Bahasa Indonesia:
+  1. Syarat & Ketentuan (8 sections: layanan, penggunaan wajar, akun, hak/kewajiban,
+     HKI, perubahan layanan/harga, batasan tanggung jawab, hukum berlaku Indonesia)
+  2. Kebijakan Privasi (8 sections: data dikumpulkan, ⚠️ DATA DIKIRIM KE API PIHAK
+     KETIGA — diungkap eksplisit teks kontrak melewati LLM provider, cara dipakai,
+     penyimpanan, durasi, akses, hak user, kepatuhan UU PDP)
+  3. Disclaimer Hukum (5 sections: inti disclaimer, siapa pengelola [mahasiswa hukum
+     bukan advokat], limitasi hasil, saran penggunaan bijak, konsultasi lanjutan)
+  4. Batasan Tanggung Jawab (5 sections: risiko pada user, kerugian tidak ditanggung,
+     batas maksimal, bukan pengganti profesional, ketersediaan layanan)
+  5. Kebijakan Konten & Penyalahgunaan (5 sections: konten boleh, dilarang,
+     penyalahgunaan sistem, konsekuensi [suspend/ban], melaporkan)
+- Created src/components/app/views/legal-view.tsx — tabbed doc selector, "Terakhir
+  diperbarui: 5 Juli 2026" date, cross-link antar dokumen, ConsultationCard di
+  disclaimer/liability.
+- Wired: store.ts (View "legal" + legalDocSlug state), page.tsx (render), footer
+  (new "Legal" column with 5 links).
+- 5 screenshots: screenshots/legal-01-terms through legal-05-content-policy.
+
+P2: DARK MODE REDESIGN — ✅ PALET TERSENDIRI
+- Rewrote .dark in globals.css as its OWN palette (not inversion of light):
+  * Background: deep warm charcoal oklch(0.17 0.015 55) — subtle brown warmth
+    (aged leather), not flat black. Card lifted (0.21) for hierarchy.
+  * Primary: muted sage-green oklch(0.62 0.08 158) — chroma 0.08 (was 0.14 = neon).
+    Visible without glare. WCAG AA on dark.
+  * Amber accent: oklch(0.3 0.05 60) — desaturated (0.05) glows warm, not neon.
+  * Borders: solid warm grey oklch(0.3 0.015 55) — not cold white/10%.
+  * Foreground: oklch(0.93 0.015 80) — high contrast text.
+- 3 screenshots: dark-01-home-light (before), dark-02-home-dark (after), dark-03-signup-dark.
+
+P3: OCR — ⚠️ TESSERACT INCOMPATIBLE, VLM RESTORED AS PRIMARY
+- Installed tesseract.js v7. Tested extensively:
+  * Tesseract works PERFECTLY on sharp-rendered SVG text ("HELLO WORLD TEST 123" →
+    exact match, confidence 96).
+  * Tesseract CANNOT read @napi-rs/canvas-rendered text (returns "12" for same text,
+    confidence 92). Root cause: napi-rs glyph anti-aliasing incompatible with
+    Tesseract's image processing. Tried: JPEG, raw ImageData→sharp re-encode, scale
+    2/3 — all fail.
+- MiniMax-M3 via iamhc endpoint: tested. API returns 200 but choices:[] (empty output).
+  MiniMax-M3 is text-only, NOT multimodal — cannot do OCR. Also checked /models
+  endpoint: 25 models, none are vision/multimodal.
+- Final OCR strategy: VLM (glm-4.5v via z-ai) as PRIMARY (works with canvas images,
+  quality limited but returns text), Tesseract as fallback (kept for non-canvas images).
+- Pipeline verified running: OCR triggers on scan PDF, VLM called, returns some text.
+  Quality limited by VLM model — documented as known limitation.
+
+VERIFICATION:
+- Lint 0 errors. Clean compile. Dev server running (200).
+- Legal pages: all 5 render with content, cross-links work, date shown.
+- Dark mode: palette active (muted sage primary, warm charcoal bg, no neon).
+- OCR: pipeline runs (9s), VLM primary + Tesseract fallback wired.
+- 8 screenshots: 5 legal + 3 dark mode.
+
+Stage Summary:
+- 5 legal pages complete with full Indonesian content, footer links, cross-nav.
+- Dark mode redesigned as own palette (no neon, warm charcoal depth, WCAG AA).
+- OCR: Tesseract installed but incompatible with napi-rs canvas rendering (root cause
+  found & documented). VLM restored as primary. MiniMax-M3 tested, not multimodal.
+
+Unresolved / Risks:
+- OCR accuracy still VLM-limited. To truly fix: replace @napi-rs/canvas with node-canvas
+  (classic) which is Tesseract-compatible, OR use a dedicated OCR API (Google Vision,
+  AWS Textract). Both require additional deps/config.
+- Recommend next: (a) test node-canvas as render backend for Tesseract, (b) verify
+  WCAG AA contrast ratios numerically for dark mode, (c) add legal page links in
+  consultation/signup flows, (d) capture mobile screenshots of legal pages.

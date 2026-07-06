@@ -20,7 +20,8 @@ export type View =
   | "glossary"
   | "samples"
   | "insights"
-  | "checklist";
+  | "checklist"
+  | "legal";
 
 interface AppState {
   user: UserDto | null;
@@ -29,12 +30,14 @@ interface AppState {
   currentAnalysis: AnalysisDto | null;
   resetToken: string | null;
   authLoading: boolean;
+  legalDocSlug: string | null;
   setAuth: (user: UserDto | null, quota: QuotaDto | null) => void;
   setView: (view: View) => void;
   setQuota: (quota: QuotaDto | null) => void;
   setCurrentAnalysis: (a: AnalysisDto | null) => void;
   setResetToken: (t: string | null) => void;
   setAuthLoading: (b: boolean) => void;
+  setLegalDocSlug: (s: string | null) => void;
 }
 
 export const useApp = create<AppState>((set) => ({
@@ -44,6 +47,7 @@ export const useApp = create<AppState>((set) => ({
   currentAnalysis: null,
   resetToken: null,
   authLoading: true,
+  legalDocSlug: null,
   setAuth: (user, quota) =>
     set((s) => ({
       user,
@@ -66,4 +70,5 @@ export const useApp = create<AppState>((set) => ({
   setCurrentAnalysis: (a) => set({ currentAnalysis: a }),
   setResetToken: (t) => set({ resetToken: t }),
   setAuthLoading: (b) => set({ authLoading: b }),
+  setLegalDocSlug: (s) => set({ legalDocSlug: s }),
 }));
