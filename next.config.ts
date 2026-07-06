@@ -15,7 +15,6 @@ const nextConfig: NextConfig = {
     "pdfjs-dist",
     "mammoth",
     "bcryptjs",
-    "tesseract.js",
   ],
 };
 

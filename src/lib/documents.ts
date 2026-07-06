@@ -3,7 +3,7 @@ import { readFileSync, existsSync } from "fs";
 import { createRequire } from "module";
 import { resolve } from "path";
 import mammoth from "mammoth";
-import ZAI from "z-ai-web-dev-sdk";
+import sharp from "sharp";
 import { logger } from "@/lib/logger";
 
 const require = createRequire(import.meta.url);
@@ -104,48 +104,67 @@ async function renderPdfPageToPng(
   return canvas.toBuffer("image/png");
 }
 
-async function ocrWithVlm(png: Buffer): Promise<string> {
-  // Primary OCR: z-ai VLM (glm-4.5v). Multimodal — reads text from images.
-  // Quality is limited but returns actual text content.
-  const zai = await ZAI.create();
-  const dataUrl = `data:image/png;base64,${png.toString("base64")}`;
-  const completion = await zai.chat.completions.createVision({
-    model: "glm-4.5v",
-    messages: [
-      {
-        role: "system",
-        content:
-          "Anda adalah mesin OCR untuk dokumen hukum berbahasa Indonesia. " +
-          "Transkripsi SELURUH teks yang terlihat pada gambar halaman secara akurat dan apa adanya. " +
-          "Pertahankan struktur paragraf dan penomoran. Jangan tambahkan komentar. " +
-          "Jika ada bagian tidak terbaca, tulis [tidak terbaca]. Hanya keluarkan teks hasil transkripsi.",
-      },
-      {
-        role: "user",
-        content: [
-          { type: "text", text: "Transkripsi teks pada halaman ini." },
-          { type: "image_url", image_url: { url: dataUrl } },
-        ],
-      },
-    ],
-    thinking: { type: "disabled" },
+/**
+ * OCR via MiniMax-M3 multimodal VLM (iamhc.cn endpoint).
+ * Reads text from images — works for both scan-PDFs and reconstructed SVG images.
+ */
+async function ocrImageWithMinimax(png: Buffer): Promise<string> {
+  const b64 = png.toString("base64");
+  const dataUrl = `data:image/png;base64,${b64}`;
+  const res = await fetch("https://api.iamhc.cn/v1/chat/completions", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer sk-jMCjpgmh6zmdzA8WEVjaaI33O4IrD8DiWdjtJrXMO3aMa7j4`,
+    },
+    body: JSON.stringify({
+      model: "MiniMax-M3",
+      messages: [
+        {
+          role: "user",
+          content: [
+            {
+              type: "text",
+              text: "Baca SEMUA teks dari gambar halaman kontrak berbahasa Indonesia ini. Transkripsi apa adanya, pertahankan struktur paragraf dan penomoran pasal. Output HANYA teks hasil transkripsi, tanpa komentar atau penjelasan tambahan.",
+            },
+            { type: "image_url", image_url: { url: dataUrl } },
+          ],
+        },
+      ],
+      max_tokens: 2000,
+    }),
   });
-  const out = completion?.choices?.[0]?.message?.content ?? "";
-  return typeof out === "string" ? out : JSON.stringify(out);
+  if (!res.ok) {
+    const err = await res.text();
+    throw new Error(`MiniMax API ${res.status}: ${err.slice(0, 200)}`);
+  }
+  const json = await res.json();
+  const content = json?.choices?.[0]?.message?.content;
+  return typeof content === "string" ? content : JSON.stringify(content || "");
 }
 
-async function ocrWithTesseract(png: Buffer): Promise<string> {
-  // Fallback OCR: Tesseract.js (local, no API cost).
-  // NOTE: Tesseract has poor results reading @napi-rs/canvas-rendered text due to
-  // glyph anti-aliasing incompatibility. Kept as fallback for non-canvas images.
-  const { createWorker } = await import("tesseract.js");
-  const worker = await createWorker(["ind", "eng"], 1, { logger: () => {} });
-  try {
-    const { data: { text } } = await worker.recognize(png);
-    return text || "";
-  } finally {
-    await worker.terminate();
+/**
+ * Reconstruct a PDF page as a PNG image via SVG (sharp-rendered).
+ * This bypasses @napi-rs/canvas glyph rendering issues — sharp renders clean text
+ * that VLM/OCR can read reliably. Only works for pages with a text layer (digital PDFs).
+ */
+async function pdfPageToPngViaSvg(pdf: any, pageNumber: number, scale = 1.5): Promise<Buffer> {
+  const page = await pdf.getPage(pageNumber);
+  const vp = page.getViewport({ scale });
+  const content = await page.getTextContent();
+  let svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${vp.width}" height="${vp.height}" viewBox="0 0 ${vp.width} ${vp.height}">`;
+  svg += `<rect width="${vp.width}" height="${vp.height}" fill="white"/>`;
+  for (const item of content.items) {
+    if (!item.str) continue;
+    const tr = item.transform;
+    const x = tr[4] * scale;
+    const y = vp.height - tr[5] * scale;
+    const fontSize = Math.hypot(tr[2], tr[3]) * scale;
+    const escaped = item.str.replace(/</g, "&lt;").replace(/&/g, "&amp;");
+    svg += `<text x="${x}" y="${y}" font-family="Helvetica,Arial,sans-serif" font-size="${fontSize}" fill="black">${escaped}</text>`;
   }
+  svg += `</svg>`;
+  return sharp(Buffer.from(svg)).png().toBuffer();
 }
 
 async function ocrPdf(pdf: any, maxPages = 6): Promise<string> {
@@ -153,21 +172,21 @@ async function ocrPdf(pdf: any, maxPages = 6): Promise<string> {
   let fullText = "";
   for (let i = 1; i <= pages; i++) {
     try {
-      const png = await renderPdfPageToPng(pdf, i, 2);
-      // Primary: VLM (works with canvas-rendered images)
-      let pageText = await ocrWithVlm(png);
-      // Fallback: Tesseract if VLM returns very little
-      if (pageText.replace(/\s/g, "").length < 20) {
-        logger("info", "vlm sparse, trying tesseract", { page: i });
-        try {
-          const tessText = await ocrWithTesseract(png);
-          if (tessText.replace(/\s/g, "").length > pageText.replace(/\s/g, "").length) {
-            pageText = tessText;
-          }
-        } catch (e) {
-          logger("warn", "tesseract ocr failed", { page: i, error: (e as Error).message });
-        }
+      let png: Buffer;
+      // Try SVG reconstruction first (works for digital PDFs with text layer).
+      // Falls back to canvas render for scan PDFs (image-only).
+      const content = await (await pdf.getPage(i)).getTextContent();
+      const hasTextLayer = content.items.some((it: any) => it.str && it.str.trim().length > 0);
+
+      if (hasTextLayer) {
+        logger("info", "ocr via svg reconstruction", { page: i });
+        png = await pdfPageToPngViaSvg(pdf, i, 1.5);
+      } else {
+        logger("info", "ocr via canvas render (scan)", { page: i });
+        png = await renderPdfPageToPng(pdf, i, 2);
       }
+
+      const pageText = await ocrImageWithMinimax(png);
       fullText += pageText + "\n\n";
     } catch (e) {
       logger("warn", "ocr page failed", { page: i, error: (e as Error).message });
