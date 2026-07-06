@@ -41,6 +41,7 @@ export function ResultView() {
   const { currentAnalysis, setCurrentAnalysis, setView, user } = useApp();
   const [exporting, setExporting] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [sevFilter, setSevFilter] = useState<string>("ALL");
 
   if (!currentAnalysis) {
     return (
@@ -57,6 +58,9 @@ export function ResultView() {
     if (s !== 0) return s;
     return y.confidence - x.confidence;
   });
+  const filteredFindings = sevFilter === "ALL"
+    ? sortedFindings
+    : sortedFindings.filter((f) => f.severity === sevFilter);
 
   const counts = {
     KRITIS: a.findings.filter((f) => f.severity === "KRITIS").length,
@@ -207,11 +211,35 @@ export function ResultView() {
 
       {/* Findings */}
       <div className="mt-8">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-wrap items-center justify-between gap-3">
           <h2 className="flex items-center gap-2 text-lg font-semibold">
             <AlertTriangle className="h-5 w-5 text-primary" />
             Temuan Klausul ({a.findings.length})
           </h2>
+          {/* Severity filter */}
+          {a.findings.length > 0 && (
+            <div className="flex flex-wrap gap-1.5">
+              {["ALL", "KRITIS", "TINGGI", "SEDANG", "RENDAH"].map((sev) => {
+                const count = sev === "ALL" ? a.findings.length : (counts as any)[sev] || 0;
+                if (sev !== "ALL" && count === 0) return null;
+                const active = sevFilter === sev;
+                return (
+                  <button
+                    key={sev}
+                    onClick={() => setSevFilter(sev)}
+                    className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-xs font-medium transition-colors ${
+                      active
+                        ? "border-primary bg-primary text-primary-foreground"
+                        : "border-border bg-background hover:bg-muted"
+                    }`}
+                  >
+                    {sev === "ALL" ? "Semua" : sev}
+                    <span className={`tabular-nums ${active ? "opacity-80" : "text-muted-foreground"}`}>{count}</span>
+                  </button>
+                );
+              })}
+            </div>
+          )}
         </div>
 
         {a.findings.length === 0 ? (
@@ -228,11 +256,20 @@ export function ResultView() {
             </CardContent>
           </Card>
         ) : (
-          <Accordion type="multiple" defaultValue={[sortedFindings[0]?.id]} className="mt-4 space-y-3">
-            {sortedFindings.map((f, idx) => (
-              <FindingCard key={f.id} finding={f} index={idx} defaultOpen={idx === 0} />
-            ))}
-          </Accordion>
+          <>
+            <Accordion type="multiple" defaultValue={[filteredFindings[0]?.id]} className="mt-4 space-y-3">
+              {filteredFindings.map((f, idx) => (
+                <FindingCard key={f.id} finding={f} index={idx} defaultOpen={idx === 0} />
+              ))}
+            </Accordion>
+            {filteredFindings.length === 0 && a.findings.length > 0 && (
+              <Card className="mt-4 border-dashed">
+                <CardContent className="p-6 text-center text-sm text-muted-foreground">
+                  Tidak ada temuan dengan severity "{sevFilter}".
+                </CardContent>
+              </Card>
+            )}
+          </>
         )}
       </div>
 

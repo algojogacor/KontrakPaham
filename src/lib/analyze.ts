@@ -184,48 +184,80 @@ export async function analyzeContract(
         "\n\n[...dokumen dipotong karena panjang...]"
       : contractText;
 
-  const completion = await zai.chat.completions.create({
-    messages: [
-      { role: "system", content: SYSTEM_PROMPT },
-      {
-        role: "user",
-        content: `Analisis kontrak berikut dan kembalikan JSON sesuai instruksi.\n\n=== KONTRAK ===\n${truncated}`,
-      },
-    ],
-    thinking: { type: "disabled" },
-  });
+  // Retry logic: LLM can return malformed JSON or transiently fail.
+  // 3 attempts with exponential backoff (1s, 2s, 4s).
+  const MAX_RETRIES = 3;
+  let lastError: Error | null = null;
+  for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+    if (signal?.aborted) throw new Error("ABORTED");
+    try {
+      // Timeout: 90s per attempt (LLM should respond within this)
+      const timeoutSignal = AbortSignal.timeout(90_000);
+      const combinedSignal = signal
+        ? AbortSignal.any([signal, timeoutSignal])
+        : timeoutSignal;
 
-  if (signal?.aborted) throw new Error("ABORTED");
+      const completion = await zai.chat.completions.create({
+        messages: [
+          { role: "system", content: SYSTEM_PROMPT },
+          {
+            role: "user",
+            content: `Analisis kontrak berikut dan kembalikan JSON sesuai instruksi.\n\n=== KONTRAK ===\n${truncated}`,
+          },
+        ],
+        thinking: { type: "disabled" },
+        signal: combinedSignal as any,
+      });
 
-  const content = completion?.choices?.[0]?.message?.content;
-  if (!content) {
-    throw new Error("Respons AI kosong");
+      if (signal?.aborted) throw new Error("ABORTED");
+
+      const content = completion?.choices?.[0]?.message?.content;
+      if (!content) {
+        throw new Error("Respons AI kosong");
+      }
+
+      const parsed = extractJson(
+        typeof content === "string" ? content : JSON.stringify(content)
+      );
+
+      const validOverall = ["RENDAH", "SEDANG", "TINGGI", "KRITIS"];
+      const findings: Finding[] = Array.isArray(parsed.findings)
+        ? parsed.findings.map(normalizeFinding).filter(
+            (f: Finding) => f.originalClause || f.explanation
+          )
+        : [];
+
+      const riskScore = clamp(Number(parsed.riskScore) || 0, 0, 100);
+
+      return {
+        summary: String(parsed.summary || "Analisis selesai.").slice(0, 2000),
+        overallRisk: validOverall.includes(String(parsed.overallRisk).toUpperCase())
+          ? String(parsed.overallRisk).toUpperCase()
+          : "SEDANG",
+        riskScore,
+        findings,
+        modelUsed: completion?.model || "glm",
+        uncertain: Boolean(parsed.uncertain),
+        notes: Array.isArray(parsed.notes)
+          ? parsed.notes.map((n: any) => String(n).slice(0, 500)).slice(0, 8)
+          : [],
+      };
+    } catch (e) {
+      lastError = e as Error;
+      if (signal?.aborted) throw e;
+      // Don't retry on abort
+      if ((e as Error).message === "ABORTED") throw e;
+      // Last attempt — give up
+      if (attempt === MAX_RETRIES) break;
+      // Exponential backoff: 1s, 2s
+      const delayMs = Math.pow(2, attempt - 1) * 1000;
+      logger("warn", "analysis attempt failed, retrying", {
+        attempt,
+        delayMs,
+        error: (e as Error).message,
+      });
+      await new Promise((r) => setTimeout(r, delayMs));
+    }
   }
-
-  const parsed = extractJson(
-    typeof content === "string" ? content : JSON.stringify(content)
-  );
-
-  const validOverall = ["RENDAH", "SEDANG", "TINGGI", "KRITIS"];
-  const findings: Finding[] = Array.isArray(parsed.findings)
-    ? parsed.findings.map(normalizeFinding).filter(
-        (f: Finding) => f.originalClause || f.explanation
-      )
-    : [];
-
-  const riskScore = clamp(Number(parsed.riskScore) || 0, 0, 100);
-
-  return {
-    summary: String(parsed.summary || "Analisis selesai.").slice(0, 2000),
-    overallRisk: validOverall.includes(String(parsed.overallRisk).toUpperCase())
-      ? String(parsed.overallRisk).toUpperCase()
-      : "SEDANG",
-    riskScore,
-    findings,
-    modelUsed: completion?.model || "glm",
-    uncertain: Boolean(parsed.uncertain),
-    notes: Array.isArray(parsed.notes)
-      ? parsed.notes.map((n: any) => String(n).slice(0, 500)).slice(0, 8)
-      : [],
-  };
+  throw lastError || new Error("Analisis gagal setelah beberapa percobaan.");
 }

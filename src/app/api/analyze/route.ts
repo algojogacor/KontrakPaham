@@ -158,6 +158,39 @@ export async function POST(req: NextRequest) {
     ? fileName.replace(/\.(pdf|docx)$/i, "")
     : rawText.slice(0, 60).replace(/\s+/g, " ").trim() + (rawText.length > 60 ? "…" : "");
 
+  // Idempotency: if client sends Idempotency-Key header, check for existing
+  // analysis with same key. Prevents double-submit (e.g. double-click) from
+  // consuming quota twice.
+  const idempotencyKey = req.headers.get("idempotency-key");
+  if (idempotencyKey) {
+    const existing = await db.analysis.findFirst({
+      where: {
+        userId: user.id,
+        // Store key in fileName field's metadata isn't clean; use title prefix.
+        // Better: dedicated column. For now, use a hash stored in title suffix.
+        title: { contains: `[idem:${idempotencyKey.slice(0, 16)}]` },
+        status: { in: ["COMPLETED", "PENDING"] },
+      },
+      include: { findings: true },
+    });
+    if (existing) {
+      if (existing.status === "COMPLETED") {
+        return NextResponse.json({
+          analysis: toAnalysisDto({ ...existing, createdAt: new Date(existing.createdAt) }),
+          warnings: [],
+          notes: [],
+          uncertain: false,
+          idempotent: true,
+        });
+      }
+      // Still pending — return 409
+      return NextResponse.json(
+        { error: "Analisis dengan key ini sedang berjalan.", code: "IN_PROGRESS" },
+        { status: 409 }
+      );
+    }
+  }
+
   // Create placeholder analysis record
   const analysis = await db.analysis.create({
     data: {

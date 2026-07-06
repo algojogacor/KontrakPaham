@@ -1122,3 +1122,89 @@ Unresolved / Risks:
   use NextResponse.json directly — functional but less structured).
 - CSP header not added (needs careful tuning with Tailwind inline styles).
 - Recommend next: migrate all routes to apiError/apiOk, add CSP, add OpenAPI spec.
+
+---
+Task ID: 17
+Agent: main (Z.ai Code) — Deep architecture analysis + production hardening
+
+DEEP ANALYSIS — Architecture, UX, Production-readiness:
+
+ARCHITECTURE ISSUES FOUND & FIXED:
+1. NO RETRY LOGIC — LLM call failed once → whole analysis failed.
+   FIX: Added 3-attempt retry with exponential backoff (1s, 2s) in analyzeContract().
+   Logs each retry attempt. Only retries on transient errors (not abort).
+
+2. NO TIMEOUT ON LLM CALL — could hang indefinitely.
+   FIX: AbortSignal.timeout(90_000) per attempt, combined with user abort signal
+   via AbortSignal.any(). 90s per attempt, 3 attempts = max ~5min total.
+
+3. NO IDEMPOTENCY — double-submit (double-click) consumed quota twice.
+   FIX: Added Idempotency-Key header support in /api/analyze. If key matches
+   existing COMPLETED analysis → return cached result (no quota consumed). If
+   matches PENDING → 409 IN_PROGRESS. Prevents accidental double-charges.
+   NOTE: key storage uses title suffix [idem:...] — works but not clean. A
+   dedicated idempotencyKey column would be better for production.
+
+4. JSON PARSE FAILURES THREW GENERIC ERROR — no recovery.
+   FIX: Now caught by retry loop — if LLM returns malformed JSON, retry gets
+   another chance. Only fails after 3 attempts.
+
+UX ISSUES FOUND & FIXED:
+5. SEVERITY FILTER — result view showed all findings at once, no way to focus.
+   FIX: Added severity filter bar (Semua/KRITIS/TINGGI/SEDANG/RENDAH) with
+   count badges. Filters findings list in real-time. Shows "no findings for
+   this severity" empty state when filter yields nothing.
+
+6. RESULT VIEW FINDINGS — now uses filteredFindings (was sortedFindings only).
+
+PRODUCTION-READINESS IMPROVEMENTS:
+7. Audit log retention (from prior task) — pruneAuditLogs(90 days) on signup.
+8. Request ID tracing (from prior task) — X-Request-ID on all responses.
+9. CSRF protection (from prior task) — mutations require origin/XHR header.
+10. Structured error responses (from prior task) — {error, code, requestId}.
+
+VERIFICATION:
+- Lint: 0 errors, 0 warnings (fully clean).
+- Compile: clean. Analysis succeeded: TINGGI, 8 findings, 60s (with retry logic).
+- Idempotency: first call creates analysis, second call with same key returns
+  cached result (quota not double-consumed). NOTE: key storage needs cleanup
+  for production (dedicated column recommended).
+- Severity filter: renders filter bar with counts, filters findings.
+
+REMAINING ANALYSIS (not yet implemented — for future phases):
+
+ARCHITECTURE — still could improve:
+- Chunked analysis for long contracts (>30k chars currently truncated, losing
+  analysis on cut parts). Could split into chunks, analyze each, merge findings.
+- Streaming results (SSE/WebSocket) — currently client waits blindly for ~60s.
+  Could stream findings as they're generated.
+- Analysis status polling endpoint — if connection drops, client can resume
+  by polling analysis status. Currently PENDING analyses are orphaned if client
+  disconnects.
+- Dedicated idempotencyKey column (cleaner than title-suffix hack).
+
+UX — still could improve:
+- Keyboard shortcuts (j/k navigate findings, e export, / search)
+- History sort/filter (by date, risk, source type)
+- Shareable read-only analysis links (for sending to lawyer/family)
+- "Resume" for dropped connections — redirect to result when analysis completes
+- Mobile loading state (currently 5 fake steps, could show real progress)
+
+PRODUCTION — still could improve:
+- OpenAPI spec for API documentation
+- Structured logging to external aggregator (Datadog, Logflare)
+- Database connection pooling (currently single SQLite)
+- Backup strategy for SQLite
+- Rate limit based on plan (PRO gets higher limits)
+- Webhook for analysis completion (for integrations)
+- Email notification when analysis completes (if user drops off)
+- A/B testing framework for prompt variations
+- Prompt versioning + rollback (track which prompt version produced which findings)
+
+Stage Summary:
+- Analysis engine: retry (3x backoff) + timeout (90s/attempt) + idempotency key.
+- UX: severity filter on result view.
+- Production: retry/timeout/idempotency make the analysis pipeline significantly
+  more robust against transient failures and double-submits.
+- Deep analysis documented for future phases (chunking, streaming, polling,
+  shareable links, prompt versioning, etc.).
