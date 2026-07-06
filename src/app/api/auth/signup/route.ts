@@ -3,7 +3,7 @@ import { db } from "@/lib/db";
 import { signupSchema, formatZodErrors } from "@/lib/validation";
 import { hashPassword, createSessionToken, setSessionCookie } from "@/lib/auth";
 import { rateLimit, getClientIp } from "@/lib/rate-limit";
-import { audit } from "@/lib/logger";
+import { audit, pruneAuditLogs } from "@/lib/logger";
 
 export async function POST(req: NextRequest) {
   const ip = getClientIp(req);
@@ -56,6 +56,8 @@ export async function POST(req: NextRequest) {
   const token = await createSessionToken({ sub: user.id, username: user.username });
   await setSessionCookie(token);
   await audit("signup", { userId: user.id, ip, meta: { username: user.username } });
+  // Periodically prune old audit logs (best-effort, fire-and-forget)
+  pruneAuditLogs().catch(() => {});
 
   return NextResponse.json({
     user: {

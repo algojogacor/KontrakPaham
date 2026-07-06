@@ -50,3 +50,17 @@ export async function audit(
 export function logger(level: LogLevel, message: string, meta?: Record<string, unknown>) {
   consoleLog(level, message, meta ?? {});
 }
+
+/**
+ * Delete audit logs older than the retention period (default 90 days).
+ * Call periodically (e.g. on signup/analyze) to prevent unbounded growth.
+ * Best-effort: never throws.
+ */
+export async function pruneAuditLogs(retentionDays = 90): Promise<void> {
+  try {
+    const cutoff = new Date(Date.now() - retentionDays * 24 * 60 * 60 * 1000);
+    await db.auditLog.deleteMany({ where: { createdAt: { lt: cutoff } } });
+  } catch {
+    // never break the request
+  }
+}

@@ -1051,3 +1051,74 @@ Unresolved / Risks:
 - Audit log retention policy not implemented (logs grow indefinitely).
 - Recommend next: add request ID for tracing, add health check with dependency
   status, add structured error response format (error code + message).
+
+---
+Task ID: 16
+Agent: main (Z.ai Code) — Request tracing + CSRF + structured errors + audit retention
+
+WORK LOG:
+
+1. REQUEST ID TRACING — ✅
+- Created src/lib/api-response.ts with:
+  * newRequestId() — generates UUID per request
+  * apiError(message, status, {code, requestId, data}) — structured error response
+    with {error, code, requestId} body + X-Request-ID header
+  * apiOk(data, {requestId}) — success response with X-Request-ID header
+  * defaultCodeForStatus() — maps HTTP status to error codes (BAD_REQUEST,
+    UNAUTHORIZED, QUOTA_EXCEEDED, RATE_LIMITED, etc.)
+- Updated api-client.ts handle() to extract X-Request-ID from response, attach
+  to ApiError (requestId field) for client-side tracing.
+- Health endpoint returns X-Request-ID header (verified via curl -I).
+
+2. CSRF PROTECTION — ✅
+- Updated src/proxy.ts: mutation endpoints (POST/PUT/PATCH/DELETE) on /api/*
+  now require either:
+  a) Same-origin (Origin header matches Host), OR
+  b) X-Requested-With custom header (cross-site forms can't set custom headers)
+- Returns 403 {error, code: "CSRF_BLOCKED"} if neither passes.
+- Updated api-client.ts: all mutation calls now send X-Requested-With: XMLHttpRequest
+  (MUTATION_HEADERS constant). analyzeFile uses FormData so only sets X-Requested-With
+  (no Content-Type, browser sets multipart boundary automatically).
+- Verified: POST without header → 403; POST with header → passes; signup → 200.
+
+3. STRUCTURED ERROR RESPONSES — ✅
+- apiError() returns {error, code, requestId} format consistently.
+- Error codes: BAD_REQUEST, UNAUTHORIZED, QUOTA_EXCEEDED, FORBIDDEN, NOT_FOUND,
+  CONFLICT, PAYLOAD_TOO_LARGE, UNSUPPORTED_MEDIA_TYPE, UNPROCESSABLE_ENTITY,
+  RATE_LIMITED, CSRF_BLOCKED, INTERNAL_ERROR.
+- proxy.ts body-size + CSRF rejections now use {error, code} format.
+
+4. AUDIT LOG RETENTION — ✅
+- Added pruneAuditLogs(retentionDays=90) to logger.ts — deletes audit logs older
+  than 90 days. Best-effort (never throws).
+- Wired into signup route (fire-and-forget on each signup) — keeps log table
+  bounded over time without needing a separate cron.
+
+5. ENHANCED HEALTH CHECK — ✅
+- /api/health now reports dependency status:
+  * database: db.$queryRaw SELECT 1
+  * minimax_configured: Boolean(MINIMAX_API_KEY)
+  * jwt_configured: Boolean(JWT_SECRET)
+- Returns {status: "ok"|"degraded", checks: {...}, time}
+- Uses apiOk() for X-Request-ID header.
+
+VERIFICATION:
+- Lint: 0 errors, 0 warnings (fully clean).
+- CSRF: blocked without header (403), passes with header (200). ✅
+- X-Request-ID: present in response headers. ✅
+- Health: returns structured dependency checks. ✅
+- Compile clean, preview running (200).
+
+Stage Summary:
+- Request ID tracing: every API response now has X-Request-ID for debugging.
+- CSRF protection: all mutations blocked from cross-site (origin/XHR header check).
+- Structured errors: {error, code, requestId} format with standardized codes.
+- Audit log retention: auto-prune logs >90 days on signup (bounded growth).
+- Health check: reports database + config dependency status.
+
+Unresolved / Risks:
+- Could migrate existing route handlers to use apiError()/apiOk() for full
+  consistency (currently only health + proxy use the new format; others still
+  use NextResponse.json directly — functional but less structured).
+- CSP header not added (needs careful tuning with Tailwind inline styles).
+- Recommend next: migrate all routes to apiError/apiOk, add CSP, add OpenAPI spec.
