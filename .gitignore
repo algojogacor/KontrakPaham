@@ -52,3 +52,16 @@ prompt
 server.log
 # Skills directory
 /skills/
+
+# logs and temp files
+*.log
+/dev-refresh.*
+/next-dev.*
+/standalone-smoke.*
+/you-test-result.json
+
+# screenshots
+/screenshots/
+
+# temporary test scripts
+/scripts/test-*
