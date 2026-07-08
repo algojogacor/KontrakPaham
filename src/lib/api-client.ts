@@ -1,4 +1,10 @@
-import type { AnalysisChatHistoryDto, AnalysisChatMessageDto, AnalysisDto, QuotaDto, UserDto } from "@/lib/types";
+import type {
+  AnalysisChatHistoryDto,
+  AnalysisChatMessageDto,
+  AnalysisDto,
+  QuotaDto,
+  UserDto,
+} from "@/lib/types";
 
 export interface LicenseCodeDto {
   id: string;
@@ -109,12 +115,22 @@ async function handle<T>(res: Response): Promise<T> {
   if (ct.includes("application/json")) {
     const data = await res.json();
     if (!res.ok) {
-      throw new ApiError(data.error || "Terjadi kesalahan.", res.status, data, requestId);
+      throw new ApiError(
+        data.error || "Terjadi kesalahan.",
+        res.status,
+        data,
+        requestId,
+      );
     }
     return data as T;
   }
   if (!res.ok) {
-    throw new ApiError(`Permintaan gagal (${res.status}).`, res.status, undefined, requestId);
+    throw new ApiError(
+      `Permintaan gagal (${res.status}).`,
+      res.status,
+      undefined,
+      requestId,
+    );
   }
   return (await res.text()) as unknown as T;
 }
@@ -124,7 +140,12 @@ export const api = {
     const res = await fetch("/api/auth/me", { cache: "no-store" });
     return handle(res);
   },
-  async signup(body: { username: string; email: string; password: string; displayName?: string }) {
+  async signup(body: {
+    username: string;
+    email: string;
+    password: string;
+    displayName?: string;
+  }) {
     const res = await fetch("/api/auth/signup", {
       method: "POST",
       headers: MUTATION_HEADERS,
@@ -141,7 +162,10 @@ export const api = {
     return handle<{ user: UserDto }>(res);
   },
   async signout() {
-    const res = await fetch("/api/auth/signout", { method: "POST", headers: MUTATION_HEADERS });
+    const res = await fetch("/api/auth/signout", {
+      method: "POST",
+      headers: MUTATION_HEADERS,
+    });
     return handle<{ ok: true }>(res);
   },
   async forgotPassword(email: string) {
@@ -150,7 +174,7 @@ export const api = {
       headers: MUTATION_HEADERS,
       body: JSON.stringify({ email }),
     });
-    return handle<{ message: string; resetToken?: string; expiresIn?: string }>(res);
+    return handle<{ message: string }>(res);
   },
   async resetPassword(token: string, password: string) {
     const res = await fetch("/api/auth/reset-password", {
@@ -169,12 +193,20 @@ export const api = {
     return handle<{ message: string }>(res);
   },
   async deleteAccount() {
-    const res = await fetch("/api/auth/account", { method: "DELETE", headers: MUTATION_HEADERS });
+    const res = await fetch("/api/auth/account", {
+      method: "DELETE",
+      headers: MUTATION_HEADERS,
+    });
     return handle<{ message: string }>(res);
   },
   async getQuota() {
     const res = await fetch("/api/quota", { cache: "no-store" });
-    return handle<{ quota: QuotaDto; limits: any; plan: string; planExpiresAt?: string | null }>(res);
+    return handle<{
+      quota: QuotaDto;
+      limits: any;
+      plan: string;
+      planExpiresAt?: string | null;
+    }>(res);
   },
   async redeemLicense(code: string) {
     const res = await fetch("/api/license/redeem", {
@@ -184,14 +216,25 @@ export const api = {
     });
     return handle<{
       user: UserDto;
-      license: { plan: string; durationMonths: number; planExpiresAt: string; analysesLimit: number };
+      license: {
+        plan: string;
+        durationMonths: number;
+        planExpiresAt: string;
+        analysesLimit: number;
+      };
     }>(res);
   },
   async listLicenses() {
     const res = await fetch("/api/admin/licenses", { cache: "no-store" });
     return handle<{ licenses: LicenseCodeDto[] }>(res);
   },
-  async createLicense(body: { plan: "LITE" | "PRO"; durationMonths: number; maxUses: number; expiresInDays?: number; note?: string }) {
+  async createLicense(body: {
+    plan: "LITE" | "PRO";
+    durationMonths: number;
+    maxUses: number;
+    expiresInDays?: number;
+    note?: string;
+  }) {
     const res = await fetch("/api/admin/licenses", {
       method: "POST",
       headers: MUTATION_HEADERS,
@@ -200,15 +243,20 @@ export const api = {
     return handle<{ license: LicenseCodeDto & { code: string } }>(res);
   },
   async deleteLicense(id: string, revokeUser = false) {
-    const res = await fetch(`/api/admin/licenses/${id}?revokeUser=${revokeUser ? "1" : "0"}`, {
-      method: "DELETE",
-      headers: MUTATION_HEADERS,
-    });
+    const res = await fetch(
+      `/api/admin/licenses/${id}?revokeUser=${revokeUser ? "1" : "0"}`,
+      {
+        method: "DELETE",
+        headers: MUTATION_HEADERS,
+      },
+    );
     return handle<{ message: string }>(res);
   },
   async listAdminUsers() {
     const res = await fetch("/api/admin/users", { cache: "no-store" });
-    return handle<{ users: AdminUserDto[]; summary: AdminUsersSummaryDto }>(res);
+    return handle<{ users: AdminUserDto[]; summary: AdminUsersSummaryDto }>(
+      res,
+    );
   },
   async listLlmProviders() {
     const res = await fetch("/api/admin/llm-providers", { cache: "no-store" });
@@ -249,7 +297,14 @@ export const api = {
       method: "POST",
       headers: MUTATION_HEADERS,
     });
-    return handle<{ ok: boolean; status?: number | string; latencyMs: number; model?: string; message: string; sample?: string }>(res);
+    return handle<{
+      ok: boolean;
+      status?: number | string;
+      latencyMs: number;
+      model?: string;
+      message: string;
+      sample?: string;
+    }>(res);
   },
   async analyzeText(text: string, quickMode = false) {
     const res = await fetch("/api/analyze", {
@@ -257,14 +312,28 @@ export const api = {
       headers: MUTATION_HEADERS,
       body: JSON.stringify({ text, quickMode }),
     });
-    return handle<{ analysis: AnalysisDto; warnings: string[]; notes: string[]; uncertain: boolean }>(res);
+    return handle<{
+      analysis: AnalysisDto;
+      warnings: string[];
+      notes: string[];
+      uncertain: boolean;
+    }>(res);
   },
   async analyzeFile(file: File, quickMode = false) {
     const form = new FormData();
     form.append("file", file);
     if (quickMode) form.append("quickMode", "true");
-    const res = await fetch("/api/analyze", { method: "POST", body: form, headers: { "X-Requested-With": "XMLHttpRequest" } });
-    return handle<{ analysis: AnalysisDto; warnings: string[]; notes: string[]; uncertain: boolean }>(res);
+    const res = await fetch("/api/analyze", {
+      method: "POST",
+      body: form,
+      headers: { "X-Requested-With": "XMLHttpRequest" },
+    });
+    return handle<{
+      analysis: AnalysisDto;
+      warnings: string[];
+      notes: string[];
+      uncertain: boolean;
+    }>(res);
   },
   async listAnalyses() {
     const res = await fetch("/api/analyses", { cache: "no-store" });
@@ -278,18 +347,27 @@ export const api = {
     return handle<{ analysis: AnalysisDto }>(res);
   },
   async deleteAnalysis(id: string) {
-    const res = await fetch(`/api/analyses/${id}`, { method: "DELETE", headers: MUTATION_HEADERS });
+    const res = await fetch(`/api/analyses/${id}`, {
+      method: "DELETE",
+      headers: MUTATION_HEADERS,
+    });
     return handle<{ message: string }>(res);
   },
   exportUrl(id: string) {
     return `/api/analyses/${id}/export`;
   },
   async shareAnalysis(id: string) {
-    const res = await fetch(`/api/analyses/${id}/share`, { method: "POST", headers: MUTATION_HEADERS });
+    const res = await fetch(`/api/analyses/${id}/share`, {
+      method: "POST",
+      headers: MUTATION_HEADERS,
+    });
     return handle<{ shareToken: string }>(res);
   },
   async revokeShareAnalysis(id: string) {
-    const res = await fetch(`/api/analyses/${id}/share`, { method: "DELETE", headers: MUTATION_HEADERS });
+    const res = await fetch(`/api/analyses/${id}/share`, {
+      method: "DELETE",
+      headers: MUTATION_HEADERS,
+    });
     return handle<{ ok: boolean; message: string }>(res);
   },
   async getInsights() {
@@ -300,12 +378,26 @@ export const api = {
       riskDistribution: Record<string, number>;
       categoryFrequency: { category: string; label: string; count: number }[];
       sourceTypeDistribution: Record<string, number>;
-      recentTrend: { id: string; title: string; riskScore: number; overallRisk: string | null; createdAt: string }[];
+      recentTrend: {
+        id: string;
+        title: string;
+        riskScore: number;
+        overallRisk: string | null;
+        createdAt: string;
+      }[];
       topRiskyCategories: { category: string; label: string; count: number }[];
       needsActionCount: number;
     }>(res);
   },
-  async generateNegotiationDraft(id: string, params: { findingIds: string[]; tone: string; channel: string; customRequest?: string }) {
+  async generateNegotiationDraft(
+    id: string,
+    params: {
+      findingIds: string[];
+      tone: string;
+      channel: string;
+      customRequest?: string;
+    },
+  ) {
     const res = await fetch(`/api/analyses/${id}/negotiate`, {
       method: "POST",
       headers: MUTATION_HEADERS,
@@ -323,20 +415,26 @@ export const api = {
       headers: MUTATION_HEADERS,
       body: JSON.stringify({ question }),
     });
-    return handle<{ threadId: string; messages: AnalysisChatMessageDto[]; reply: AnalysisChatMessageDto }>(res);
+    return handle<{
+      threadId: string;
+      messages: AnalysisChatMessageDto[];
+      reply: AnalysisChatMessageDto;
+    }>(res);
   },
 };
 
 export function friendlyError(e: unknown): string {
   if (e instanceof ApiError) {
-    if (e.status === 429) return "Anda terlalu sering mencoba. Tunggu sebentar lalu coba lagi.";
+    if (e.status === 429)
+      return "Anda terlalu sering mencoba. Tunggu sebentar lalu coba lagi.";
     if (e.status === 401) return "Sesi Anda berakhir. Silakan masuk kembali.";
     if (e.status === 402) return e.message;
     if (e.status === 413) return e.message;
     return e.message;
   }
   if (e instanceof Error) {
-    if (e.message === "Failed to fetch") return "Koneksi terputus. Periksa internet Anda lalu coba lagi.";
+    if (e.message === "Failed to fetch")
+      return "Koneksi terputus. Periksa internet Anda lalu coba lagi.";
     return e.message;
   }
   return "Terjadi kesalahan tak terduga. Silakan coba lagi.";
