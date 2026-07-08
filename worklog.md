@@ -2644,6 +2644,17 @@ Stage Summary:
 - Koyeb free tier masih sangat kecil untuk fitur analisis dokumen berat, tetapi idle/startup
   app sekarang memakai runtime Node yang lebih sesuai dengan Next standalone.
 
+Follow-up Result:
+- User melaporkan deployment Koyeb sudah stabil dan CPU turun ke sekitar 20-30%.
+- Kesimpulan: bottleneck utama bukan kode aplikasi/fitur legal analysis, melainkan runtime
+  mismatch pada free tier: Next standalone `server.js` lebih efisien dijalankan dengan
+  Node daripada Bun pada instance `0.1 vCPU`.
+- Perubahan yang berdampak:
+  * Runner image production: `oven/bun:1.3.14-slim` -> `node:24-bookworm-slim`.
+  * Production command: `bun server.js` -> `node server.js`.
+  * `NODE_OPTIONS=--max-old-space-size=384` untuk menjaga heap tetap terkendali.
+  * Build stage tetap Bun, jadi proses install/build tidak berubah.
+
 
 
 
