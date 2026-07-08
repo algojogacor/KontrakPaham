@@ -8,6 +8,32 @@ const SEVERITY_COLORS: Record<string, [number, number, number]> = {
   KRITIS: [185, 28, 28],
 };
 
+// Human-readable labels for enum values
+const URGENCY_LABEL: Record<string, string> = {
+  INFO: "Info",
+  PERHATIAN: "Perhatian",
+  PERLU_TINDAKAN: "Perlu Tindakan",
+};
+
+const SEVERITY_LABEL: Record<string, string> = {
+  RENDAH: "Rendah",
+  SEDANG: "Sedang",
+  TINGGI: "Tinggi",
+  KRITIS: "Kritis",
+};
+
+/** Strip markdown symbols so plain-text PDF looks clean */
+function stripMarkdown(text: string): string {
+  return text
+    .replace(/\*\*([^*]+)\*\*/g, "$1")   // **bold** → bold
+    .replace(/\*([^*]+)\*/g, "$1")        // *italic* → italic
+    .replace(/\[\[\d+(?:,\s*\d+)*\]\]/g, "") // [[1]], [[1,2]] → remove
+    .replace(/^#{1,4}\s+/gm, "")          // ### heading → remove hashes
+    .replace(/^-{3,}$/gm, "─".repeat(40)) // --- divider → typographic rule
+    .replace(/\n{3,}/g, "\n\n")           // collapse extra blank lines
+    .trim();
+}
+
 function hex(rgb: [number, number, number]) {
   return rgb;
 }
@@ -157,14 +183,15 @@ export function generateAnalysisPdf(
       doc.setFont("helvetica", "bold");
       doc.setFontSize(8);
       doc.setTextColor(90, 90, 90);
-      doc.text("CUPLIKAN RISET DENGAN MARKER SITASI", margin, y);
-      y += 12;
+      doc.text("RINGKASAN RISET HUKUM", margin, y);
+      y += 13;
       doc.setFont("helvetica", "normal");
       doc.setFontSize(8.5);
-      doc.setTextColor(70, 70, 70);
-      const excerpt = analysis.researchContent.slice(0, 1200);
-      const lines = doc.splitTextToSize(excerpt + (analysis.researchContent.length > excerpt.length ? "\n[...dipotong...]" : ""), contentW);
-      for (const line of lines) {
+      doc.setTextColor(60, 60, 60);
+      // Strip markdown before rendering in PDF
+      const cleanResearch = stripMarkdown(analysis.researchContent);
+      const researchLines = doc.splitTextToSize(cleanResearch, contentW);
+      for (const line of researchLines) {
         ensureSpace(11);
         doc.text(line, margin, y);
         y += 11;
@@ -216,15 +243,16 @@ export function generateAnalysisPdf(
     doc.setFont("helvetica", "bold");
     doc.setFontSize(8);
     doc.setTextColor(...hex(sevColor));
-    doc.text(f.severity, pageW - margin, y + 12, { align: "right" });
+    doc.text(SEVERITY_LABEL[f.severity] || f.severity, pageW - margin, y + 12, { align: "right" });
     y += 20;
 
     doc.setFont("helvetica", "normal");
     doc.setFontSize(8);
     doc.setTextColor(110, 110, 110);
-    const meta = `Confidence ${f.confidence}% · Urgensi ${f.urgency} · ${
-      f.actionType === "BUTUH_NASIHAT" ? "Butuh nasihat" : "Info umum"
-    }`;
+    const urgencyLabel = URGENCY_LABEL[f.urgency] || f.urgency;
+    const severityLabel = SEVERITY_LABEL[f.severity] || f.severity;
+    const actionLabel = f.actionType === "BUTUH_NASIHAT" ? "Butuh Nasihat" : "Info Umum";
+    const meta = `Confidence ${f.confidence}% · Urgensi: ${urgencyLabel} · ${actionLabel}`;
     doc.text(meta, margin + 12, y);
     y += 14;
 

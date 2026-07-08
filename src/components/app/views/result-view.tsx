@@ -289,12 +289,102 @@ export function ResultView() {
   );
 }
 
+// Renders simple markdown: headings (###), **bold**, - bullets, [[n]] citations
+function RenderMarkdown({ text }: { text: string }) {
+  const lines = text.split("\n");
+  const elements: React.ReactNode[] = [];
+  let bulletBuffer: string[] = [];
+
+  const flushBullets = (key: string) => {
+    if (bulletBuffer.length === 0) return;
+    elements.push(
+      <ul key={key} className="my-1.5 ml-4 space-y-0.5 list-none">
+        {bulletBuffer.map((item, i) => (
+          <li key={i} className="flex gap-2 text-sm leading-relaxed">
+            <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-primary/60" />
+            <span>{inlineFormat(item)}</span>
+          </li>
+        ))}
+      </ul>
+    );
+    bulletBuffer = [];
+  };
+
+  lines.forEach((line, i) => {
+    const trimmed = line.trim();
+    if (!trimmed) {
+      flushBullets(`bl-${i}`);
+      return;
+    }
+    // Heading ###
+    if (trimmed.startsWith("### ")) {
+      flushBullets(`bl-${i}`);
+      elements.push(
+        <p key={i} className="mt-3 mb-0.5 text-xs font-bold uppercase tracking-widest text-primary/80">
+          {inlineFormat(trimmed.slice(4))}
+        </p>
+      );
+      return;
+    }
+    // Heading ##
+    if (trimmed.startsWith("## ")) {
+      flushBullets(`bl-${i}`);
+      elements.push(
+        <p key={i} className="mt-3 mb-0.5 text-sm font-bold text-foreground">
+          {inlineFormat(trimmed.slice(3))}
+        </p>
+      );
+      return;
+    }
+    // Bullet - or *
+    if (trimmed.startsWith("- ") || trimmed.startsWith("* ")) {
+      bulletBuffer.push(trimmed.slice(2));
+      return;
+    }
+    // Normal paragraph
+    flushBullets(`bl-${i}`);
+    elements.push(
+      <p key={i} className="text-sm leading-relaxed text-foreground/80">
+        {inlineFormat(trimmed)}
+      </p>
+    );
+  });
+  flushBullets("bl-end");
+  return <div className="space-y-0.5">{elements}</div>;
+}
+
+// Format inline: **bold**, [[n]] citation badges
+function inlineFormat(text: string): React.ReactNode[] {
+  const parts: React.ReactNode[] = [];
+  // Split on **..** and [[n]]
+  const regex = /(\*\*[^*]+\*\*|\[\[\d+\]\])/g;
+  let last = 0;
+  let match;
+  while ((match = regex.exec(text)) !== null) {
+    if (match.index > last) parts.push(text.slice(last, match.index));
+    const token = match[0];
+    if (token.startsWith("**")) {
+      parts.push(<strong key={match.index} className="font-semibold text-foreground">{token.slice(2, -2)}</strong>);
+    } else {
+      const num = token.slice(2, -2);
+      parts.push(
+        <sup key={match.index}>
+          <span className="ml-0.5 inline-flex h-4 min-w-4 items-center justify-center rounded bg-primary/15 px-1 text-[10px] font-bold text-primary">{num}</span>
+        </sup>
+      );
+    }
+    last = match.index + token.length;
+  }
+  if (last < text.length) parts.push(text.slice(last));
+  return parts;
+}
+
 function ResearchSourcesCard({ analysis }: { analysis: AnalysisDto }) {
   const sources = analysis.researchSources || [];
   if (!analysis.researchContent && sources.length === 0) return null;
 
   const latency = analysis.researchLatencyMs ? `${(analysis.researchLatencyMs / 1000).toFixed(1)} dtk` : null;
-  const excerpt = (analysis.researchContent || "").slice(0, 1800);
+  const content = analysis.researchContent || "";
 
   return (
     <Card className="mt-4 border-primary/20 bg-primary/5">
@@ -324,6 +414,7 @@ function ResearchSourcesCard({ analysis }: { analysis: AnalysisDto }) {
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
+        {/* Source links */}
         {sources.length > 0 ? (
           <div className="grid gap-2">
             {sources.map((source, index) => (
@@ -351,15 +442,15 @@ function ResearchSourcesCard({ analysis }: { analysis: AnalysisDto }) {
           </Alert>
         )}
 
-        {excerpt && (
-          <div className="rounded-lg border bg-background p-4">
-            <p className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-              <Quote className="h-3.5 w-3.5" /> Cuplikan riset dengan marker sitasi
+        {/* Rendered research content */}
+        {content && (
+          <div className="rounded-lg border bg-background px-4 pb-4 pt-3">
+            <p className="mb-3 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+              <Quote className="h-3.5 w-3.5" /> Ringkasan Riset Hukum
             </p>
-            <p className="mt-2 max-h-64 overflow-auto whitespace-pre-wrap text-sm leading-relaxed text-foreground/80">
-              {excerpt}
-              {(analysis.researchContent || "").length > excerpt.length ? "\n\n[...cuplikan dipotong di tampilan...]" : ""}
-            </p>
+            <div>
+              <RenderMarkdown text={content} />
+            </div>
           </div>
         )}
 
