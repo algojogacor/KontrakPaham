@@ -1,0 +1,4 @@
+## 2024-07-08 - Password Reset Token Leak
+**Vulnerability:** The `/api/auth/forgot-password/route.ts` endpoint returns the generated reset token directly in the HTTP response if the user exists. This allows an unauthenticated attacker to generate a reset token and immediately use it to reset any user's password if they know their email.
+**Learning:** Returning sensitive tokens in HTTP responses to bypass email sending during demo or development can introduce critical vulnerabilities that might accidentally be deployed to production.
+**Prevention:** Never return authentication or authorization tokens (like password reset tokens or magic links) in an unauthenticated response. Write them to server logs if needed for local testing/demo purposes, but ensure the HTTP response remains generic and does not leak the token or user existence.

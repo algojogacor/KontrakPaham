@@ -43,18 +43,18 @@ export async function POST(req: NextRequest) {
       data: { userId: user.id, token, expiresAt },
     });
     await audit("password_reset_requested", { userId: user.id, ip });
-    // Return token directly (demo only — no mail server). Production: send email link.
+    // SECURITY FIX: Never leak reset token in HTTP response. Log it instead for demo purposes.
+    console.log(`[DEMO] Reset token for ${user.email}: ${token}`);
+
     return NextResponse.json({
       message:
-        "Jika email terdaftar, tautan reset telah dibuat. (Mode demo) Gunakan token berikut untuk reset:",
-      resetToken: token,
-      expiresIn: "30 menit",
+        "Jika email terdaftar, tautan reset telah dibuat. (Mode demo) Periksa log server untuk token reset.",
     });
   }
 
   await audit("password_reset_requested_unknown", { ip, meta: { email: parsed.data.email }, level: "warn" });
   return NextResponse.json({
     message:
-      "Jika email terdaftar, tautan reset telah dibuat. (Mode demo) Gunakan token dari email Anda.",
+      "Jika email terdaftar, tautan reset telah dibuat. (Mode demo) Periksa log server untuk token reset.",
   });
 }

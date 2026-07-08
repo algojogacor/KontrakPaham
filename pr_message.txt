@@ -1,11 +1,8 @@
-🔒 [Security] Remove insecure hardcoded JWT secret fallback
+🛡️ Sentinel: [CRITICAL] Fix password reset token leak
 
-🎯 **What:**
-Removed the insecure, hardcoded fallback for the `JWT_SECRET` in `src/lib/auth.ts`.
+🚨 Severity: CRITICAL
+💡 Vulnerability: The `/api/auth/forgot-password` endpoint leaked the password reset token in the JSON response if the requested email was registered in the system. Since it's an unauthenticated endpoint, any attacker who knows a target user's email address could easily retrieve the token from the response and immediately reset the victim's password. This effectively functions as a complete authentication bypass.
+🎯 Impact: Attackers can hijack any account if they know the user's email address, leading to complete account takeover.
+🔧 Fix: Removed the token from the HTTP response. For demo or local testing purposes, the token is now printed directly into the server logs instead (`console.log`). The HTTP response has been modified to return a generic success message that avoids enumerating users.
+✅ Verification: Calling `POST /api/auth/forgot-password` with a valid email address should now return a generic message ("... Periksa log server untuk token reset.") and should NOT include the token in the response payload. The token should only be visible in the server logs.
 
-⚠️ **Risk:**
-Previously, if the `JWT_SECRET` environment variable was not set, the application would silently fallback to a known hardcoded string ("dev-only-insecure-secret-change-me"). This allowed anyone with knowledge of the codebase to forge session tokens and impersonate any user, compromising the entire application.
-
-🛡️ **Solution:**
-- Removed the hardcoded fallback completely.
-- Modified the application to fail fast by throwing a clear error unconditionally during initialization if `JWT_SECRET` is not provided, regardless of the environment.
