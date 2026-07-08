@@ -1,0 +1,13 @@
+.git
+.next
+node_modules
+coverage
+out
+build
+*.log
+*.tsbuildinfo
+.env
+.env.*
+db/*.db
+screenshots
+download

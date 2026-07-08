@@ -1,10 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useApp } from "@/lib/store";
 import { api, friendlyError } from "@/lib/api-client";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Textarea } from "@/components/ui/textarea";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import {
   Accordion,
@@ -26,12 +28,21 @@ import {
 import { SeverityBadge, UrgencyBadge, ActionTypeBadge, RiskPill, ConfidenceBar } from "@/components/app/badges";
 import { ConsultationCard } from "@/components/app/consultation-card";
 import { CATEGORY_META } from "@/lib/types";
-import type { AnalysisDto, FindingDto } from "@/lib/types";
+import type { AnalysisChatMessageDto, AnalysisDto, FindingDto } from "@/lib/types";
 import {
   Download, ArrowLeft, FileText, AlertTriangle, Info, Lightbulb,
   Languages, ShieldAlert, Loader2, Trash2, History, Sparkles, Copy, CheckCircle2, ListChecks,
-  ExternalLink, BookOpen, Quote,
+  ExternalLink, BookOpen, Quote, MessageCircle, Send, Share2, Link2,
 } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import { toast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import { id as idLocale } from "date-fns/locale";
@@ -43,6 +54,124 @@ export function ResultView() {
   const [exporting, setExporting] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [sevFilter, setSevFilter] = useState<string>("ALL");
+
+  const [shareToken, setShareToken] = useState<string | null>(null);
+  const [sharingLoading, setSharingLoading] = useState(false);
+  const [copiedLink, setCopiedLink] = useState(false);
+  const [revoking, setRevoking] = useState(false);
+
+  useEffect(() => {
+    if (currentAnalysis) {
+      setShareToken(currentAnalysis.shareToken || null);
+    }
+  }, [currentAnalysis]);
+
+  const handleShare = async () => {
+    if (!currentAnalysis) return;
+    setSharingLoading(true);
+    try {
+      const res = await api.shareAnalysis(currentAnalysis.id);
+      setShareToken(res.shareToken);
+      setCurrentAnalysis({ ...currentAnalysis, shareToken: res.shareToken });
+      toast({ title: "Tautan berbagi berhasil dibuat." });
+    } catch (e) {
+      toast({ title: friendlyError(e), variant: "destructive" });
+    } finally {
+      setSharingLoading(false);
+    }
+  };
+
+  const handleRevokeShare = async () => {
+    if (!currentAnalysis) return;
+    setRevoking(true);
+    try {
+      await api.revokeShareAnalysis(currentAnalysis.id);
+      setShareToken(null);
+      setCurrentAnalysis({ ...currentAnalysis, shareToken: null });
+      toast({ title: "Tautan berbagi dicabut." });
+    } catch (e) {
+      toast({ title: friendlyError(e), variant: "destructive" });
+    } finally {
+      setRevoking(false);
+    }
+  };
+
+  const copyShareLink = async () => {
+    if (!shareToken) return;
+    const url = `${window.location.origin}/share/${shareToken}`;
+    try {
+      await navigator.clipboard.writeText(url);
+      setCopiedLink(true);
+      setTimeout(() => setCopiedLink(false), 2000);
+      toast({ title: "Tautan disalin ke clipboard." });
+    } catch {
+      // ignore
+    }
+  };
+
+  const [expandedIds, setExpandedIds] = useState<string[]>([]);
+
+  useEffect(() => {
+    if (currentAnalysis?.findings && currentAnalysis.findings.length > 0) {
+      // Sort findings to find the first one displayed
+      const sorted = [...currentAnalysis.findings].sort((x, y) => {
+        const s = (SEV_ORDER[x.severity] ?? 9) - (SEV_ORDER[y.severity] ?? 9);
+        if (s !== 0) return s;
+        return y.confidence - x.confidence;
+      });
+      setExpandedIds([sorted[0].id]);
+    }
+  }, [currentAnalysis]);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (!currentAnalysis) return;
+      // Disable shortcuts if focus is on inputs, textareas, etc.
+      if (
+        document.activeElement?.tagName === "INPUT" ||
+        document.activeElement?.tagName === "TEXTAREA" ||
+        (document.activeElement as HTMLElement)?.isContentEditable
+      ) {
+        return;
+      }
+
+      if (e.key === "e") {
+        e.preventDefault();
+        handleExport();
+      } else if (e.key === "c") {
+        e.preventDefault();
+        setView("checklist");
+      } else if (e.key === "n") {
+        e.preventDefault();
+        setView("negotiation");
+      } else if (e.key === "j" || e.key === "k") {
+        const sorted = [...currentAnalysis.findings].sort((x, y) => {
+          const s = (SEV_ORDER[x.severity] ?? 9) - (SEV_ORDER[y.severity] ?? 9);
+          if (s !== 0) return s;
+          return y.confidence - x.confidence;
+        });
+        const currentFindings = sevFilter === "ALL" ? sorted : sorted.filter((f) => f.severity === sevFilter);
+        if (currentFindings.length === 0) return;
+        e.preventDefault();
+        const currentIdx = currentFindings.findIndex((f) => expandedIds.includes(f.id));
+        let nextIdx = 0;
+        if (e.key === "j") {
+          nextIdx = currentIdx + 1 < currentFindings.length ? currentIdx + 1 : 0;
+        } else {
+          nextIdx = currentIdx - 1 >= 0 ? currentIdx - 1 : currentFindings.length - 1;
+        }
+        const nextId = currentFindings[nextIdx]?.id;
+        if (nextId) {
+          setExpandedIds([nextId]);
+          // Scroll the element into view
+          document.getElementById(`finding-item-${nextId}`)?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+        }
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [currentAnalysis, expandedIds, sevFilter, setView]);
 
   if (!currentAnalysis) {
     return (
@@ -128,6 +257,69 @@ export function ResultView() {
             {exporting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
             Export PDF
           </Button>
+          <Dialog>
+            <DialogTrigger asChild>
+              <Button variant="outline" size="sm" className="gap-1.5">
+                <Share2 className="h-4 w-4" /> Bagikan
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-md">
+              <DialogHeader>
+                <DialogTitle>Bagikan Analisis Kontrak</DialogTitle>
+                <DialogDescription>
+                  Buat tautan publik read-only agar orang lain dapat membaca ringkasan riset dan temuan analisis ini tanpa perlu masuk log.
+                </DialogDescription>
+              </DialogHeader>
+              <div className="space-y-4 py-2">
+                {shareToken ? (
+                  <div className="space-y-3">
+                    <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Tautan Berbagi Anda:</p>
+                    <div className="flex items-center gap-2 rounded-lg border bg-muted/30 p-2.5">
+                      <span className="min-w-0 flex-1 truncate text-sm text-foreground select-all font-mono">
+                        {typeof window !== "undefined" ? `${window.location.origin}/share/${shareToken}` : `/share/${shareToken}`}
+                      </span>
+                      <Button size="sm" variant="secondary" className="h-8 gap-1" onClick={copyShareLink}>
+                        {copiedLink ? <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" /> : <Copy className="h-3.5 w-3.5" />}
+                        {copiedLink ? "Tersalin" : "Salin"}
+                      </Button>
+                    </div>
+                    <div className="flex items-center justify-between gap-2 pt-2 text-xs">
+                      <span className="text-emerald-600 dark:text-emerald-400 font-medium">● Tautan aktif & publik</span>
+                      <Button
+                        size="xs"
+                        variant="ghost"
+                        className="text-destructive hover:text-destructive hover:bg-destructive/10 gap-1"
+                        disabled={revoking}
+                        onClick={handleRevokeShare}
+                      >
+                        {revoking ? <Loader2 className="h-3 w-3 animate-spin" /> : null}
+                        Cabut Akses
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex flex-col items-center justify-center py-6 text-center">
+                    <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-primary">
+                      <Share2 className="h-6 w-6" />
+                    </div>
+                    <p className="mt-3 text-sm font-semibold">Tautan berbagi belum dibuat</p>
+                    <p className="mt-1 text-xs text-muted-foreground max-w-xs leading-relaxed">
+                      Siapapun yang memiliki tautan ini akan dapat melihat hasil analisis, temuan klausul, dan riset hukum terkait.
+                    </p>
+                    <Button className="mt-4 gap-2" size="sm" onClick={handleShare} disabled={sharingLoading}>
+                      {sharingLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Link2 className="h-4 w-4" />}
+                      Buat Tautan Publik
+                    </Button>
+                  </div>
+                )}
+              </div>
+              <DialogFooter className="sm:justify-start">
+                <p className="text-[10px] text-muted-foreground leading-relaxed">
+                  Catatan: Hanya hasil analisis (ringkasan & temuan) yang dibagikan. Percakapan "Tanya Lanjutan" Anda tetap privat dan aman.
+                </p>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
           <Button size="sm" className="gap-1.5" onClick={() => setView("analyze")}>
             <Sparkles className="h-4 w-4" /> Analisis Baru
           </Button>
@@ -214,6 +406,7 @@ export function ResultView() {
       </Card>
 
       <ResearchSourcesCard analysis={a} />
+      <AnalysisChatCard analysis={a} />
 
       {/* Findings */}
       <div className="mt-8">
@@ -263,7 +456,7 @@ export function ResultView() {
           </Card>
         ) : (
           <>
-            <Accordion type="multiple" defaultValue={[filteredFindings[0]?.id]} className="mt-4 space-y-3">
+            <Accordion type="multiple" value={expandedIds} onValueChange={setExpandedIds} className="mt-4 space-y-3">
               {filteredFindings.map((f, idx) => (
                 <FindingCard key={f.id} finding={f} index={idx} defaultOpen={idx === 0} />
               ))}
@@ -467,6 +660,179 @@ function ResearchSourcesCard({ analysis }: { analysis: AnalysisDto }) {
   );
 }
 
+function AnalysisChatCard({ analysis }: { analysis: AnalysisDto }) {
+  const [messages, setMessages] = useState<AnalysisChatMessageDto[]>([]);
+  const [question, setQuestion] = useState("");
+  const [loadingHistory, setLoadingHistory] = useState(true);
+  const [sending, setSending] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    setLoadingHistory(true);
+    api.getAnalysisChat(analysis.id)
+      .then((history) => {
+        if (!cancelled) setMessages(history.messages);
+      })
+      .catch((e) => {
+        if (!cancelled) toast({ title: friendlyError(e), variant: "destructive" });
+      })
+      .finally(() => {
+        if (!cancelled) setLoadingHistory(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [analysis.id]);
+
+  const ask = async (text?: string) => {
+    const q = (text ?? question).trim();
+    if (!q) return;
+    setQuestion("");
+    setSending(true);
+    const optimistic: AnalysisChatMessageDto = {
+      id: `local-${Date.now()}`,
+      role: "user",
+      content: q,
+      createdAt: new Date().toISOString(),
+    };
+    setMessages((prev) => [...prev, optimistic]);
+    try {
+      const result = await api.askAnalysisChat(analysis.id, q);
+      setMessages(result.messages);
+    } catch (e) {
+      setMessages((prev) => prev.filter((message) => message.id !== optimistic.id));
+      setQuestion(q);
+      toast({ title: friendlyError(e), variant: "destructive" });
+    } finally {
+      setSending(false);
+    }
+  };
+
+  const suggestions = [
+    "Apa 3 hal yang paling perlu saya negosiasikan dulu?",
+    "Kalau pihak sana menolak revisi, respons saya sebaiknya bagaimana?",
+    "Pertanyaan klarifikasi apa yang perlu saya kirim sebelum tanda tangan?",
+  ];
+
+  return (
+    <Card className="mt-4 border-primary/20 bg-background shadow-soft">
+      <CardHeader className="pb-3">
+        <CardTitle className="flex items-center gap-2 text-base">
+          <MessageCircle className="h-4 w-4 text-primary" />
+          Tanya Lanjutan
+        </CardTitle>
+        <CardDescription>
+          Chat ini tersimpan di akun Anda dan selalu memakai konteks analisis "{analysis.title}".
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <ScrollArea className="h-[300px] rounded-lg border bg-muted/20 p-3">
+          {loadingHistory ? (
+            <div className="grid min-h-[274px] place-items-center text-sm text-muted-foreground">
+              <div className="flex items-center gap-2">
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Memuat riwayat tanya lanjutan...
+              </div>
+            </div>
+          ) : messages.length === 0 ? (
+            <div className="grid min-h-[274px] place-items-center px-4 text-center">
+              <div className="flex max-w-md flex-col items-center">
+                <div className="flex h-11 w-11 items-center justify-center rounded-full bg-primary/10 text-primary">
+                  <MessageCircle className="h-5 w-5" />
+                </div>
+                <p className="mt-3 text-sm font-semibold text-foreground">Belum ada percakapan</p>
+                <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
+                  Tanyakan skenario praktis, prioritas negosiasi, atau cara menjelaskan risiko ke pihak kontrak.
+                </p>
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-3 pr-3">
+              {messages.map((message) => (
+                <div
+                  key={message.id}
+                  className={`flex ${message.role === "user" ? "justify-end" : "justify-start"}`}
+                >
+                  <div
+                    className={`max-w-[85%] rounded-lg px-3 py-2 text-sm leading-relaxed ${
+                      message.role === "user"
+                        ? "bg-primary text-primary-foreground"
+                        : "border bg-background text-foreground"
+                    }`}
+                  >
+                    <p className="whitespace-pre-wrap">{message.content}</p>
+                    <p className={`mt-1 text-[10px] ${message.role === "user" ? "text-primary-foreground/70" : "text-muted-foreground"}`}>
+                      {format(new Date(message.createdAt), "d MMM HH:mm", { locale: idLocale })}
+                      {message.modelUsed ? ` · ${message.modelUsed}` : ""}
+                    </p>
+                  </div>
+                </div>
+              ))}
+              {sending && (
+                <div className="flex justify-start">
+                  <div className="inline-flex items-center gap-2 rounded-lg border bg-background px-3 py-2 text-sm text-muted-foreground">
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    Menyusun jawaban...
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+        </ScrollArea>
+
+        {messages.length === 0 && !loadingHistory && (
+          <div className="flex flex-wrap gap-2">
+            {suggestions.map((item) => (
+              <Button
+                key={item}
+                type="button"
+                variant="outline"
+                size="sm"
+                className="h-auto whitespace-normal rounded-full px-3 py-1.5 text-left text-xs"
+                disabled={sending}
+                onClick={() => ask(item)}
+              >
+                {item}
+              </Button>
+            ))}
+          </div>
+        )}
+
+        <div className="flex gap-2">
+          <Textarea
+            value={question}
+            onChange={(e) => setQuestion(e.target.value)}
+            placeholder="Tulis pertanyaan lanjutan, misalnya: apakah denda ini masih wajar kalau telat 1 minggu?"
+            className="min-h-20 resize-none text-sm"
+            maxLength={3000}
+            disabled={sending}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) {
+                e.preventDefault();
+                ask();
+              }
+            }}
+          />
+          <Button
+            type="button"
+            className="h-20 w-12 shrink-0"
+            size="icon"
+            disabled={sending || question.trim().length < 3}
+            onClick={() => ask()}
+            aria-label="Kirim pertanyaan"
+          >
+            {sending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+          </Button>
+        </div>
+        <div className="flex items-center justify-between gap-2 text-[11px] text-muted-foreground">
+          <span>Ctrl/⌘ + Enter untuk kirim.</span>
+          <span>{question.length}/3000</span>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
 function SevCount({ label, count, cls }: { label: string; count: number; cls: string }) {
   return (
     <div className="rounded-md bg-background p-1.5">
@@ -508,7 +874,7 @@ ${finding.recommendation}`;
   };
 
   return (
-    <Card className="overflow-hidden transition-shadow hover:shadow-md">
+    <Card className="overflow-hidden transition-shadow hover:shadow-md" id={`finding-item-${finding.id}`}>
       <AccordionItem value={finding.id} className="border-b-0">
         <AccordionTrigger className="px-4 py-4 hover:no-underline sm:px-5">
           <div className="flex w-full items-start gap-3 pr-2 text-left">

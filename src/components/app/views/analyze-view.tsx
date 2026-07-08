@@ -19,6 +19,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 import { ContractLoading } from "@/components/app/contract-loading";
 import { ViewShell } from "@/components/app/view-shell";
 import { api, friendlyError } from "@/lib/api-client";
@@ -43,6 +45,7 @@ export function AnalyzeView() {
   const [error, setError] = useState("");
   const [warnings, setWarnings] = useState<string[]>([]);
   const [stepIdx, setStepIdx] = useState(0);
+  const [quickMode, setQuickMode] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const timersRef = useRef<ReturnType<typeof setTimeout>[]>([]);
 
@@ -59,8 +62,9 @@ export function AnalyzeView() {
   const onFile = useCallback((f: File | null) => {
     if (!f) return;
     const ext = f.name.toLowerCase().split(".").pop() || "";
-    if (ext !== "pdf" && ext !== "docx") {
-      setError("Format file tidak didukung. Hanya PDF atau DOCX.");
+    const allowed = ["pdf", "docx", "txt", "md"];
+    if (!allowed.includes(ext)) {
+      setError("Format file tidak didukung. Gunakan PDF, DOCX, TXT, atau MD.");
       setFile(null);
       return;
     }
@@ -110,7 +114,9 @@ export function AnalyzeView() {
     setLoading(true);
     const cancelProgress = startProgress();
     try {
-      const res = tab === "text" ? await api.analyzeText(text) : await api.analyzeFile(file!);
+      const res = tab === "text"
+        ? await api.analyzeText(text, quickMode)
+        : await api.analyzeFile(file!, quickMode);
       setWarnings(res.warnings || []);
       setCurrentAnalysis(res.analysis);
       try {
@@ -190,7 +196,7 @@ export function AnalyzeView() {
                 <input
                   ref={inputRef}
                   type="file"
-                  accept=".pdf,.docx,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                  accept=".pdf,.docx,.txt,.md,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain,text/markdown"
                   className="hidden"
                   onChange={(e) => onFile(e.target.files?.[0] || null)}
                 />
@@ -210,7 +216,7 @@ export function AnalyzeView() {
                     </div>
                     <div>
                       <p className="font-medium">Klik untuk memilih, atau seret file ke sini</p>
-                      <p className="mt-1 text-xs text-muted-foreground">PDF termasuk scan dengan OCR, atau DOCX. Maks. 5 MB.</p>
+                      <p className="mt-1 text-xs text-muted-foreground">PDF, DOCX, TXT, atau MD. Maks. 5 MB.</p>
                     </div>
                   </button>
                 ) : (
@@ -231,6 +237,23 @@ export function AnalyzeView() {
                 )}
               </TabsContent>
             </Tabs>
+
+            {/* Quick Mode Toggle */}
+            <div className="mt-5 flex items-center justify-between rounded-xl border bg-muted/20 p-4 transition-all hover:bg-muted/30">
+              <div className="space-y-0.5 pr-2">
+                <Label htmlFor="quick-mode" className="text-sm font-semibold flex items-center gap-1.5 cursor-pointer">
+                  <Sparkles className="h-4 w-4 text-primary" /> Mode Cepat (Tanpa Riset Hukum)
+                </Label>
+                <p className="text-xs text-muted-foreground">
+                  Lewati pencarian undang-undang eksternal (You.com) untuk mempercepat analisis menjadi ~15-20 detik.
+                </p>
+              </div>
+              <Switch
+                id="quick-mode"
+                checked={quickMode}
+                onCheckedChange={setQuickMode}
+              />
+            </div>
 
             <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <p className="flex items-center gap-1.5 text-xs text-muted-foreground">

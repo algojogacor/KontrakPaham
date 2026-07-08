@@ -1,4 +1,4 @@
-import type { AnalysisDto, QuotaDto, UserDto } from "@/lib/types";
+import type { AnalysisChatHistoryDto, AnalysisChatMessageDto, AnalysisDto, QuotaDto, UserDto } from "@/lib/types";
 
 export interface LicenseCodeDto {
   id: string;
@@ -251,17 +251,18 @@ export const api = {
     });
     return handle<{ ok: boolean; status?: number | string; latencyMs: number; model?: string; message: string; sample?: string }>(res);
   },
-  async analyzeText(text: string) {
+  async analyzeText(text: string, quickMode = false) {
     const res = await fetch("/api/analyze", {
       method: "POST",
       headers: MUTATION_HEADERS,
-      body: JSON.stringify({ text }),
+      body: JSON.stringify({ text, quickMode }),
     });
     return handle<{ analysis: AnalysisDto; warnings: string[]; notes: string[]; uncertain: boolean }>(res);
   },
-  async analyzeFile(file: File) {
+  async analyzeFile(file: File, quickMode = false) {
     const form = new FormData();
     form.append("file", file);
+    if (quickMode) form.append("quickMode", "true");
     const res = await fetch("/api/analyze", { method: "POST", body: form, headers: { "X-Requested-With": "XMLHttpRequest" } });
     return handle<{ analysis: AnalysisDto; warnings: string[]; notes: string[]; uncertain: boolean }>(res);
   },
@@ -283,6 +284,14 @@ export const api = {
   exportUrl(id: string) {
     return `/api/analyses/${id}/export`;
   },
+  async shareAnalysis(id: string) {
+    const res = await fetch(`/api/analyses/${id}/share`, { method: "POST", headers: MUTATION_HEADERS });
+    return handle<{ shareToken: string }>(res);
+  },
+  async revokeShareAnalysis(id: string) {
+    const res = await fetch(`/api/analyses/${id}/share`, { method: "DELETE", headers: MUTATION_HEADERS });
+    return handle<{ ok: boolean; message: string }>(res);
+  },
   async getInsights() {
     const res = await fetch("/api/insights", { cache: "no-store" });
     return handle<{
@@ -303,6 +312,18 @@ export const api = {
       body: JSON.stringify(params),
     });
     return handle<{ draft: string; modelUsed: string }>(res);
+  },
+  async getAnalysisChat(id: string) {
+    const res = await fetch(`/api/analyses/${id}/chat`, { cache: "no-store" });
+    return handle<AnalysisChatHistoryDto>(res);
+  },
+  async askAnalysisChat(id: string, question: string) {
+    const res = await fetch(`/api/analyses/${id}/chat`, {
+      method: "POST",
+      headers: MUTATION_HEADERS,
+      body: JSON.stringify({ question }),
+    });
+    return handle<{ threadId: string; messages: AnalysisChatMessageDto[]; reply: AnalysisChatMessageDto }>(res);
   },
 };
 

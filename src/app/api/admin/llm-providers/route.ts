@@ -3,6 +3,7 @@ import { z } from "zod";
 import { requireAdmin } from "@/lib/admin";
 import { db } from "@/lib/db";
 import { audit } from "@/lib/logger";
+import { invalidateProviderCache } from "@/lib/llm";
 
 const providerSchema = z.object({
   name: z.string().min(2).max(80),
@@ -71,6 +72,7 @@ export async function POST(req: NextRequest) {
   }
 
   const provider = await db.llmProvider.create({ data: parsed.data });
+  invalidateProviderCache();
   await audit("llm_provider_created", {
     userId: admin.id,
     meta: { providerId: provider.id, name: provider.name, model: provider.model },

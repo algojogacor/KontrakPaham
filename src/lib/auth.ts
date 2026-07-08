@@ -4,6 +4,16 @@ import { cookies } from "next/headers";
 import { db } from "@/lib/db";
 
 const COOKIE_NAME = "kp_session";
+
+// SECURITY: Fail-fast if JWT_SECRET is missing in production.
+// Without this, all sessions can be forged using the hardcoded fallback key.
+if (process.env.NODE_ENV === "production" && !process.env.JWT_SECRET) {
+  throw new Error(
+    "[FATAL] JWT_SECRET env var tidak diset di mode production. " +
+    "Set JWT_SECRET ke string random 64+ karakter sebelum deploy."
+  );
+}
+
 const SECRET = new TextEncoder().encode(
   process.env.JWT_SECRET || "dev-only-insecure-secret-change-me"
 );

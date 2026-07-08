@@ -74,13 +74,27 @@ function envProvider(): ProviderConfig[] {
   return providers;
 }
 
+// In-process provider cache — TTL 5 minutes.
+// Avoids Turso DB round-trip (~50-150ms) on every analyzeContract() call.
+let _providerCache: { providers: ProviderConfig[]; expiresAt: number } | null = null;
+const PROVIDER_CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
+
+/** Clear the provider cache (e.g. after admin edits a provider). */
+export function invalidateProviderCache() {
+  _providerCache = null;
+}
+
 export async function getActiveProviders(): Promise<ProviderConfig[]> {
+  const now = Date.now();
+  if (_providerCache && _providerCache.expiresAt > now) {
+    return _providerCache.providers;
+  }
+
   const rows = await db.llmProvider.findMany({
     where: { enabled: true },
     orderBy: [{ priority: "asc" }, { createdAt: "asc" }],
   });
-  if (rows.length === 0) return envProvider();
-  return rows.map((r) => ({
+  const providers: ProviderConfig[] = rows.length === 0 ? envProvider() : rows.map((r) => ({
     id: r.id,
     name: r.name,
     provider: r.provider,
@@ -94,6 +108,9 @@ export async function getActiveProviders(): Promise<ProviderConfig[]> {
     temperature: r.temperature,
     timeoutMs: r.timeoutMs,
   }));
+
+  _providerCache = { providers, expiresAt: now + PROVIDER_CACHE_TTL_MS };
+  return providers;
 }
 
 async function callProvider(

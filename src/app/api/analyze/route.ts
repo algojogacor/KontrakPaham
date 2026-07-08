@@ -58,6 +58,7 @@ export async function POST(req: NextRequest) {
   let fileName: string | undefined;
   let rawText = "";
   let charCount = 0;
+  let quickMode = false;
   const warnings: string[] = [];
 
   const tParseDoc0 = Date.now();
@@ -66,6 +67,7 @@ export async function POST(req: NextRequest) {
       const form = await req.formData();
       const file = form.get("file");
       const text = form.get("text");
+      quickMode = form.get("quickMode") === "true";
       if (file && file instanceof File) {
         if (file.size > limits.maxFileBytes) {
           return NextResponse.json(
@@ -80,7 +82,19 @@ export async function POST(req: NextRequest) {
         const ext = file.name.toLowerCase().split(".").pop() || "";
         const arrayBuffer = await file.arrayBuffer();
         const data = new Uint8Array(arrayBuffer);
+
+        // Magic bytes validation — prevents spoofed file extensions
+        const magic = Buffer.from(data.slice(0, 8));
+        const isPdf = magic[0] === 0x25 && magic[1] === 0x50 && magic[2] === 0x44 && magic[3] === 0x46; // %PDF
+        const isZip = magic[0] === 0x50 && magic[1] === 0x4b; // PK — DOCX is ZIP
+
         if (ext === "pdf" || file.type === "application/pdf") {
+          if (!isPdf) {
+            return NextResponse.json(
+              { error: "File bukan PDF valid. Pastikan file tidak rusak." },
+              { status: 422 }
+            );
+          }
           sourceType = "PDF";
           fileName = file.name;
           const parsed = await parsePdf(data, file.name);
@@ -90,14 +104,36 @@ export async function POST(req: NextRequest) {
           ext === "docx" ||
           file.type === "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
         ) {
+          if (!isZip) {
+            return NextResponse.json(
+              { error: "File bukan DOCX valid. Pastikan file tidak rusak." },
+              { status: 422 }
+            );
+          }
           sourceType = "DOCX";
           fileName = file.name;
           const parsed = await parseDocx(Buffer.from(arrayBuffer), file.name);
           rawText = parsed.text;
           warnings.push(...parsed.warnings);
+        } else if (
+          ext === "txt" ||
+          ext === "md" ||
+          file.type === "text/plain" ||
+          file.type === "text/markdown"
+        ) {
+          // Prevent compiled binaries renamed to .txt/.md by checking for null bytes
+          if (data.includes(0)) {
+            return NextResponse.json(
+              { error: "File teks tidak valid. Terdeteksi konten biner." },
+              { status: 422 }
+            );
+          }
+          sourceType = "TEXT";
+          fileName = file.name;
+          rawText = new TextDecoder("utf-8").decode(data);
         } else {
           return NextResponse.json(
-            { error: "Format file tidak didukung. Hanya PDF atau DOCX." },
+            { error: "Format file tidak didukung. Gunakan PDF, DOCX, TXT, atau MD." },
             { status: 415 }
           );
         }
@@ -120,13 +156,14 @@ export async function POST(req: NextRequest) {
       }
       sourceType = "TEXT";
       rawText = body.text;
+      quickMode = Boolean(body.quickMode);
     } else {
       return NextResponse.json(
         { error: "Content-Type tidak didukung." },
         { status: 415 }
       );
     }
-    console.log(`[TIMING] document_parsing: ${Date.now() - tParseDoc0}ms | sourceType=${sourceType}`);
+    console.log(`[TIMING] document_parsing: ${Date.now() - tParseDoc0}ms | sourceType=${sourceType} | quickMode=${quickMode}`);
   } catch (e) {
     console.log(`[TIMING] document_parsing FAILED: ${Date.now() - tParseDoc0}ms | error=${(e as Error).message.slice(0, 120)}`);
     if (e instanceof DocumentError) {
@@ -229,7 +266,7 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    const result = await analyzeContract(rawText, plan);
+    const result = await analyzeContract(rawText, plan, undefined, quickMode);
 
     const tDbUpdate0 = Date.now();
     const updated = await db.analysis.update({

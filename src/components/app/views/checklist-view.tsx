@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import {
   ArrowLeft, Printer, CheckCircle2, Circle, AlertTriangle, ShieldCheck,
-  FileText, Lightbulb, Download,
+  FileText, Lightbulb, Download, Sparkles,
 } from "lucide-react";
 import type { FindingDto } from "@/lib/types";
 

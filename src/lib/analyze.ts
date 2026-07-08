@@ -113,7 +113,7 @@ function normalizeRiskScore(value: unknown) {
   return clamp(score, 0, 100);
 }
 
-export async function analyzeContract(contractText: string, plan = "FREE", signal?: AbortSignal): Promise<AnalysisResult> {
+export async function analyzeContract(contractText: string, plan = "FREE", signal?: AbortSignal, quickMode = false): Promise<AnalysisResult> {
   const tTotal0 = Date.now();
   console.log(`[TIMING] analyzeContract START | chars=${contractText.length} | plan=${plan}`);
 
@@ -126,14 +126,16 @@ export async function analyzeContract(contractText: string, plan = "FREE", signa
     console.log(`[TIMING] text_truncated: original=${contractText.length} truncated=30000`);
   }
 
-  // --- Phase 1: Legal Research ---
+  // --- Phase 1: Legal Research (skipped in Quick Mode) ---
   const tResearch0 = Date.now();
-  const research = await buildLegalResearchContext(contractText, plan);
+  const research = quickMode
+    ? { enabled: false, warning: "Quick Mode aktif — riset hukum You.com dilewati untuk kecepatan." } as const
+    : await buildLegalResearchContext(contractText, plan);
   const researchMs = Date.now() - tResearch0;
-  console.log(`[TIMING] research_total: ${researchMs}ms | enabled=${research.enabled} | effort=${research.effort ?? "none"} | youLatency=${research.latencyMs ?? "n/a"}ms`);
+  console.log(`[TIMING] research_total: ${researchMs}ms | quickMode=${quickMode} | enabled=${research.enabled} | effort=${'effort' in research ? research.effort : "none"} | youLatency=${'latencyMs' in research ? research.latencyMs : "n/a"}ms`);
 
-  const researchPrompt = research.content
-    ? `\n\n=== KONTEKS RISET HUKUM TERKINI ===\nEffort: ${research.effort}\nQuery: ${research.query}\n${research.content}\n\nGunakan konteks riset ini untuk memperbarui analisis, tetapi jangan mengarang sumber. Jika konteks riset tidak cukup, nyatakan keterbatasan di notes.`
+  const researchPrompt = ('content' in research && research.content)
+    ? `\n\n=== KONTEKS RISET HUKUM TERKINI ===\nEffort: ${'effort' in research ? research.effort : ''}\nQuery: ${'query' in research ? research.query : ''}\n${research.content}\n\nGunakan konteks riset ini untuk memperbarui analisis, tetapi jangan mengarang sumber. Jika konteks riset tidak cukup, nyatakan keterbatasan di notes.`
     : research.warning
       ? `\n\n=== CATATAN RISET HUKUM ===\n${research.warning}\n`
       : "";
@@ -178,8 +180,8 @@ export async function analyzeContract(contractText: string, plan = "FREE", signa
         uncertain: Boolean(parsed.uncertain),
         research,
         notes: [
-          ...(research.content
-            ? [`Riset hukum You.com dipakai (${research.effort}, ${research.latencyMs ?? "-"} ms).`]
+          ...('content' in research && research.content
+            ? [`Riset hukum You.com dipakai (${'effort' in research ? research.effort : 'n/a'}, ${'latencyMs' in research ? research.latencyMs : '-'} ms).`]
             : research.warning
               ? [research.warning]
               : []),

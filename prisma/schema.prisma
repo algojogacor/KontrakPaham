@@ -21,6 +21,8 @@ model User {
   updatedAt    DateTime @updatedAt
 
   analyses         Analysis[]
+  analysisChatThreads AnalysisChatThread[]
+  analysisChatMessages AnalysisChatMessage[]
   quotas           Quota[]
   passwordResets   PasswordResetToken[]
   auditLogs        AuditLog[]
@@ -93,11 +95,49 @@ model Analysis {
   researchLatencyMs Int?
   researchContent String?
   researchSources String?
+  shareToken   String?  @unique  // Read-only public share token
   createdAt    DateTime @default(now())
 
   user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   findings Finding[]
+  chatThreads AnalysisChatThread[]
+  chatMessages AnalysisChatMessage[]
 
+  @@index([userId, createdAt])
+}
+
+model AnalysisChatThread {
+  id         String   @id @default(cuid())
+  analysisId String
+  userId     String
+  title      String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  analysis Analysis @relation(fields: [analysisId], references: [id], onDelete: Cascade)
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  messages AnalysisChatMessage[]
+
+  @@unique([analysisId, userId])
+  @@index([userId, updatedAt])
+}
+
+model AnalysisChatMessage {
+  id         String   @id @default(cuid())
+  threadId   String
+  analysisId String
+  userId     String
+  role       String   // user | assistant
+  content    String
+  modelUsed  String?
+  createdAt  DateTime @default(now())
+
+  thread   AnalysisChatThread @relation(fields: [threadId], references: [id], onDelete: Cascade)
+  analysis Analysis           @relation(fields: [analysisId], references: [id], onDelete: Cascade)
+  user     User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([threadId, createdAt])
+  @@index([analysisId, createdAt])
   @@index([userId, createdAt])
 }
 

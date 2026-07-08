@@ -58,7 +58,7 @@ export const useApp = create<AppState>((set) => ({
         ? s.view === "signin" || s.view === "signup" || s.view === "forgot" || s.view === "reset"
           ? "dashboard"
           : s.view
-        : s.view === "dashboard" || s.view === "analyze" || s.view === "result" || s.view === "history" || s.view === "settings" || s.view === "insights" || s.view === "admin"
+        : s.view === "dashboard" || s.view === "analyze" || s.view === "result" || s.view === "history" || s.view === "settings" || s.view === "insights" || s.view === "admin" || s.view === "checklist" || s.view === "negotiation"
           ? "home"
           : s.view,
     })),

@@ -42,8 +42,22 @@ export interface AnalysisDto {
   researchLatencyMs?: number | null;
   researchContent?: string | null;
   researchSources?: ResearchSourceDto[];
+  shareToken?: string | null;
   createdAt: string;
   findings: FindingDto[];
+}
+
+export interface AnalysisChatMessageDto {
+  id: string;
+  role: "user" | "assistant";
+  content: string;
+  modelUsed?: string | null;
+  createdAt: string;
+}
+
+export interface AnalysisChatHistoryDto {
+  threadId: string | null;
+  messages: AnalysisChatMessageDto[];
 }
 
 export interface AnalysisWithFindings {
@@ -64,6 +78,7 @@ export interface AnalysisWithFindings {
   researchLatencyMs?: number | null;
   researchContent?: string | null;
   researchSources?: ResearchSourceDto[];
+  shareToken?: string | null;
   createdAt: Date;
   findings: FindingDto[];
   notes?: string[];
@@ -125,6 +140,7 @@ export function toAnalysisDto(a: {
   researchLatencyMs?: number | null;
   researchContent?: string | null;
   researchSources?: string | ResearchSourceDto[] | null;
+  shareToken?: string | null;
   createdAt: Date;
   findings: FindingDto[];
 }): AnalysisDto {
@@ -146,6 +162,7 @@ export function toAnalysisDto(a: {
     researchLatencyMs: a.researchLatencyMs,
     researchContent: a.researchContent,
     researchSources: normalizeResearchSources(a.researchSources),
+    shareToken: a.shareToken || null,
     createdAt: a.createdAt.toISOString(),
     findings: (a.findings || []).map((f: FindingDto) => ({
       id: f.id,
