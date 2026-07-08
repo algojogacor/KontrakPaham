@@ -2431,6 +2431,26 @@ Verification:
 - All duplicate/redundant timing log PRs closed. Local files synced to latest.
 - `git status` verified clean and `.gitignore` updates successfully pushed to origin/main.
 
+---
+Task ID: 42
+Agent: main (Antigravity) — Untracking Credentials & Merging Signin Security Fix
+
+Work Log:
+- Identified that `.env` (containing API keys), `db/custom.db` (local SQLite database), and `you-test-result.json` were previously tracked in the git repository.
+- Safely removed `.env`, `db/custom.db`, and `you-test-result.json` from git tracking cache using `git rm --cached` without deleting local copies.
+- Updated `.gitignore` to ignore the local database folder `/db/` and database files `*.db` to prevent future tracking.
+- Audited PR #13:
+  * Analyzed a timing side-channel vulnerability in `src/app/api/auth/signin/route.ts` where unknown usernames failed instantly due to an invalid dummy hash string.
+  * Verified the fix, which replaces the invalid dummy hash with a structurally valid static bcrypt hash to normalize check times and prevent username enumeration.
+  * Checked out, ran validations (lint, build) successfully, and merged PR #13 to `main`.
+- Pulled latest main changes to local and pushed all worklog and gitignore edits.
+
+Verification:
+- `git status` verified clean (working tree clean).
+- Eslint and build validated on local main branch → pass.
+- Remote repository successfully updated with security changes.
+
+
 
 
 
