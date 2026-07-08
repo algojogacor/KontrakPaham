@@ -132,7 +132,6 @@ export async function analyzeContract(contractText: string, plan = "FREE", signa
     ? { enabled: false, warning: "Quick Mode aktif — riset hukum You.com dilewati untuk kecepatan." } as const
     : await buildLegalResearchContext(contractText, plan);
   const researchMs = Date.now() - tResearch0;
-  console.log(`[TIMING] research_total: ${researchMs}ms | quickMode=${quickMode} | enabled=${research.enabled} | effort=${'effort' in research ? research.effort : "none"} | youLatency=${'latencyMs' in research ? research.latencyMs : "n/a"}ms`);
 
   const researchPrompt = ('content' in research && research.content)
     ? `\n\n=== KONTEKS RISET HUKUM TERKINI ===\nEffort: ${'effort' in research ? research.effort : ''}\nQuery: ${'query' in research ? research.query : ''}\n${research.content}\n\nGunakan konteks riset ini untuk memperbarui analisis, tetapi jangan mengarang sumber. Jika konteks riset tidak cukup, nyatakan keterbatasan di notes.`
