@@ -2576,6 +2576,39 @@ Stage Summary:
 - Next action di Koyeb: deploy ulang dari latest `main`, pastikan build log clone SHA
   sudah bukan `d9a6a5f` dan Dockerfile step menunjukkan `DATABASE_URL="file:./build.db"`.
 
+---
+Task ID: 47
+Agent: main (Codex) - Prisma 7 Adapter Fix for Koyeb Build
+
+Task: Memperbaiki error Koyeb terbaru pada step `bun run build`:
+`PrismaClientConstructorValidationError: Using engine type "client" requires either
+"adapter" or "accelerateUrl"`.
+
+Work Log:
+- Membaca log Koyeb terbaru; fix Dockerfile sebelumnya sudah aktif karena step
+  `RUN DATABASE_URL="file:./build.db" bunx prisma generate` berhasil.
+- Mengidentifikasi error baru muncul saat Next mengumpulkan page data untuk route
+  `/api/admin/users`, yang mengimpor `src/lib/db.ts` dan membuat Prisma Client.
+- Menelusuri `src/lib/db.ts`: Prisma Client hanya memakai `PrismaLibSql` adapter jika
+  `TURSO_DATABASE_URL` dan `TURSO_AUTH_TOKEN` tersedia. Saat build Docker hanya ada
+  `DATABASE_URL=file:./build.db`, kode jatuh ke `new PrismaClient()` tanpa adapter.
+- Mengonfirmasi dari dokumentasi Prisma bahwa Prisma 7/Bun + libSQL/SQLite perlu
+  driver adapter, termasuk untuk SQLite `file:` URL.
+- Mengubah `createPrismaClient()` agar selalu membuat `PrismaLibSql` adapter dari
+  `TURSO_DATABASE_URL` atau fallback `DATABASE_URL`, dan hanya mengisi `authToken`
+  jika `TURSO_AUTH_TOKEN` tersedia.
+- Menambahkan fail-fast jelas jika tidak ada `DATABASE_URL` maupun `TURSO_DATABASE_URL`.
+
+Verification:
+- `DATABASE_URL="file:./build.db" TURSO_DATABASE_URL="" TURSO_AUTH_TOKEN="" JWT_SECRET="build-time-only-placeholder-change-in-runtime" bun run build` -> pass.
+- `bun run lint` -> pass.
+
+Stage Summary:
+- Koyeb build sekarang punya dua lapis fix:
+  * Dockerfile menyediakan env build-time non-secret untuk Prisma/Next build.
+  * Prisma client factory tetap menggunakan adapter saat build-time SQLite placeholder.
+- Runtime Turso tetap memakai `TURSO_DATABASE_URL` dan `TURSO_AUTH_TOKEN` dari Koyeb.
+
 
 
 
