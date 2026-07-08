@@ -49,10 +49,8 @@ export async function getQuota(userId: string, plan: string) {
   };
 }
 
-export async function consumeQuota(userId: string): Promise<boolean> {
-  const user = await db.user.findUnique({ where: { id: userId } });
-  if (!user) return false;
-  const quota = await getQuota(userId, getEffectivePlan(user));
+export async function consumeQuota(userId: string, plan: string): Promise<boolean> {
+  const quota = await getQuota(userId, plan);
   if (quota.remaining <= 0) return false;
   const { month, year } = monthYear();
   await db.quota.update({

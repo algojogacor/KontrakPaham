@@ -255,7 +255,7 @@ export async function POST(req: NextRequest) {
 
   // Consume quota up-front (refunded on failure)
   const tQuotaConsume0 = Date.now();
-  const consumed = await consumeQuota(user.id);
+  const consumed = await consumeQuota(user.id, plan);
   console.log(`[TIMING] quota_consume: ${Date.now() - tQuotaConsume0}ms`);
   if (!consumed) {
     await db.analysis.delete({ where: { id: analysis.id } }).catch(() => {});
