@@ -1,0 +1,61 @@
+--- src/app/api/insights/route.ts
++++ src/app/api/insights/route.ts
+@@ -55,39 +55,46 @@
+     }
+
+     const total = analyses.length;
+-    const avgRiskScore = Math.round(
+-      analyses.reduce((s, a) => s + (a.riskScore || 0), 0) / total
+-    );
++    let riskScoreSum = 0;
+
+     const riskDistribution: Record<string, number> = {};
+     const sourceTypeDistribution: Record<string, number> = {};
+     const categoryCount: Record<string, { count: number; label: string }> = {};
+     let needsActionCount = 0;
+
+-    for (const a of analyses) {
+-      riskDistribution[a.overallRisk || "SEDANG"] = (riskDistribution[a.overallRisk || "SEDANG"] || 0) + 1;
+-      sourceTypeDistribution[a.sourceType] = (sourceTypeDistribution[a.sourceType] || 0) + 1;
+-      for (const f of a.findings) {
+-        if (!categoryCount[f.category]) {
+-          categoryCount[f.category] = { count: 0, label: f.categoryLabel };
++    for (let i = 0; i < total; i++) {
++      const a = analyses[i];
++      riskScoreSum += a.riskScore || 0;
++
++      const risk = a.overallRisk || "SEDANG";
++      riskDistribution[risk] = (riskDistribution[risk] || 0) + 1;
++
++      const srcType = a.sourceType;
++      sourceTypeDistribution[srcType] = (sourceTypeDistribution[srcType] || 0) + 1;
++
++      const findings = a.findings;
++      const findingsLen = findings.length;
++      for (let j = 0; j < findingsLen; j++) {
++        const f = findings[j];
++        const cat = f.category;
++        if (!categoryCount[cat]) {
++          categoryCount[cat] = { count: 1, label: f.categoryLabel };
++        } else {
++          categoryCount[cat].count += 1;
+         }
+-        categoryCount[f.category].count += 1;
+         if (f.actionType === "BUTUH_NASIHAT") needsActionCount += 1;
+       }
+     }
+
++    const avgRiskScore = Math.round(riskScoreSum / total);
++
+     const topRiskyCategories = Object.entries(categoryCount)
+       .map(([category, { count, label }]) => ({ category, label, count }))
+       .sort((a, b) => b.count - a.count)
+       .slice(0, 6);
+
+-    const recentTrend = [...analyses]
++    const recentTrend = analyses
++      .slice(0, 8)
+       .reverse()
+-      .slice(-8)
+       .map((a) => ({
+         id: a.id,

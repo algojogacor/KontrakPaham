@@ -6,15 +6,14 @@ import { rateLimit } from "@/lib/rate-limit";
 
 export async function GET() {
   const user = await getCurrentUser();
-  if (!user)
-    return NextResponse.json({ error: "Belum masuk." }, { status: 401 });
+  if (!user) return NextResponse.json({ error: "Belum masuk." }, { status: 401 });
 
   // Rate limit: 20 req/jam per user (insights is an aggregation query)
   const rl = rateLimit(`insights:${user.id}`, 20, 60 * 60 * 1000);
   if (!rl.ok) {
     return NextResponse.json(
       { error: "Terlalu banyak permintaan. Coba lagi nanti." },
-      { status: 429 },
+      { status: 429 }
     );
   }
 
@@ -56,48 +55,35 @@ export async function GET() {
     }
 
     const total = analyses.length;
-    let riskScoreSum = 0;
+    const avgRiskScore = Math.round(
+      analyses.reduce((s, a) => s + (a.riskScore || 0), 0) / total
+    );
 
     const riskDistribution: Record<string, number> = {};
     const sourceTypeDistribution: Record<string, number> = {};
     const categoryCount: Record<string, { count: number; label: string }> = {};
     let needsActionCount = 0;
 
-    for (let i = 0; i < total; i++) {
-      const a = analyses[i];
-      riskScoreSum += a.riskScore || 0;
-
-      const risk = a.overallRisk || "SEDANG";
-      riskDistribution[risk] = (riskDistribution[risk] || 0) + 1;
-
-      const srcType = a.sourceType;
-      sourceTypeDistribution[srcType] =
-        (sourceTypeDistribution[srcType] || 0) + 1;
-
-      const findings = a.findings;
-      const findingsLen = findings.length;
-      for (let j = 0; j < findingsLen; j++) {
-        const f = findings[j];
-        const cat = f.category;
-        if (!categoryCount[cat]) {
-          categoryCount[cat] = { count: 1, label: f.categoryLabel };
-        } else {
-          categoryCount[cat].count += 1;
+    for (const a of analyses) {
+      riskDistribution[a.overallRisk || "SEDANG"] = (riskDistribution[a.overallRisk || "SEDANG"] || 0) + 1;
+      sourceTypeDistribution[a.sourceType] = (sourceTypeDistribution[a.sourceType] || 0) + 1;
+      for (const f of a.findings) {
+        if (!categoryCount[f.category]) {
+          categoryCount[f.category] = { count: 0, label: f.categoryLabel };
         }
+        categoryCount[f.category].count += 1;
         if (f.actionType === "BUTUH_NASIHAT") needsActionCount += 1;
       }
     }
-
-    const avgRiskScore = Math.round(riskScoreSum / total);
 
     const topRiskyCategories = Object.entries(categoryCount)
       .map(([category, { count, label }]) => ({ category, label, count }))
       .sort((a, b) => b.count - a.count)
       .slice(0, 6);
 
-    const recentTrend = analyses
-      .slice(0, 8)
+    const recentTrend = [...analyses]
       .reverse()
+      .slice(-8)
       .map((a) => ({
         id: a.id,
         title: a.title.slice(0, 30),
@@ -117,13 +103,7 @@ export async function GET() {
       needsActionCount,
     });
   } catch (e) {
-    logger("error", "insights failed", {
-      userId: user.id,
-      error: (e as Error).message,
-    });
-    return NextResponse.json(
-      { error: "Gagal memuat insight." },
-      { status: 500 },
-    );
+    logger("error", "insights failed", { userId: user.id, error: (e as Error).message });
+    return NextResponse.json({ error: "Gagal memuat insight." }, { status: 500 });
   }
 }
