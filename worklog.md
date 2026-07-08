@@ -2546,6 +2546,36 @@ Stage Summary:
   aman/legitimate.
 - Kondisi `main` sudah lebih aman daripada patch PR #31 untuk isu reset-token leak.
 
+---
+Task ID: 46
+Agent: main (Codex) - Koyeb Deploy Log Recheck
+
+Task: Menganalisis log Koyeb terbaru dari user setelah fix Dockerfile untuk memastikan
+apakah masih ada error baru atau build masih memakai commit lama.
+
+Work Log:
+- Membaca log Koyeb dari attachment user.
+- Menemukan Koyeb meng-clone commit `d9a6a5fff88b0e735c0c2837a9183cb94b432d97`
+  (`docs: add task 43 - full PR batch audit...`).
+- Membandingkan dengan commit fix Dockerfile yang sudah dipush sebelumnya:
+  `9d4379e54fc0e212b4207a45afa28daf4f47d59e`.
+- Memastikan log Koyeb masih menjalankan Dockerfile lama:
+  * Step gagal: `RUN bunx prisma generate`.
+  * Dockerfile fixed seharusnya menjalankan:
+    `RUN DATABASE_URL="file:./build.db" bunx prisma generate`.
+- Verifikasi remote/local `main` sudah berada di commit fix dan Dockerfile lokal sudah
+  berisi build-time placeholder untuk `DATABASE_URL` dan `JWT_SECRET`.
+
+Verification:
+- `git rev-parse HEAD` -> `9d4379e54fc0e212b4207a45afa28daf4f47d59e`.
+- `git ls-remote origin refs/heads/main` -> `9d4379e54fc0e212b4207a45afa28daf4f47d59e`.
+- `DATABASE_URL="file:./build.db" bunx prisma generate` -> pass.
+
+Stage Summary:
+- Error yang dikirim user masih berasal dari deployment lama sebelum fix Dockerfile.
+- Next action di Koyeb: deploy ulang dari latest `main`, pastikan build log clone SHA
+  sudah bukan `d9a6a5f` dan Dockerfile step menunjukkan `DATABASE_URL="file:./build.db"`.
+
 
 
 
