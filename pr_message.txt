@@ -1,11 +1,18 @@
-🔒 [Security] Remove insecure hardcoded JWT secret fallback
+🧪 Add tests for indonesianScore function
 
 🎯 **What:**
-Removed the insecure, hardcoded fallback for the `JWT_SECRET` in `src/lib/auth.ts`.
+Added unit tests for the `indonesianScore` function in `src/lib/documents.ts`. This addresses a testing gap where the core heuristic language detector lacked dedicated verification.
 
-⚠️ **Risk:**
-Previously, if the `JWT_SECRET` environment variable was not set, the application would silently fallback to a known hardcoded string ("dev-only-insecure-secret-change-me"). This allowed anyone with knowledge of the codebase to forge session tokens and impersonate any user, compromising the entire application.
+📊 **Coverage:**
+The new test suite in `src/lib/documents.test.ts` covers the following scenarios:
+* Empty strings and whitespace
+* Typical high-scoring Indonesian contract text
+* Prefix matches (`ber`, `mem`, etc.) correctly triggering `+0.5` hits
+* Suffix matches (`kan`, `an`, `i`) correctly triggering `+0.4` hits
+* Punctuation stripping logic to ensure trailing characters don't break word matching
+* Pure non-Indonesian text resulting in a 0 score
+* Case insensitivity
+* Verifying the maximum score is capped at `1.0`
 
-🛡️ **Solution:**
-- Removed the hardcoded fallback completely.
-- Modified the application to fail fast by throwing a clear error unconditionally during initialization if `JWT_SECRET` is not provided, regardless of the environment.
+✨ **Result:**
+Improved test coverage and reliability. The `indonesianScore` logic is now fully covered by tests, enabling safe refactoring in the future.
