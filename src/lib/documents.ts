@@ -1,37 +1,15 @@
 import * as pdfjs from "pdfjs-dist/legacy/build/pdf.mjs";
-import { existsSync } from "fs";
-import { createRequire } from "module";
-import { resolve } from "path";
-import { pathToFileURL } from "url";
+import * as pdfjsWorker from "pdfjs-dist/legacy/build/pdf.worker.mjs";
 import mammoth from "mammoth";
 import sharp from "sharp";
 import { logger } from "@/lib/logger";
 
-const require = createRequire(import.meta.url);
-// pdfjs worker resolution under Next.js/Turbopack is fragile: Turbopack rewrites
-// require.resolve(), import.meta.url, etc. The most robust approach for both Node
-// and Bun is resolving the worker path using resolve(process.cwd(), ...) and passing
-// it as a file:// URL. base64 data: URLs throw "Invalid URL" under Bun.
-function setupPdfWorker() {
-  const candidates = [
-    resolve(process.cwd(), "node_modules/pdfjs-dist/legacy/build/pdf.worker.mjs"),
-  ];
-  // Also try require.resolve as a fallback (works when not bundled/externalized cleanly)
-  try {
-    candidates.push(require.resolve("pdfjs-dist/legacy/build/pdf.worker.mjs"));
-  } catch { /* ignore */ }
-  for (const p of candidates) {
-    if (existsSync(p)) {
-      pdfjs.GlobalWorkerOptions.workerSrc = pathToFileURL(p).toString();
-      return;
-    }
-  }
-  logger("error", "pdfjs worker setup failed", {
-    error: "worker file not found in any candidate path",
-    candidates,
-  });
-}
-setupPdfWorker();
+// pdfjs worker resolution under Next.js/Turbopack/Bun is extremely fragile when
+// loading files dynamically via workerSrc (e.g. throwing "Invalid URL").
+// The most robust approach is statically importing the worker module and registering
+// it on globalThis.pdfjsWorker. This bypasses workerSrc dynamic imports entirely.
+(globalThis as any).pdfjsWorker = pdfjsWorker;
+
 
 
 export interface ParsedDocument {
