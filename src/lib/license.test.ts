@@ -1,7 +1,12 @@
 /// <reference types="bun-types" />
 
 import { describe, expect, test } from "bun:test";
-import { buildLicenseCode, hashLicenseCode, addLicenseMonths } from "./license";
+import {
+  buildLicenseCode,
+  hashLicenseCode,
+  addLicenseMonths,
+  isPaidPlan,
+} from "./license";
 
 describe("license helpers", () => {
   test("buildLicenseCode produces grouped uppercase redeem code", () => {
@@ -21,5 +26,15 @@ describe("license helpers", () => {
     const current = new Date("2026-08-08T00:00:00.000Z");
     const expires = addLicenseMonths(now, 1, current);
     expect(expires.toISOString()).toBe("2026-09-08T00:00:00.000Z");
+  });
+
+  test("isPaidPlan correctly identifies paid and unpaid plans", () => {
+    expect(isPaidPlan("LITE")).toBe(true);
+    expect(isPaidPlan("PRO")).toBe(true);
+    expect(isPaidPlan("FREE")).toBe(false);
+    expect(isPaidPlan("lite")).toBe(false);
+    expect(isPaidPlan("pro")).toBe(false);
+    expect(isPaidPlan("")).toBe(false);
+    expect(isPaidPlan("PREMIUM")).toBe(false);
   });
 });
