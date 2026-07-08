@@ -15,36 +15,62 @@ export async function GET() {
   }
 
   const { month, year } = monthYear();
-  const users = await db.user.findMany({
-    orderBy: { createdAt: "desc" },
-    take: 100,
-    include: {
-      quotas: {
-        where: { month, year },
-        take: 1,
-      },
-      analyses: {
-        orderBy: { createdAt: "desc" },
-        take: 1,
-        select: {
-          id: true,
-          title: true,
-          overallRisk: true,
-          riskScore: true,
-          createdAt: true,
-        },
-      },
-      _count: { select: { analyses: true } },
-    },
-  });
 
-  const activeUsers = users.filter((u) => u.analyses.length > 0 || u.quotas.some((q) => q.analysesUsed > 0)).length;
-  const paidUsers = users.filter((u) => ["LITE", "PRO", "ADMIN"].includes(getEffectivePlan(u))).length;
-  const analysesThisMonth = users.reduce((sum, u) => sum + (u.quotas[0]?.analysesUsed ?? 0), 0);
+  const [totalUsers, activeUsers, paidUsers, analysesAgg, users] =
+    await Promise.all([
+      db.user.count(),
+      db.user.count({
+        where: {
+          OR: [
+            { analyses: { some: {} } },
+            { quotas: { some: { month, year, analysesUsed: { gt: 0 } } } },
+          ],
+        },
+      }),
+      db.user.count({
+        where: {
+          OR: [
+            { plan: "ADMIN" },
+            {
+              plan: { in: ["LITE", "PRO"] },
+              planExpiresAt: { gt: new Date() },
+            },
+          ],
+        },
+      }),
+      db.quota.aggregate({
+        where: { month, year },
+        _sum: { analysesUsed: true },
+      }),
+      db.user.findMany({
+        orderBy: { createdAt: "desc" },
+        take: 100,
+        include: {
+          quotas: {
+            where: { month, year },
+            take: 1,
+          },
+          analyses: {
+            orderBy: { createdAt: "desc" },
+            take: 1,
+            select: {
+              id: true,
+              title: true,
+              overallRisk: true,
+              riskScore: true,
+              createdAt: true,
+            },
+          },
+          _count: { select: { analyses: true } },
+        },
+      }),
+    ]);
+
+  const analysesThisMonth = analysesAgg._sum.analysesUsed ?? 0;
 
   return NextResponse.json({
     summary: {
-      totalUsers: users.length,
+      totalUsers,
       activeUsers,
       paidUsers,
       analysesThisMonth,
@@ -68,7 +94,11 @@ export async function GET() {
         quota: {
           used: quota?.analysesUsed ?? 0,
           limit: quota?.analysesLimit ?? limits.analysesPerMonth,
-          remaining: Math.max(0, (quota?.analysesLimit ?? limits.analysesPerMonth) - (quota?.analysesUsed ?? 0)),
+          remaining: Math.max(
+            0,
+            (quota?.analysesLimit ?? limits.analysesPerMonth) -
+              (quota?.analysesUsed ?? 0),
+          ),
           month,
           year,
         },
