@@ -2098,3 +2098,28 @@ Unresolved / Risks:
 - DeepSeek V4 Flash adalah model reasoning (R1) yang tetap membutuhkan waktu berpikir (~4-8 detik). Jika ingin latency di bawah 10 detik, model non-reasoning (seperti NVIDIA Mistral Large) harus diprioritaskan di DB.
 - Batas maksimal completion token di API DeepSeek adalah 8192. Nilai maxTokens tidak boleh diatur lebih tinggi dari itu (misal 16384) karena akan ditolak dengan error 400 Bad Request oleh server API.
 
+---
+Task ID: 30
+Agent: main (Antigravity) — System Prompt Refactoring
+
+Task: Meningkatkan kualitas dan kompetensi hukum keluaran LLM dengan memodifikasi system prompt untuk
+menggunakan Persona Ahli Hukum Kontrak Senior (Senior Legal Counsel) Indonesia, tanpa membatasi
+kemampuannya dengan penafian (disclaimer) internal yang berlebihan.
+
+Work Log:
+- Melakukan riset dan analisis mengenai praktik terbaik Prompt Engineering untuk Legal AI.
+- Menemukan bahwa menyematkan kalimat negatif ("Anda BUKAN advokat berlisensi") di dalam system prompt
+  dapat menurunkan kompetensi dan kedalaman penalaran LLM (*self-limiting behavior*).
+- Merefaktor `src/lib/analyze.ts` pada konstanta `SYSTEM_PROMPT`:
+  * Mengubah peran dari "asisten kontrak biasa" menjadi "Senior Legal Counsel ahli hukum kontrak Indonesia".
+  * Mengalihkan batasan kepatuhan hukum dari penafian peran menjadi instruksi penulisan output (menghasilkan nada edukatif, menyertakan rujukan advokat pada `actionType: BUTUH_NASIHAT` jika ragu, dan menjaga objektivitas).
+- Menambahkan perubahan ke repositori lokal dan melakukan push ke repositori GitHub utama (`algojogacor/KontrakPaham`).
+
+Stage Summary:
+- System prompt berhasil diperbarui dengan persona kompetensi tinggi.
+- Model kini memiliki kerangka kerja penalaran yang lebih tajam dan mendalam karena tidak dibatasi instruksi negatif secara internal.
+- Perubahan berhasil terunggah secara otomatis ke GitHub.
+
+Unresolved / Risks:
+- Meskipun model menulis dalam nada edukatif, UI produk dan file PDF ekspor harus tetap menampilkan disclaimer hukum di bagian luar (non-LLM) agar secara hukum aman dan transparan bagi pengguna awam.
+
