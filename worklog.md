@@ -2424,10 +2424,13 @@ Work Log:
   * Ran standard verification checks (build & lint) which passed cleanly.
 - Closed PR #9, #11, and #12 as redundant since timing log cleanups in `analyze.ts` (PR #6) and `route.ts` (PR #5) had already been successfully merged into `main`.
 - Pulled the merge commit locally to sync the main branch files.
+- Configured `.gitignore` to ignore temporary log files (`*.log`), screenshots folder (`/screenshots/`), test outputs (`/you-test-result.json`), and temporary test scripts (`/scripts/test-*`).
 
 Verification:
 - Checked out PR 10, verified `eslint .` & `bun run build` → pass.
 - All duplicate/redundant timing log PRs closed. Local files synced to latest.
+- `git status` verified clean and `.gitignore` updates successfully pushed to origin/main.
+
 
 
 
