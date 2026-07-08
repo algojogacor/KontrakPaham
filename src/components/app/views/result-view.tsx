@@ -121,6 +121,9 @@ export function ResultView() {
           <Button variant="outline" size="sm" className="gap-1.5" onClick={() => setView("checklist")}>
             <ListChecks className="h-4 w-4" /> Checklist
           </Button>
+          <Button variant="outline" size="sm" className="gap-1.5 text-primary border-primary/20 bg-primary/5 hover:bg-primary/10" onClick={() => setView("negotiation")}>
+            <Sparkles className="h-4 w-4" /> Draf Negosiasi
+          </Button>
           <Button variant="outline" size="sm" className="gap-1.5" onClick={handleExport} disabled={exporting}>
             {exporting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
             Export PDF

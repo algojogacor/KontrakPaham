@@ -151,6 +151,9 @@ export function ChecklistView() {
           <Button variant="outline" size="sm" className="gap-1.5" onClick={() => setView("result")}>
             <FileText className="h-4 w-4" /> Lihat hasil lengkap
           </Button>
+          <Button variant="outline" size="sm" className="gap-1.5" onClick={() => setView("negotiation")}>
+            <Sparkles className="h-4 w-4 text-primary" /> Draf Negosiasi
+          </Button>
           <Button variant="outline" size="sm" className="gap-1.5" onClick={handlePrint}>
             <Download className="h-4 w-4" /> Simpan sebagai PDF
           </Button>

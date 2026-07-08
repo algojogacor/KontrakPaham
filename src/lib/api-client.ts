@@ -296,6 +296,14 @@ export const api = {
       needsActionCount: number;
     }>(res);
   },
+  async generateNegotiationDraft(id: string, params: { findingIds: string[]; tone: string; channel: string; customRequest?: string }) {
+    const res = await fetch(`/api/analyses/${id}/negotiate`, {
+      method: "POST",
+      headers: MUTATION_HEADERS,
+      body: JSON.stringify(params),
+    });
+    return handle<{ draft: string; modelUsed: string }>(res);
+  },
 };
 
 export function friendlyError(e: unknown): string {

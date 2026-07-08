@@ -22,6 +22,8 @@ import { PricingView } from "@/components/app/views/pricing-view";
 import { ResultView } from "@/components/app/views/result-view";
 import { SamplesView } from "@/components/app/views/samples-view";
 import { SettingsView } from "@/components/app/views/settings-view";
+import { NegotiationView } from "@/components/app/views/negotiation-view";
+
 
 export default function Home() {
   const { view, user, authLoading, setAuth, setAuthLoading, setView } = useApp();
@@ -43,7 +45,7 @@ export default function Home() {
     };
   }, [setAuth, setAuthLoading]);
 
-  const protectedViews = ["dashboard", "analyze", "result", "history", "settings", "insights", "checklist", "admin"];
+  const protectedViews = ["dashboard", "analyze", "result", "history", "settings", "insights", "checklist", "admin", "negotiation"];
   useEffect(() => {
     if (!authLoading && !user && protectedViews.includes(view)) {
       setView("signin");
@@ -82,6 +84,7 @@ export default function Home() {
         {view === "insights" && <InsightsView />}
         {view === "checklist" && <ChecklistView />}
         {view === "legal" && <LegalView />}
+        {view === "negotiation" && <NegotiationView />}
       </main>
       <SiteFooter />
     </div>

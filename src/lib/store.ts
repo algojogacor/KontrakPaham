@@ -22,6 +22,7 @@ export type View =
   | "insights"
   | "checklist"
   | "legal"
+  | "negotiation"
   | "admin";
 
 interface AppState {

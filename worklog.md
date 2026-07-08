@@ -2175,3 +2175,42 @@ Stage Summary:
 Unresolved / Risks:
 - Tidak ada. Solusi ini adalah standar yang paling andal untuk mengintegrasikan PDF.js v6 dengan Next.js App Router (Turbopack/Webpack).
 
+---
+Task ID: 33
+Agent: main (Antigravity) — PDF Export and Research Polishing
+
+Task: Merapikan tampilan marker sitasi di box riset hukum dan memperbaiki kerusakan/font corruption pada file PDF yang di-export.
+
+Work Log:
+- Membuat helper `RenderMarkdown` dan `inlineFormat` di `result-view.tsx` untuk mem-parsing teks riset hukum markdown mentah secara client-side, menampilkan visual tebal, bullet points, header, dan badge sitasi superscript biru muda secara dinamis.
+- Menghapus pembatasan dan tombol "Tampilkan lebih banyak" agar seluruh teks riset hukum dapat dibaca secara penuh tanpa potongan.
+- Menganalisis kerusakan file PDF hasil export yang disebabkan oleh penggunaan karakter pembatas garis Unicode (`─` U+2500). Font bawaan Helvetica pada jsPDF tidak mendukung Unicode tersebut sehingga merusak teks berikutnya.
+- Memperbaiki `pdf-export.ts` dengan mengganti karakter garis Unicode menjadi tanda minus ASCII biasa (`-`), menghapus truncation riset di PDF agar tercetak penuh (sampai batas 2500 karakter), serta merapikan label enums (Urgensi, Severity, Action Type) ke format Bahasa Indonesia yang ramah pengguna.
+- Melakukan push perubahan ke GitHub utama.
+
+Stage Summary:
+- Hasil PDF export kembali bersih tanpa kotak-kotak/kerusakan karakter.
+- Box riset hukum di aplikasi merender markdown dengan indah dan lengkap.
+
+---
+Task ID: 34
+Agent: main (Antigravity) — Negotiation Proposal Draft Builder
+
+Task: Menambahkan fitur opsional premium "Draf Negosiasi" untuk membantu pengguna membuat surat/email/WhatsApp sanggahan negosiasi kontrak secara otomatis menggunakan AI.
+
+Work Log:
+- Membuat API route baru `/api/analyses/[id]/negotiate/route.ts` yang menerima list temuan klausul, tipe gaya bahasa (sopan, tegas, kasual), dan saluran pengiriman (email, WhatsApp, surat resmi). Route ini memanggil API LLM dengan prompt khusus untuk menyusun draf negosiasi kesetaraan hukum.
+- Menambahkan metode API client `generateNegotiationDraft` di `api-client.ts`.
+- Mendeklarasikan view baru `"negotiation"` di dalam store Zustand `src/lib/store.ts`.
+- Membuat antarmuka pengguna `negotiation-view.tsx` yang interaktif dan modern:
+  * Pemilihan klausul berisiko via checklist.
+  * Pemilihan gaya bahasa (Tone) dan saluran pesan (Channel) dengan visual card dan ikon yang cantik.
+  * Area input catatan tambahan opsional untuk konteks kustom dari user.
+  * Draf box workspace hasil AI dengan tombol "Salin Draf" (termasuk micro-interaction "Tersalin") dan visualizer loading state yang mulus.
+- Menambahkan tombol navigasi masuk ke "Draf Negosiasi" di halaman utama analisis (`result-view.tsx`) dan halaman checklist (`checklist-view.tsx`).
+- Melakukan verifikasi build dan hot-reload lokal, dan mengunggah kode ke GitHub utama (`algojogacor/KontrakPaham`).
+
+Stage Summary:
+- Fitur Asisten Negosiasi Kontrak siap dipakai oleh pengguna.
+- Interaktivitas dan kemampuan fungsional aplikasi meningkat drastis di luar fungsionalitas dasar audit risiko pasif.
+
