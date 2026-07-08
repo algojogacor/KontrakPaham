@@ -2609,6 +2609,41 @@ Stage Summary:
   * Prisma client factory tetap menggunakan adapter saat build-time SQLite placeholder.
 - Runtime Turso tetap memakai `TURSO_DATABASE_URL` dan `TURSO_AUTH_TOKEN` dari Koyeb.
 
+---
+Task ID: 48
+Agent: main (Codex) - Free Koyeb Runtime CPU Optimization
+
+Task: Mengoptimalkan runtime deployment agar lebih cocok untuk Koyeb free tier
+(`0.1 vCPU`, 512 MB RAM) setelah user melihat instance restart dan metrik CPU tinggi.
+
+Work Log:
+- Menganalisis log runtime Koyeb: container berhasil start, health check pass, lalu proses
+  sempat keluar dengan code 9 dan Koyeb menandai kemungkinan OOM/resource pressure.
+- User mengonfirmasi grafik RAM relatif aman, sedangkan CPU spike sangat tinggi pada
+  free tier.
+- Mengecek Dockerfile: build/install sudah memakai Bun, tetapi Next standalone runtime
+  juga dijalankan dengan `bun server.js`.
+- Mengubah runtime image dari `oven/bun:1.3.14-slim` ke `node:24-bookworm-slim` dan
+  menjalankan standalone server dengan `node server.js`.
+- Menjaga build stage tetap memakai Bun agar dependency install/build tetap sama.
+- Menambahkan `NODE_OPTIONS=--max-old-space-size=384` di runtime container untuk
+  membatasi heap Node agar tidak agresif di instance 512 MB.
+- Mengubah script `start` lokal agar memakai `node .next/standalone/server.js`,
+  selaras dengan runtime production.
+
+Verification:
+- `DATABASE_URL="file:./build.db" TURSO_DATABASE_URL="" TURSO_AUTH_TOKEN="" JWT_SECRET="build-time-only-placeholder-change-in-runtime" bun run build` -> pass.
+- `bun run lint` -> pass.
+- Smoke test standalone Node lokal di port 3100:
+  * `GET /` -> 200.
+  * `GET /api/health` -> 200.
+  * Process tetap hidup sampai dimatikan manual oleh test cleanup.
+
+Stage Summary:
+- Optimasi ini menargetkan runtime CPU/heap, bukan build time.
+- Koyeb free tier masih sangat kecil untuk fitur analisis dokumen berat, tetapi idle/startup
+  app sekarang memakai runtime Node yang lebih sesuai dengan Next standalone.
+
 
 
 

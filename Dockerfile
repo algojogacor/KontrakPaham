@@ -16,16 +16,18 @@ COPY . .
 RUN DATABASE_URL="file:./build.db" bunx prisma generate
 RUN DATABASE_URL="file:./build.db" JWT_SECRET="build-time-only-placeholder-change-in-runtime" bun run build
 
-FROM oven/bun:1.3.14-slim AS runner
+FROM node:24-bookworm-slim AS runner
 WORKDIR /app
 
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV HOSTNAME=0.0.0.0
 ENV PORT=3000
+# Keep the free Koyeb instance from overcommitting memory during cold starts.
+ENV NODE_OPTIONS=--max-old-space-size=384
 
 COPY --from=builder /app/.next/standalone ./
 
 EXPOSE 3000
 
-CMD ["bun", "server.js"]
+CMD ["node", "server.js"]
