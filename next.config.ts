@@ -7,13 +7,14 @@ const nextConfig: NextConfig = {
   },
   reactStrictMode: false,
   // Load native/tricky packages from node_modules at runtime instead of bundling.
-  // @napi-rs/canvas (native binary), mammoth, pdfjs-dist all externalized.
-  // pdfjs worker is loaded via data: URL in documents.ts to bypass Turbopack mangling.
+  // NOTE: pdfjs-dist is intentionally NOT externalized — it is pure ESM (.mjs) and
+  // cannot be require()'d by Node's CJS runtime. Turbopack must bundle it as ESM.
+  // @napi-rs/canvas stays external because it has native .node binaries.
   serverExternalPackages: [
     "@napi-rs/canvas",
-    "pdfjs-dist",
     "mammoth",
     "bcryptjs",
+    "sharp",
   ],
   // Security headers — applied to all routes
   async headers() {
