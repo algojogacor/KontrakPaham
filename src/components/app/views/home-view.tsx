@@ -77,10 +77,10 @@ export function HomeView() {
               </Button>
             </div>
 
-            <div className="mt-7 flex flex-wrap items-center gap-x-5 gap-y-2 text-xs text-muted-foreground animate-fade-in-up stagger-4">
-              <span className="flex items-center gap-1.5"><Check className="h-3.5 w-3.5 text-primary" /> 3 analisis gratis / bulan</span>
-              <span className="flex items-center gap-1.5"><Check className="h-3.5 w-3.5 text-primary" /> Tanpa kartu kredit</span>
-              <span className="flex items-center gap-1.5"><Check className="h-3.5 w-3.5 text-primary" /> Hasil ~1 menit</span>
+            <div className="mt-7 grid max-w-xl grid-cols-1 gap-2 text-xs text-muted-foreground animate-fade-in-up stagger-4 sm:grid-cols-3">
+              <HeroMeta label="Input" value="PDF, DOCX, teks" />
+              <HeroMeta label="Output" value="Risiko + saran" />
+              <HeroMeta label="Batasan" value="Edukasi hukum" />
             </div>
           </div>
 
@@ -215,7 +215,7 @@ export function HomeView() {
                   <Badge variant="outline" className="border-amber-500/40 text-amber-700 dark:text-amber-300">Transparan</Badge>
                 </div>
                 <p className="mt-2 text-sm leading-relaxed text-ink-soft">
-                  KontrakPaham dikelola oleh <strong className="text-ink">mahasiswa hukum tingkat akhir, bukan advokat berlisensi</strong>.
+                  KontrakPaham dikelola oleh <strong className="text-ink">mahasiswa hukum UNAIR, bukan advokat berlisensi</strong>.
                   Hasil analisis bersifat edukasi & gambaran risiko — bukan nasihat hukum definitif. Untuk keputusan
                   penting, konsultasikan dengan advokat berlisensi. Kami transparan soal ini dari awal.
                 </p>
@@ -294,6 +294,15 @@ function SectionEyebrow({ children }: { children: React.ReactNode }) {
     <div className="inline-flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-primary">
       <span className="h-px w-6 bg-primary/40" />
       {children}
+    </div>
+  );
+}
+
+function HeroMeta({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-lg border border-border/70 bg-card/55 px-3 py-2 backdrop-blur-sm">
+      <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-muted-foreground">{label}</p>
+      <p className="mt-0.5 font-medium text-ink">{value}</p>
     </div>
   );
 }

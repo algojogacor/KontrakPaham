@@ -1,41 +1,14 @@
 import { db } from "@/lib/db";
+import { getPlanLimits } from "@/lib/plans";
 
-export interface PlanLimits {
-  analysesPerMonth: number;
-  maxFileBytes: number;
-  maxChars: number;
-  features: string[];
-}
+export { getPlanLimits, PLAN_LIMITS, type PlanLimits } from "@/lib/plans";
 
-export const PLAN_LIMITS: Record<string, PlanLimits> = {
-  FREE: {
-    analysesPerMonth: 3,
-    maxFileBytes: 5 * 1024 * 1024, // 5 MB
-    maxChars: 50_000,
-    features: [
-      "3 analisis per bulan",
-      "Upload PDF / DOCX / teks",
-      "Deteksi klausul bermasalah",
-      "Penjelasan bahasa awam",
-      "Export PDF report",
-    ],
-  },
-  PRO: {
-    analysesPerMonth: 999, // praktis unlimited untuk demo
-    maxFileBytes: 20 * 1024 * 1024, // 20 MB
-    maxChars: 200_000,
-    features: [
-      "Analisis tak terbatas",
-      "File hingga 20 MB",
-      "Semua fitur FREE",
-      "Prioritas antrean analisis",
-      "Konsultasi lanjutan",
-    ],
-  },
-};
-
-export function getPlanLimits(plan: string): PlanLimits {
-  return PLAN_LIMITS[plan] ?? PLAN_LIMITS.FREE;
+export function getEffectivePlan(user: { plan: string; planExpiresAt?: Date | string | null }): string {
+  if (user.plan === "ADMIN") return "ADMIN";
+  if (user.plan === "FREE") return "FREE";
+  if (!user.planExpiresAt) return "FREE";
+  const expires = user.planExpiresAt instanceof Date ? user.planExpiresAt : new Date(user.planExpiresAt);
+  return expires.getTime() > Date.now() ? user.plan : "FREE";
 }
 
 function monthYear(d = new Date()) {
@@ -79,7 +52,7 @@ export async function getQuota(userId: string, plan: string) {
 export async function consumeQuota(userId: string): Promise<boolean> {
   const user = await db.user.findUnique({ where: { id: userId } });
   if (!user) return false;
-  const quota = await getQuota(userId, user.plan);
+  const quota = await getQuota(userId, getEffectivePlan(user));
   if (quota.remaining <= 0) return false;
   const { month, year } = monthYear();
   await db.quota.update({

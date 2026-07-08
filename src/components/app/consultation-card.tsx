@@ -26,7 +26,7 @@ export function ConsultationCard({ compact = false }: { compact?: boolean }) {
             <h3 className="font-semibold text-foreground">Butuh diskusi lebih lanjut?</h3>
             <p className="mt-1 text-sm text-muted-foreground">
               Hubungi untuk mendiskusikan hasil analisis. <span className="font-medium text-foreground">Jujur soal kredensial:</span>{" "}
-              ini dikelola oleh mahasiswa hukum tingkat akhir, <strong>bukan advokat berlisensi</strong>.
+              ini dikelola oleh mahasiswa hukum UNAIR, <strong>bukan advokat berlisensi</strong>.
               Bisa bantu memahami & memetakan opsi, bukan memberi nasihat hukum definitif.
             </p>
 

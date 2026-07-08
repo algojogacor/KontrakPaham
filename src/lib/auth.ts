@@ -89,6 +89,7 @@ export async function getCurrentUser() {
       email: true,
       displayName: true,
       plan: true,
+      planExpiresAt: true,
       createdAt: true,
     },
   });

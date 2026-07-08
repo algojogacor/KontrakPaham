@@ -1,20 +1,33 @@
 "use client";
 
-import { useState, useCallback, useRef, useEffect } from "react";
-import { useApp } from "@/lib/store";
-import { api, friendlyError } from "@/lib/api-client";
+import { useCallback, useEffect, useRef, useState } from "react";
+import {
+  AlertTriangle,
+  CheckCircle2,
+  ClipboardPaste,
+  FileCheck2,
+  FileText,
+  Loader2,
+  ScanLine,
+  Sparkles,
+  Upload,
+  X,
+} from "lucide-react";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Progress } from "@/components/ui/progress";
-import { Upload, FileText, ClipboardPaste, Loader2, AlertTriangle, FileCheck2, ScanLine, Sparkles, X, CheckCircle2 } from "lucide-react";
+import { ContractLoading } from "@/components/app/contract-loading";
+import { ViewShell } from "@/components/app/view-shell";
+import { api, friendlyError } from "@/lib/api-client";
+import { useApp } from "@/lib/store";
 import { toast } from "@/hooks/use-toast";
 
 const ANALYSIS_STEPS = [
   { label: "Membaca dokumen", detail: "Mengekstrak teks dari file Anda" },
-  { label: "Memvalidasi", detail: "Cek bahasa, kelengkapan, & ukuran" },
+  { label: "Memvalidasi", detail: "Cek bahasa, kelengkapan, dan ukuran" },
   { label: "Menganalisis klausul", detail: "Mendeteksi klausul berisiko per kategori" },
   { label: "Menyusun penjelasan", detail: "Menerjemahkan ke bahasa awam" },
   { label: "Menyusun rekomendasi", detail: "Memberi saran tindakan konkret" },
@@ -33,7 +46,6 @@ export function AnalyzeView() {
   const inputRef = useRef<HTMLInputElement>(null);
   const timersRef = useRef<ReturnType<typeof setTimeout>[]>([]);
 
-  // Clear any pending progress timers on unmount to prevent state updates on unmounted component
   useEffect(() => {
     return () => {
       timersRef.current.forEach(clearTimeout);
@@ -65,13 +77,11 @@ export function AnalyzeView() {
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
     setDragOver(false);
-    const f = e.dataTransfer.files?.[0];
-    onFile(f);
+    onFile(e.dataTransfer.files?.[0] || null);
   };
 
   const startProgress = () => {
     setStepIdx(0);
-    // Clear any previous timers before starting new ones
     timersRef.current.forEach(clearTimeout);
     timersRef.current = [];
     const delay = (i: number, ms: number) =>
@@ -100,13 +110,9 @@ export function AnalyzeView() {
     setLoading(true);
     const cancelProgress = startProgress();
     try {
-      const res =
-        tab === "text"
-          ? await api.analyzeText(text)
-          : await api.analyzeFile(file!);
+      const res = tab === "text" ? await api.analyzeText(text) : await api.analyzeFile(file!);
       setWarnings(res.warnings || []);
       setCurrentAnalysis(res.analysis);
-      // Refresh quota
       try {
         const q = await api.getQuota();
         setQuota(q.quota);
@@ -125,23 +131,22 @@ export function AnalyzeView() {
   };
 
   return (
-    <div className="mx-auto max-w-3xl px-4 py-8">
-      <div className="text-center">
-        <h1 className="font-display text-2xl font-bold tracking-tight text-ink sm:text-3xl">Analisis Kontrak</h1>
-        <p className="mt-1 text-muted-foreground">
-          Unggah file atau tempel teks kontrak berbahasa Indonesia. Hasil muncul dalam ~1 menit.
-        </p>
-      </div>
-
+    <ViewShell
+      size="narrow"
+      eyebrow="Analisis baru"
+      title="Analisis Kontrak"
+      description="Unggah file atau tempel teks kontrak berbahasa Indonesia. Hasil muncul dalam sekitar 1 menit."
+      icon={FileText}
+    >
       {error && (
-        <Alert variant="destructive" className="mt-6">
+        <Alert variant="destructive" className="mb-5">
           <AlertTriangle className="h-4 w-4" />
           <AlertDescription>{error}</AlertDescription>
         </Alert>
       )}
 
       {warnings.length > 0 && (
-        <Alert className="mt-6 border-amber-300/60 bg-amber-50 text-amber-900 dark:bg-amber-950/30 dark:text-amber-200">
+        <Alert className="mb-5 border-amber-300/60 bg-amber-50 text-amber-900 dark:bg-amber-950/30 dark:text-amber-200">
           <AlertTriangle className="h-4 w-4" />
           <AlertTitle>Catatan dokumen</AlertTitle>
           <AlertDescription>
@@ -155,14 +160,14 @@ export function AnalyzeView() {
       {loading ? (
         <LoadingCard stepIdx={stepIdx} />
       ) : (
-        <Card className="mt-6">
+        <Card className="border-border/70 bg-card/90 shadow-soft-lg">
           <CardContent className="p-5 sm:p-6">
-            <Tabs value={tab} onValueChange={(v) => setTab(v as any)}>
-              <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="text" className="gap-1.5">
+            <Tabs value={tab} onValueChange={(v) => setTab(v as "text" | "file")}>
+              <TabsList className="grid h-auto w-full grid-cols-2 rounded-xl bg-muted/70 p-1">
+                <TabsTrigger value="text" className="gap-1.5 rounded-lg">
                   <ClipboardPaste className="h-4 w-4" /> Tempel Teks
                 </TabsTrigger>
-                <TabsTrigger value="file" className="gap-1.5">
+                <TabsTrigger value="file" className="gap-1.5 rounded-lg">
                   <Upload className="h-4 w-4" /> Upload File
                 </TabsTrigger>
               </TabsList>
@@ -171,8 +176,8 @@ export function AnalyzeView() {
                 <Textarea
                   value={text}
                   onChange={(e) => setText(e.target.value)}
-                  placeholder="Tempel teks kontrak di sini… (min. 120 karakter, maks. 50.000)"
-                  className="min-h-[260px] resize-y font-mono text-sm leading-relaxed"
+                  placeholder="Tempel teks kontrak di sini... (min. 120 karakter, maks. 50.000)"
+                  className="min-h-[280px] resize-y font-mono text-sm leading-relaxed"
                   maxLength={charLimit + 1000}
                 />
                 <div className="flex items-center justify-between text-xs text-muted-foreground">
@@ -196,7 +201,7 @@ export function AnalyzeView() {
                     onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
                     onDragLeave={() => setDragOver(false)}
                     onDrop={handleDrop}
-                    className={`flex w-full flex-col items-center justify-center gap-3 rounded-xl border-2 border-dashed p-10 text-center transition-colors ${
+                    className={`flex min-h-[260px] w-full flex-col items-center justify-center gap-3 rounded-xl border-2 border-dashed p-6 text-center transition-all sm:p-10 ${
                       dragOver ? "border-primary bg-primary/5" : "border-border hover:border-primary/50 hover:bg-muted/40"
                     }`}
                   >
@@ -205,7 +210,7 @@ export function AnalyzeView() {
                     </div>
                     <div>
                       <p className="font-medium">Klik untuk memilih, atau seret file ke sini</p>
-                      <p className="mt-1 text-xs text-muted-foreground">PDF (termasuk scan — ada OCR) atau DOCX · maks. 5 MB</p>
+                      <p className="mt-1 text-xs text-muted-foreground">PDF termasuk scan dengan OCR, atau DOCX. Maks. 5 MB.</p>
                     </div>
                   </button>
                 ) : (
@@ -216,7 +221,7 @@ export function AnalyzeView() {
                     <div className="min-w-0 flex-1">
                       <p className="truncate font-medium">{file.name}</p>
                       <p className="text-xs text-muted-foreground">
-                        {(file.size / 1024).toFixed(0)} KB · {file.name.split(".").pop()?.toUpperCase()}
+                        {(file.size / 1024).toFixed(0)} KB - {file.name.split(".").pop()?.toUpperCase()}
                       </p>
                     </div>
                     <Button variant="ghost" size="icon" onClick={() => setFile(null)} aria-label="Hapus file">
@@ -231,7 +236,7 @@ export function AnalyzeView() {
               <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
                 <ScanLine className="h-3.5 w-3.5" /> PDF hasil scan? OCR otomatis diaktifkan jika teks tak terbaca.
               </p>
-              <Button size="lg" className="gap-2" onClick={run} disabled={loading}>
+              <Button size="lg" className="gap-2 sm:min-w-44" onClick={run} disabled={loading}>
                 <Sparkles className="h-4 w-4" /> Mulai Analisis
               </Button>
             </div>
@@ -239,29 +244,25 @@ export function AnalyzeView() {
         </Card>
       )}
 
-      {/* Privacy note */}
-      <p className="mt-4 flex items-start gap-2 text-xs text-muted-foreground">
+      <p className="mt-4 flex items-start gap-2 text-xs leading-relaxed text-muted-foreground">
         <CheckCircle2 className="mt-0.5 h-3.5 w-3.5 shrink-0 text-emerald-500" />
-        Teks kontrak Anda disimpan terkait akun untuk riwayat & bisa Anda hapus kapan saja. Jangan unggah dokumen
+        Teks kontrak Anda disimpan terkait akun untuk riwayat dan bisa Anda hapus kapan saja. Jangan unggah dokumen
         yang mengandung data sensitif jika tidak perlu (mis. nomor KTP penuh). Sebaiknya sensor dulu.
       </p>
-    </div>
+    </ViewShell>
   );
 }
 
 function LoadingCard({ stepIdx }: { stepIdx: number }) {
   return (
-    <Card className="mt-6 overflow-hidden">
+    <Card className="overflow-hidden border-primary/20 bg-card/90 shadow-soft-lg">
       <CardContent className="p-6">
-        <div className="mb-5 flex items-center gap-3">
-          <div className="relative flex h-12 w-12 items-center justify-center">
-            <Loader2 className="h-8 w-8 animate-spin text-primary" />
-          </div>
-          <div>
-            <h3 className="font-semibold">Sedang menganalisis kontrak Anda…</h3>
-            <p className="text-sm text-muted-foreground">Biasanya 30 detik – 2 menit. Jangan tutup halaman ini.</p>
-          </div>
-        </div>
+        <ContractLoading
+          compact
+          title="Sedang menganalisis kontrak Anda..."
+          detail="Biasanya 30 detik sampai 2 menit. Jangan tutup halaman ini."
+          className="mb-6"
+        />
 
         <div className="space-y-3">
           {ANALYSIS_STEPS.map((s, i) => {

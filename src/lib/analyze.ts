@@ -1,11 +1,13 @@
-import ZAI from "z-ai-web-dev-sdk";
 import { logger } from "@/lib/logger";
+import { createChatCompletion } from "@/lib/llm";
+import { buildLegalResearchContext } from "@/lib/research";
+import type { LegalResearchContext } from "@/lib/research";
 
 export interface Finding {
   category: string;
   categoryLabel: string;
   severity: "RENDAH" | "SEDANG" | "TINGGI" | "KRITIS";
-  confidence: number; // 0-100
+  confidence: number;
   urgency: "INFO" | "PERHATIAN" | "PERLU_TINDAKAN";
   originalClause: string;
   plainTranslation: string;
@@ -18,246 +20,185 @@ export interface Finding {
 export interface AnalysisResult {
   summary: string;
   overallRisk: "RENDAH" | "SEDANG" | "TINGGI" | "KRITIS";
-  riskScore: number; // 0-100
+  riskScore: number;
   findings: Finding[];
   modelUsed: string;
   uncertain: boolean;
   notes: string[];
+  research?: LegalResearchContext;
 }
 
 const SYSTEM_PROMPT = `Anda adalah asisten analisis kontrak hukum untuk masyarakat awam Indonesia.
-Tugas: menganalisis teks kontrak berbahasa Indonesia, mendeteksi klausul yang berpotensi bermasalah
-atau merugikan salah satu pihak, lalu menjelaskannya dalam bahasa awam yang mudah dimengerti
-orang yang bukan ahli hukum.
+Tugas Anda: membaca kontrak berbahasa Indonesia, menemukan klausul yang berpotensi merugikan, lalu menjelaskan risikonya dalam bahasa awam.
 
-PRINSIP PENTING:
-- Anda BUKAN advokat berlisensi. Berikan edukasi & gambaran risiko, BUKAN nasihat hukum definitif.
-- Jika Anda TIDAK YAKIN pada suatu temuan, tetap laporkan tapi turunkan confidence-nya (di bawah 60)
-  dan tandai actionType = "BUTUH_NASIHAT". Jangan pernah diam/silent fail.
-- Bahasa penjelasan harus sederhana, hindari jargon, atau jelaskan jargon jika terpaksa.
+Prinsip wajib:
+- Anda BUKAN advokat berlisensi. Berikan edukasi dan gambaran risiko, BUKAN nasihat hukum definitif.
+- Jangan mengarang klausul. Kutip hanya klausul yang ada di teks.
+- Jika ragu, tetap laporkan temuan dengan confidence rendah dan actionType "BUTUH_NASIHAT".
+- Tidak semua klausul harus dibuat berbahaya. Jika wajar, overallRisk bisa RENDAH.
+- Penjelasan harus konkret: jelaskan dampak, perbandingan kewajaran jika relevan, dan rekomendasi negosiasi yang bisa dieksekusi.
 
-KEDALAMAN TEMUAN (WAJIB untuk setiap finding):
-- plainTranslation = terjemahan/parafrasa klausul asli ke bahasa awam yang jelas. Sebut siapa
-  pihak yang dirugikan jika terlihat.
-- explanation = mengapa berisiko. WAJIB sertakan PERBANDINGAN dengan NORMA WAJAR/praktik umum
-  jika relevan. Contoh: "Denda 2%/hari setara ~730%/tahun. Untuk perbandingan, bunga bank
-  konvensional sekitar 0,1%/hari (~36%/tahun) — jadi denda ini ~20× lipat norma wajar."
-  Berikan angka/konteks konkret, BUKAN pernyataan generik seperti "ini berisiko".
-- recommendation = langkah konkret yang bisa DIEKSEKUSI user. Sebutkan: (a) apa yang minta
-  diubah/dinegosiasi, (b) nilai/batas wajar yang diusulkan, (c) alternatif jika ditolak.
-  Contoh: "Negosiasi denda maksimal 0,1%/hari atau nominal tetap Rp50.000. Minta grace period
-  3 hari. Jika penolak, pertimbangkan menunda tanda tangan."
-- actionType "INFO_UMUM" = hal baik diketahui, tidak mendesak. "BUTUH_NASIHAT" = sebaiknya
-  didiskusikan/sebelum tanda tangan.
+Kategori yang tersedia:
+JANGKA_WAKTU, DENDA_SANKSI, KLAUSUL_SEPIHAK, PENGALIHAN_RISIKO, KETENTUAN_PEMUTUSAN,
+KEWAJIBAN_PEMBAYARAN, HAK_KEPEMILIKAN, KERAHASIAAN, PENYELESAIAN_SENGKETA, FORUM_HUKUM,
+FORCE_MAJEUR, PERUBAHAN_KLAUSUL, TANGGUNG_JAWAB, DATA_PRIBADI, KLAUSUL_ABNORMAL, LAIN_LAIN.
 
-PENANGANAN KLAUSUL AMBIGU / TIDAK JELAS:
-Jika klausul bisa ditafsirkan dua arah (mis. definisi samar, ruang lingkup tidak jelas, kondisi
-yang tergantung konteks), JANGAN paksa severity tinggi. Sebagai gantinya:
-- confidence rendah (30-55)
-- severity SEDANG (bukan TINGGI/KRITIS kecuali jelas-jelas berbahaya)
-- urgency PERHATIAN
-- actionType BUTUH_NASIHAT
-- explanation: jelaskan AMBIGUITAS-nya ("klausul ini bisa berarti X atau Y tergantung
-  interpretasi — klarifikasi secara tertulis")
-- recommendation: minta klarifikasi tertulis spesifik sebelum tanda tangan.
-Ini penting: TIDAK SEMUA klausul harus berisiko tinggi. Lebih baik jujur "kurang yakin" daripada
-over-alarm. Tapi tetap laporkan agar user aware.
+Severity: RENDAH, SEDANG, TINGGI, KRITIS.
+Urgency: INFO, PERHATIAN, PERLU_TINDAKAN.
+ActionType: INFO_UMUM, BUTUH_NASIHAT.
 
-KATEGORI temuan (pilih category yang paling pas, boleh lebih dari satu temuan per kategori):
-- JANGKA_WAKTU
-- DENDA_SANKSI
-- KLAUSUL_SEPIHAK
-- PENGALIHAN_RISIKO
-- KETENTUAN_PEMUTUSAN
-- KEWAJIBAN_PEMBAYARAN
-- HAK_KEPEMILIKAN
-- KERAHASIAAN
-- PENYELESAIAN_SENGKETA
-- FORUM_HUKUM
-- FORCE_MAJEUR
-- PERUBAHAN_KLAUSUL
-- TANGGUNG_JAWAB
-- DATA_PRIBADI
-- KLAUSUL_ABNORMAL
-- LAIN_LAIN
-
-severity (dampak):
-- RENDAH: minor, tidak banyak dampak
-- SEDANG: perlu diperhatikan
-- TINGGI: berpotensi merugikan signifikan
-- KRITIS: sangat berbahaya, jangan ditandatangani sebelum diklarifikasi
-
-urgency:
-- INFO: informasi umum
-- PERHATIAN: perlu dipahami sebelum tanda tangan
-- PERLU_TINDAKAN: wajib dinegosiasi/diklarifikasi
-
-confidence: 0-100, seberapa yakin Anda ini benar-benar masalah. Rendah (<60) jika ambigu.
-
-PENTING: Jawab HANYA dengan JSON valid (tanpa markdown, tanpa teks tambahan) dengan struktur:
+Balas HANYA JSON valid dengan struktur:
 {
-  "summary": "ringkasan 2-4 kalimat tentang kontrak & risiko keseluruhan",
+  "summary": "ringkasan 2-4 kalimat",
   "overallRisk": "RENDAH|SEDANG|TINGGI|KRITIS",
-  "riskScore": 0-100,
+  "riskScore": 0,
   "findings": [
     {
       "category": "...",
-      "categoryLabel": "Label ramah manusia dalam Bahasa Indonesia",
-      "severity": "...",
-      "confidence": 0-100,
-      "urgency": "...",
-      "originalClause": "kutipan klausul asli (boleh dipendekkan, jangan mengarang)",
-      "plainTranslation": "terjemahan ke bahasa awam",
-      "explanation": "penjelasan risiko + perbandingan norma wajar",
-      "recommendation": "rekomendasi aksi konkret + nilai wajar + alternatif",
+      "categoryLabel": "...",
+      "severity": "RENDAH|SEDANG|TINGGI|KRITIS",
+      "confidence": 0,
+      "urgency": "INFO|PERHATIAN|PERLU_TINDAKAN",
+      "originalClause": "kutipan klausul asli",
+      "plainTranslation": "bahasa awam",
+      "explanation": "risiko + perbandingan wajar bila relevan",
+      "recommendation": "aksi konkret + alternatif",
       "actionType": "INFO_UMUM|BUTUH_NASIHAT",
-      "location": "opsional: nomor pasal/bagian jika terlihat"
+      "location": "opsional"
     }
   ],
-  "uncertain": boolean,
-  "notes": ["catatan tambahan, misal keterbatasan analisis atau ambiguitas yang perlu klarifikasi"]
-}
-
-Jika teks bukan kontrak sama sekali, tetap kembalikan JSON dengan findings kosong,
-summary yang menjelaskan dokumen bukan kontrak, overallRisk "RENDAH", uncertain true,
-dan notes berisi penjelasan. JANGAN mengarang klausul.
-
-Jika kontrak AMAN/berisiko rendah (semua klausul wajar), tetap kembalikan findings (bisa
-kosong atau hanya RENDAH/INFO), overallRisk "RENDAH", uncertain false. Jangan dipaksakan
-mencari masalah yang tidak ada.`;
+  "uncertain": false,
+  "notes": []
+}`;
 
 function extractJson(text: string): any {
-  // Strip code fences if present
   let t = text.trim();
   if (t.startsWith("```")) {
     t = t.replace(/^```(?:json)?\s*/i, "").replace(/```\s*$/i, "").trim();
   }
-  // Find first { and last }
   const first = t.indexOf("{");
   const last = t.lastIndexOf("}");
-  if (first === -1 || last === -1) {
-    throw new Error("Respons AI tidak mengandung JSON");
-  }
-  const slice = t.slice(first, last + 1);
-  return JSON.parse(slice);
+  if (first === -1 || last === -1) throw new Error("Respons AI tidak mengandung JSON");
+  return JSON.parse(t.slice(first, last + 1));
 }
 
 function clamp(n: number, min: number, max: number) {
   return Math.max(min, Math.min(max, n));
 }
 
+function oneOf<T extends string>(value: unknown, allowed: readonly T[], fallback: T): T {
+  const normalized = String(value || "").toUpperCase();
+  return allowed.includes(normalized as T) ? (normalized as T) : fallback;
+}
+
 function normalizeFinding(raw: any): Finding {
-  const validSev = ["RENDAH", "SEDANG", "TINGGI", "KRITIS"];
-  const validUrg = ["INFO", "PERHATIAN", "PERLU_TINDAKAN"];
-  const validAct = ["INFO_UMUM", "BUTUH_NASIHAT"];
   return {
     category: String(raw.category || "LAIN_LAIN").toUpperCase(),
     categoryLabel: String(raw.categoryLabel || raw.category || "Lainnya"),
-    severity: validSev.includes(String(raw.severity).toUpperCase())
-      ? String(raw.severity).toUpperCase()
-      : "SEDANG",
+    severity: oneOf(raw.severity, ["RENDAH", "SEDANG", "TINGGI", "KRITIS"], "SEDANG"),
     confidence: clamp(Number(raw.confidence) || 50, 0, 100),
-    urgency: validUrg.includes(String(raw.urgency).toUpperCase())
-      ? String(raw.urgency).toUpperCase()
-      : "PERHATIAN",
+    urgency: oneOf(raw.urgency, ["INFO", "PERHATIAN", "PERLU_TINDAKAN"], "PERHATIAN"),
     originalClause: String(raw.originalClause || "").slice(0, 2000),
     plainTranslation: String(raw.plainTranslation || "").slice(0, 2000),
     explanation: String(raw.explanation || "").slice(0, 2000),
     recommendation: String(raw.recommendation || "").slice(0, 2000),
-    actionType: validAct.includes(String(raw.actionType).toUpperCase())
-      ? String(raw.actionType).toUpperCase()
-      : "BUTUH_NASIHAT",
+    actionType: oneOf(raw.actionType, ["INFO_UMUM", "BUTUH_NASIHAT"], "BUTUH_NASIHAT"),
     location: raw.location ? String(raw.location).slice(0, 200) : undefined,
   };
 }
 
-export async function analyzeContract(
-  contractText: string,
-  signal?: AbortSignal
-): Promise<AnalysisResult> {
-  const zai = await ZAI.create();
+function normalizeRiskScore(value: unknown) {
+  const score = Number(value) || 0;
+  if (score > 0 && score <= 10) return clamp(score * 10, 0, 100);
+  return clamp(score, 0, 100);
+}
 
-  // Truncate very long text to stay within context limits
+export async function analyzeContract(contractText: string, plan = "FREE", signal?: AbortSignal): Promise<AnalysisResult> {
+  const tTotal0 = Date.now();
+  console.log(`[TIMING] analyzeContract START | chars=${contractText.length} | plan=${plan}`);
+
   const truncated =
-    contractText.length > 30000
-      ? contractText.slice(0, 30000) +
-        "\n\n[...dokumen dipotong karena panjang...]"
+    contractText.length > 30_000
+      ? `${contractText.slice(0, 30_000)}\n\n[...dokumen dipotong karena panjang...]`
       : contractText;
 
-  // Retry logic: LLM can return malformed JSON or transiently fail.
-  // 3 attempts with exponential backoff (1s, 2s, 4s).
-  const MAX_RETRIES = 3;
+  if (contractText.length > 30_000) {
+    console.log(`[TIMING] text_truncated: original=${contractText.length} truncated=30000`);
+  }
+
+  // --- Phase 1: Legal Research ---
+  const tResearch0 = Date.now();
+  const research = await buildLegalResearchContext(contractText, plan);
+  const researchMs = Date.now() - tResearch0;
+  console.log(`[TIMING] research_total: ${researchMs}ms | enabled=${research.enabled} | effort=${research.effort ?? "none"} | youLatency=${research.latencyMs ?? "n/a"}ms`);
+
+  const researchPrompt = research.content
+    ? `\n\n=== KONTEKS RISET HUKUM TERKINI ===\nEffort: ${research.effort}\nQuery: ${research.query}\n${research.content}\n\nGunakan konteks riset ini untuk memperbarui analisis, tetapi jangan mengarang sumber. Jika konteks riset tidak cukup, nyatakan keterbatasan di notes.`
+    : research.warning
+      ? `\n\n=== CATATAN RISET HUKUM ===\n${research.warning}\n`
+      : "";
+
+  // --- Phase 2: LLM Analysis (with retry) ---
+  const maxRetries = 3;
   let lastError: Error | null = null;
-  for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
     if (signal?.aborted) throw new Error("ABORTED");
+    const tAttempt0 = Date.now();
+    console.log(`[TIMING] llm_analysis_attempt START | attempt=${attempt}/${maxRetries}`);
     try {
-      // Timeout: 90s per attempt (LLM should respond within this)
-      const timeoutSignal = AbortSignal.timeout(90_000);
-      const combinedSignal = signal
-        ? AbortSignal.any([signal, timeoutSignal])
-        : timeoutSignal;
-
-      const completion = await zai.chat.completions.create({
-        messages: [
+      const completion = await createChatCompletion(
+        [
           { role: "system", content: SYSTEM_PROMPT },
-          {
-            role: "user",
-            content: `Analisis kontrak berikut dan kembalikan JSON sesuai instruksi.\n\n=== KONTRAK ===\n${truncated}`,
-          },
+          { role: "user", content: `Analisis kontrak berikut.${researchPrompt}\n\n=== KONTRAK ===\n${truncated}` },
         ],
-        thinking: { type: "disabled" },
-        signal: combinedSignal as any,
-      });
-
-      if (signal?.aborted) throw new Error("ABORTED");
-
-      const content = completion?.choices?.[0]?.message?.content;
-      if (!content) {
-        throw new Error("Respons AI kosong");
-      }
-
-      const parsed = extractJson(
-        typeof content === "string" ? content : JSON.stringify(content)
+        signal,
+        "analysis_llm",
       );
+      const llmMs = Date.now() - tAttempt0;
+      console.log(`[TIMING] llm_analysis_attempt DONE: ${llmMs}ms | attempt=${attempt} | provider=${completion.provider} | model=${completion.model}`);
 
-      const validOverall = ["RENDAH", "SEDANG", "TINGGI", "KRITIS"];
+      // --- Phase 3: JSON parse + normalize ---
+      const tParse0 = Date.now();
+      const parsed = extractJson(completion.content);
       const findings: Finding[] = Array.isArray(parsed.findings)
-        ? parsed.findings.map(normalizeFinding).filter(
-            (f: Finding) => f.originalClause || f.explanation
-          )
+        ? parsed.findings.map(normalizeFinding).filter((f: Finding) => f.originalClause || f.explanation)
         : [];
+      const parseMs = Date.now() - tParse0;
+      console.log(`[TIMING] json_normalize: ${parseMs}ms | raw_findings=${Array.isArray(parsed.findings) ? parsed.findings.length : 0} | kept=${findings.length}`);
 
-      const riskScore = clamp(Number(parsed.riskScore) || 0, 0, 100);
+      const totalMs = Date.now() - tTotal0;
+      console.log(`[TIMING] analyzeContract DONE: total=${totalMs}ms | breakdown: research=${researchMs}ms llm=${llmMs}ms parse=${parseMs}ms`);
 
       return {
         summary: String(parsed.summary || "Analisis selesai.").slice(0, 2000),
-        overallRisk: validOverall.includes(String(parsed.overallRisk).toUpperCase())
-          ? String(parsed.overallRisk).toUpperCase()
-          : "SEDANG",
-        riskScore,
+        overallRisk: oneOf(parsed.overallRisk, ["RENDAH", "SEDANG", "TINGGI", "KRITIS"], "SEDANG"),
+        riskScore: normalizeRiskScore(parsed.riskScore),
         findings,
-        modelUsed: completion?.model || "glm",
+        modelUsed: `${completion.provider}:${completion.model}`,
         uncertain: Boolean(parsed.uncertain),
-        notes: Array.isArray(parsed.notes)
-          ? parsed.notes.map((n: any) => String(n).slice(0, 500)).slice(0, 8)
-          : [],
+        research,
+        notes: [
+          ...(research.content
+            ? [`Riset hukum You.com dipakai (${research.effort}, ${research.latencyMs ?? "-"} ms).`]
+            : research.warning
+              ? [research.warning]
+              : []),
+          ...(Array.isArray(parsed.notes)
+            ? parsed.notes.map((n: any) => String(n).slice(0, 500)).slice(0, 8)
+            : []),
+        ],
       };
     } catch (e) {
       lastError = e as Error;
-      if (signal?.aborted) throw e;
-      // Don't retry on abort
-      if ((e as Error).message === "ABORTED") throw e;
-      // Last attempt — give up
-      if (attempt === MAX_RETRIES) break;
-      // Exponential backoff: 1s, 2s
-      const delayMs = Math.pow(2, attempt - 1) * 1000;
-      logger("warn", "analysis attempt failed, retrying", {
-        attempt,
-        delayMs,
-        error: (e as Error).message,
-      });
+      if (signal?.aborted || lastError.message === "ABORTED") throw lastError;
+      if (attempt === maxRetries) break;
+      const delayMs = 2 ** (attempt - 1) * 1000;
+      const attemptMs = Date.now() - tAttempt0;
+      logger("warn", "analysis attempt failed, retrying", { attempt, delayMs, error: lastError.message });
+      console.log(`[TIMING] llm_analysis_attempt FAILED: ${attemptMs}ms | attempt=${attempt} | retryDelay=${delayMs}ms | error=${lastError.message.slice(0, 120)}`);
       await new Promise((r) => setTimeout(r, delayMs));
     }
   }
   throw lastError || new Error("Analisis gagal setelah beberapa percobaan.");
 }
+

@@ -1,20 +1,22 @@
 import { NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth";
-import { getQuota } from "@/lib/quota";
+import { getEffectivePlan, getQuota } from "@/lib/quota";
 import { logger } from "@/lib/logger";
 
 export async function GET() {
   const user = await getCurrentUser();
   if (!user) return NextResponse.json({ user: null, quota: null });
   try {
-    const quota = await getQuota(user.id, user.plan);
+    const effectivePlan = getEffectivePlan(user);
+    const quota = await getQuota(user.id, effectivePlan);
     return NextResponse.json({
       user: {
         id: user.id,
         username: user.username,
         email: user.email,
         displayName: user.displayName,
-        plan: user.plan,
+        plan: effectivePlan,
+        planExpiresAt: user.planExpiresAt?.toISOString() || null,
         createdAt: user.createdAt.toISOString(),
       },
       quota,

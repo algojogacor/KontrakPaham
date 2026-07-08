@@ -5,7 +5,7 @@ import { useApp } from "@/lib/store";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger, SheetTitle, SheetHeader } from "@/components/ui/sheet";
 import { ThemeToggle } from "@/components/theme-toggle";
-import { Menu, LayoutDashboard, FileSearch, History, Settings, LogOut, Sparkles, HelpCircle, BookOpen, BarChart3, FileText } from "lucide-react";
+import { Menu, LayoutDashboard, FileSearch, History, Settings, LogOut, Sparkles, HelpCircle, BookOpen, BarChart3, FileText, ShieldCheck } from "lucide-react";
 import { api } from "@/lib/api-client";
 import { toast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
@@ -41,8 +41,9 @@ export function SiteNav() {
         setOpen(false);
       }}
       className={cn(
-        "inline-flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium transition-colors hover:bg-muted",
-        view === target ? "text-foreground" : "text-muted-foreground"
+        "relative inline-flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium transition-all hover:bg-muted hover:text-foreground",
+        "after:absolute after:bottom-1 after:left-3 after:right-3 after:h-0.5 after:origin-left after:rounded-full after:bg-primary after:transition-transform",
+        view === target ? "text-foreground after:scale-x-100" : "text-muted-foreground after:scale-x-0"
       )}
     >
       {icon}
@@ -51,8 +52,8 @@ export function SiteNav() {
   );
 
   return (
-    <header className="sticky top-0 z-40 w-full border-b border-border/60 bg-background/85 backdrop-blur-xl supports-[backdrop-filter]:bg-background/70">
-      <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4">
+    <header className="sticky top-0 z-40 w-full px-3 py-2">
+      <div className="glass mx-auto flex h-16 max-w-6xl items-center justify-between rounded-2xl border-border/70 px-3 shadow-soft sm:px-4">
         <button onClick={() => setView(user ? "dashboard" : "home")} className="flex items-center gap-2.5 transition-opacity hover:opacity-80">
           {/* Custom editorial logo mark — a stylized "K" with an annotation underline */}
           <div className="relative flex h-9 w-9 items-center justify-center rounded-xl bg-ink text-background shadow-soft">
@@ -76,6 +77,7 @@ export function SiteNav() {
               {navItem("Contoh", "samples", <FileText className="h-4 w-4" />)}
               {navItem("Insight", "insights", <BarChart3 className="h-4 w-4" />)}
               {navItem("Riwayat", "history", <History className="h-4 w-4" />)}
+              {user.plan === "ADMIN" && navItem("Admin", "admin", <ShieldCheck className="h-4 w-4" />)}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" size="sm" className="gap-1 px-2">
@@ -130,6 +132,7 @@ export function SiteNav() {
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
+              <ThemeToggle />
             </>
           ) : (
             <>
@@ -171,6 +174,7 @@ export function SiteNav() {
                     {navItem("Contoh Kontrak", "samples", <FileText className="h-4 w-4" />)}
                     {navItem("Insight & Statistik", "insights", <BarChart3 className="h-4 w-4" />)}
                     {navItem("Riwayat", "history", <History className="h-4 w-4" />)}
+                    {user.plan === "ADMIN" && navItem("Admin License", "admin", <ShieldCheck className="h-4 w-4" />)}
                     {navItem("FAQ", "faq", <HelpCircle className="h-4 w-4" />)}
                     {navItem("Glosarium Hukum", "glossary", <BookOpen className="h-4 w-4" />)}
                     {navItem("Harga", "pricing", <Sparkles className="h-4 w-4" />)}

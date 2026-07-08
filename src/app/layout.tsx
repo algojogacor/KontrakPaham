@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono, Fraunces } from "next/font/google";
+import { Fraunces, Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import { Toaster } from "@/components/ui/toaster";
 import { ThemeProvider } from "@/components/theme-provider";
+import { Toaster } from "@/components/ui/toaster";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -14,7 +14,7 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-// Fraunces — characterful variable serif for editorial display headlines.
+// Fraunces: characterful variable serif for editorial display headlines.
 const fraunces = Fraunces({
   variable: "--font-display",
   subsets: ["latin"],
@@ -24,7 +24,7 @@ const fraunces = Fraunces({
 });
 
 export const metadata: Metadata = {
-  title: "KontrakPaham — Baca Kontrak Seperti Ahli, dalam 60 Detik",
+  title: "KontrakPaham - Baca Kontrak Seperti Ahli, dalam 60 Detik",
   description:
     "Unggah kontrak (PDF/DOCX/teks) berbahasa Indonesia. AI mendeteksi klausul bermasalah, menjelaskan risiko dalam bahasa awam, dan memberi saran tindakan sebelum Anda tanda tangan.",
   keywords: [
@@ -36,6 +36,21 @@ export const metadata: Metadata = {
   ],
   authors: [{ name: "KontrakPaham" }],
   icons: { icon: "/logo.svg" },
+};
+
+const softwareApplicationJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  name: "KontrakPaham",
+  applicationCategory: "BusinessApplication",
+  operatingSystem: "Web",
+  offers: {
+    "@type": "Offer",
+    price: "0",
+    priceCurrency: "IDR",
+  },
+  description:
+    "Analisis kontrak berbahasa Indonesia untuk mendeteksi klausul berisiko, menjelaskan risiko dalam bahasa awam, dan memberi saran tindakan edukatif sebelum tanda tangan.",
 };
 
 export default function RootLayout({
@@ -54,6 +69,10 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
+          <script
+            type="application/ld+json"
+            dangerouslySetInnerHTML={{ __html: JSON.stringify(softwareApplicationJsonLd) }}
+          />
           {children}
           <Toaster />
         </ThemeProvider>

@@ -38,6 +38,8 @@
   --color-popover: var(--popover);
   --color-card-foreground: var(--card-foreground);
   --color-card: var(--card);
+  --color-ink: var(--ink);
+  --color-ink-soft: var(--ink-soft);
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
@@ -281,6 +283,33 @@
   animation: slide-in-right 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
+@keyframes scan-contract {
+  0% { transform: translateY(-18px); opacity: 0; }
+  12% { opacity: 1; }
+  88% { opacity: 1; }
+  100% { transform: translateY(142px); opacity: 0; }
+}
+
+@keyframes stamp-pop {
+  0%, 100% { transform: rotate(-4deg) scale(1); }
+  50% { transform: rotate(-4deg) scale(1.04); }
+}
+
+@keyframes page-breathe {
+  0%, 100% { transform: translateY(0); box-shadow: 0 12px 36px -18px oklch(0.18 0.025 55 / 0.32); }
+  50% { transform: translateY(-3px); box-shadow: 0 20px 48px -20px oklch(0.18 0.025 55 / 0.38); }
+}
+
+@keyframes soft-route-in {
+  from { opacity: 0; transform: translateY(8px); filter: blur(3px); }
+  to { opacity: 1; transform: translateY(0); filter: blur(0); }
+}
+
+@keyframes orbit-nudge {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50% { transform: translateY(-2px) rotate(-2deg); }
+}
+
 /* Draw annotation underline */
 @keyframes draw-line {
   from { background-size: 0% 2px; }
@@ -300,6 +329,79 @@
 .stagger-4 { animation-delay: 0.24s; }
 .stagger-5 { animation-delay: 0.3s; }
 .stagger-6 { animation-delay: 0.36s; }
+
+/* Purposeful micro-interactions */
+[data-slot="button"] {
+  transform: translateZ(0);
+}
+[data-slot="button"]:not(:disabled):active {
+  transform: scale(0.98);
+}
+
+.route-surface {
+  animation: soft-route-in 0.32s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: 0.26s;
+  animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.contract-loader {
+  width: 172px;
+  height: 148px;
+}
+
+.contract-loader__page {
+  position: absolute;
+  inset: 8px 16px 0 0;
+  overflow: hidden;
+  border-radius: 14px;
+  border: 1px solid var(--border);
+  background: var(--card);
+  animation: page-breathe 2.4s ease-in-out infinite;
+}
+
+.contract-loader__scan {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 14px;
+  height: 28px;
+  background: linear-gradient(
+    to bottom,
+    transparent,
+    oklch(0.36 0.075 158 / 0.12),
+    oklch(0.36 0.075 158 / 0.28),
+    transparent
+  );
+  border-top: 1px solid oklch(0.36 0.075 158 / 0.35);
+  border-bottom: 1px solid oklch(0.36 0.075 158 / 0.24);
+  animation: scan-contract 2.2s cubic-bezier(0.45, 0, 0.2, 1) infinite;
+}
+
+.contract-loader__badge {
+  position: absolute;
+  right: 0;
+  top: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  border-radius: 999px;
+  background: var(--ink);
+  color: var(--background);
+  padding: 5px 8px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  box-shadow: 0 12px 28px -14px oklch(0.18 0.025 55 / 0.45);
+  animation: stamp-pop 1.8s ease-in-out infinite;
+}
+
+.empty-state-orbit {
+  animation: orbit-nudge 2.6s ease-in-out infinite;
+}
 
 /* Glassmorphism */
 .glass {
@@ -424,5 +526,12 @@
   .reveal {
     opacity: 1;
     transform: none;
+  }
+  .route-surface {
+    animation: none !important;
+  }
+  ::view-transition-old(root),
+  ::view-transition-new(root) {
+    animation: none !important;
   }
 }

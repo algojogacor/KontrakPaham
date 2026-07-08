@@ -15,9 +15,9 @@ export function EmptyState({
   action?: React.ReactNode;
 }) {
   return (
-    <Card className="border-dashed">
+    <Card className="border-dashed bg-card/75">
       <CardContent className="flex flex-col items-center justify-center gap-3 p-10 text-center">
-        <div className="flex h-14 w-14 items-center justify-center rounded-full bg-primary/10 text-primary">
+        <div className="empty-state-orbit flex h-14 w-14 items-center justify-center rounded-full bg-primary/10 text-primary">
           <Icon className="h-7 w-7" />
         </div>
         <div>

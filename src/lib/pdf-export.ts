@@ -107,6 +107,72 @@ export function generateAnalysisPdf(
   }
   y += 12;
 
+  // Research sources
+  if ((analysis.researchSources && analysis.researchSources.length > 0) || analysis.researchContent) {
+    ensureSpace(50);
+    doc.setTextColor(24, 24, 27);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(12);
+    doc.text("Sumber Riset Hukum", margin, y);
+    y += 15;
+
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(9);
+    doc.setTextColor(80, 80, 80);
+    const researchMeta = [
+      analysis.researchEffort ? `Effort: ${analysis.researchEffort}` : null,
+      analysis.researchLatencyMs ? `Latency: ${(analysis.researchLatencyMs / 1000).toFixed(1)} detik` : null,
+    ].filter(Boolean).join(" - ");
+    if (researchMeta) {
+      doc.text(researchMeta, margin, y);
+      y += 13;
+    }
+
+    if (analysis.researchSources && analysis.researchSources.length > 0) {
+      analysis.researchSources.forEach((source, index) => {
+        ensureSpace(28);
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(9);
+        doc.setTextColor(40, 40, 40);
+        const titleLines = doc.splitTextToSize(`${index + 1}. ${source.title}`, contentW);
+        for (const line of titleLines) {
+          ensureSpace(12);
+          doc.text(line, margin, y);
+          y += 12;
+        }
+        doc.setFont("helvetica", "normal");
+        doc.setTextColor(37, 99, 235);
+        const urlLines = doc.splitTextToSize(source.url, contentW);
+        for (const line of urlLines) {
+          ensureSpace(12);
+          doc.text(line, margin + 12, y);
+          y += 12;
+        }
+      });
+    }
+
+    if (analysis.researchContent) {
+      ensureSpace(28);
+      y += 4;
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(8);
+      doc.setTextColor(90, 90, 90);
+      doc.text("CUPLIKAN RISET DENGAN MARKER SITASI", margin, y);
+      y += 12;
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(8.5);
+      doc.setTextColor(70, 70, 70);
+      const excerpt = analysis.researchContent.slice(0, 1200);
+      const lines = doc.splitTextToSize(excerpt + (analysis.researchContent.length > excerpt.length ? "\n[...dipotong...]" : ""), contentW);
+      for (const line of lines) {
+        ensureSpace(11);
+        doc.text(line, margin, y);
+        y += 11;
+      }
+    }
+    y += 12;
+  }
+
   // Findings
   doc.setFont("helvetica", "bold");
   doc.setFontSize(12);
@@ -238,7 +304,7 @@ export function generateAnalysisPdf(
   doc.setTextColor(50, 50, 50);
   const disclaimer = [
     "Laporan ini dihasilkan oleh sistem otomatis berbasis kecerdasan buatan dan disusun untuk tujuan EDUKASI dan gambaran umum, BUKAN nasihat hukum definitif.",
-    "Sistem ini dikelola oleh mahasiswa hukum tingkat akhir, BUKAN advokat berlisensi. Hasil analisis bisa salah, tidak lengkap, atau tidak menangkap konteks spesifik perjanjian Anda.",
+    "Sistem ini dikelola oleh mahasiswa hukum UNAIR, BUKAN advokat berlisensi. Hasil analisis bisa salah, tidak lengkap, atau tidak menangkap konteks spesifik perjanjian Anda.",
     "Untuk keputusan penting (menandatangani kontrak, sengketa, transaksi besar), konsultasikan dengan advokat berlisensi yang memahami konteks Anda.",
     "Tingkat keyakinan (confidence) dan tingkat risiko adalah estimasi heuristik, bukan jaminan.",
     "Dengan menggunakan layanan ini, Anda memahami batasan tersebut.",

@@ -4,6 +4,7 @@ import { signinSchema, formatZodErrors } from "@/lib/validation";
 import { verifyPassword, createSessionToken, setSessionCookie } from "@/lib/auth";
 import { rateLimit, getClientIp } from "@/lib/rate-limit";
 import { audit } from "@/lib/logger";
+import { getEffectivePlan } from "@/lib/quota";
 
 export async function POST(req: NextRequest) {
   const ip = getClientIp(req);
@@ -50,6 +51,7 @@ export async function POST(req: NextRequest) {
   const token = await createSessionToken({ sub: user.id, username: user.username });
   await setSessionCookie(token);
   await audit("signin", { userId: user.id, ip });
+  const effectivePlan = getEffectivePlan(user);
 
   return NextResponse.json({
     user: {
@@ -57,7 +59,8 @@ export async function POST(req: NextRequest) {
       username: user.username,
       email: user.email,
       displayName: user.displayName,
-      plan: user.plan,
+      plan: effectivePlan,
+      planExpiresAt: user.planExpiresAt?.toISOString() || null,
       createdAt: user.createdAt.toISOString(),
     },
   });

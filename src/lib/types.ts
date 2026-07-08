@@ -19,6 +19,11 @@ export interface FindingDto {
   location?: string | null;
 }
 
+export interface ResearchSourceDto {
+  title: string;
+  url: string;
+}
+
 export interface AnalysisDto {
   id: string;
   title: string;
@@ -32,6 +37,11 @@ export interface AnalysisDto {
   status: string;
   errorMessage?: string | null;
   modelUsed?: string | null;
+  researchEffort?: string | null;
+  researchQuery?: string | null;
+  researchLatencyMs?: number | null;
+  researchContent?: string | null;
+  researchSources?: ResearchSourceDto[];
   createdAt: string;
   findings: FindingDto[];
 }
@@ -49,6 +59,11 @@ export interface AnalysisWithFindings {
   status: string;
   errorMessage?: string | null;
   modelUsed?: string | null;
+  researchEffort?: string | null;
+  researchQuery?: string | null;
+  researchLatencyMs?: number | null;
+  researchContent?: string | null;
+  researchSources?: ResearchSourceDto[];
   createdAt: Date;
   findings: FindingDto[];
   notes?: string[];
@@ -69,6 +84,7 @@ export interface UserDto {
   email: string;
   displayName?: string | null;
   plan: string;
+  planExpiresAt?: string | null;
   createdAt: string;
 }
 
@@ -104,6 +120,11 @@ export function toAnalysisDto(a: {
   status: string;
   errorMessage?: string | null;
   modelUsed?: string | null;
+  researchEffort?: string | null;
+  researchQuery?: string | null;
+  researchLatencyMs?: number | null;
+  researchContent?: string | null;
+  researchSources?: string | ResearchSourceDto[] | null;
   createdAt: Date;
   findings: FindingDto[];
 }): AnalysisDto {
@@ -120,6 +141,11 @@ export function toAnalysisDto(a: {
     status: a.status,
     errorMessage: a.errorMessage,
     modelUsed: a.modelUsed,
+    researchEffort: a.researchEffort,
+    researchQuery: a.researchQuery,
+    researchLatencyMs: a.researchLatencyMs,
+    researchContent: a.researchContent,
+    researchSources: normalizeResearchSources(a.researchSources),
     createdAt: a.createdAt.toISOString(),
     findings: (a.findings || []).map((f: FindingDto) => ({
       id: f.id,
@@ -136,4 +162,22 @@ export function toAnalysisDto(a: {
       location: f.location,
     })),
   };
+}
+
+function normalizeResearchSources(value: string | ResearchSourceDto[] | null | undefined): ResearchSourceDto[] {
+  if (!value) return [];
+  if (Array.isArray(value)) return value;
+  try {
+    const parsed = JSON.parse(value);
+    if (!Array.isArray(parsed)) return [];
+    return parsed
+      .map((source: any) => ({
+        title: String(source?.title || "Sumber resmi").slice(0, 180),
+        url: String(source?.url || ""),
+      }))
+      .filter((source: ResearchSourceDto) => source.url)
+      .slice(0, 12);
+  } catch {
+    return [];
+  }
 }

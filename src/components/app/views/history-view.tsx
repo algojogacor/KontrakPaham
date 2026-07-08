@@ -1,13 +1,19 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useApp } from "@/lib/store";
-import { api, friendlyError } from "@/lib/api-client";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import { format, formatDistanceToNow } from "date-fns";
+import { id as idLocale } from "date-fns/locale";
+import {
+  Clock,
+  Download,
+  FileSearch,
+  FileText,
+  History as HistoryIcon,
+  Loader2,
+  Plus,
+  Search,
+  Trash2,
+} from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -18,11 +24,16 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Skeleton } from "@/components/ui/skeleton";
 import { RiskPill } from "@/components/app/badges";
 import { EmptyState } from "@/components/app/empty-state";
-import { FileText, FileSearch, Search, Download, Trash2, Plus, Clock, Loader2, History as HistoryIcon } from "lucide-react";
-import { formatDistanceToNow, format } from "date-fns";
-import { id as idLocale } from "date-fns/locale";
+import { ViewShell } from "@/components/app/view-shell";
+import { api, friendlyError } from "@/lib/api-client";
+import { useApp } from "@/lib/store";
 import type { AnalysisDto } from "@/lib/types";
 import { toast } from "@/hooks/use-toast";
 
@@ -52,11 +63,11 @@ export function HistoryView() {
   };
 
   useEffect(() => {
-    load();
+    void load();
   }, []);
 
   const open = async (id: string) => {
-    toast({ title: "Memuat…" });
+    toast({ title: "Memuat..." });
     try {
       const { analysis } = await api.getAnalysis(id);
       setCurrentAnalysis(analysis);
@@ -88,40 +99,37 @@ export function HistoryView() {
   );
 
   return (
-    <div className="mx-auto max-w-4xl px-4 py-8">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h1 className="flex items-center gap-2 text-2xl font-bold tracking-tight">
-            <HistoryIcon className="h-6 w-6 text-primary" /> Riwayat Analisis
-          </h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Semua analisis tersimpan di akun Anda. Klik untuk melihat detail atau mengunduh ulang.
-          </p>
-        </div>
+    <ViewShell
+      size="medium"
+      eyebrow="Arsip kontrak"
+      title="Riwayat Analisis"
+      description="Semua analisis tersimpan di akun Anda. Klik kartu untuk melihat detail atau unduh ulang laporan PDF."
+      icon={HistoryIcon}
+      actions={
         <Button className="gap-1.5" onClick={() => setView("analyze")}>
           <Plus className="h-4 w-4" /> Analisis Baru
         </Button>
-      </div>
-
+      }
+    >
       {items && items.length > 0 && (
-        <div className="relative mt-5">
+        <div className="relative mb-5">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Cari judul atau nama file…"
-            className="pl-9"
+            placeholder="Cari judul atau nama file..."
+            className="h-11 rounded-xl bg-card pl-9"
           />
         </div>
       )}
 
       {error && (
-        <Alert variant="destructive" className="mt-5">
+        <Alert variant="destructive" className="mb-5">
           <AlertDescription>{error}</AlertDescription>
         </Alert>
       )}
 
-      <div className="mt-5 space-y-3">
+      <div className="space-y-3">
         {loading ? (
           [0, 1, 2, 3].map((i) => (
             <Card key={i}>
@@ -135,7 +143,7 @@ export function HistoryView() {
           <EmptyState
             icon={FileSearch}
             title="Belum ada analisis"
-            desc="Mulai analisis kontrak pertama Anda — unggah PDF/DOCX atau tempel teks."
+            desc="Mulai analisis kontrak pertama Anda: unggah PDF/DOCX atau tempel teks."
             action={<Button onClick={() => setView("analyze")} className="gap-1.5"><Plus className="h-4 w-4" /> Analisis sekarang</Button>}
           />
         ) : filtered?.length === 0 ? (
@@ -146,9 +154,9 @@ export function HistoryView() {
           </Card>
         ) : (
           filtered?.map((a) => (
-            <Card key={a.id} className="transition-shadow hover:shadow-md">
-              <CardContent className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center">
-                <button onClick={() => open(a.id)} className="flex min-w-0 flex-1 items-center gap-4 text-left">
+            <Card key={a.id} className="border-border/70 transition-all hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-soft">
+              <CardContent className="grid gap-3 p-4 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center">
+                <button onClick={() => open(a.id)} className="grid min-w-0 gap-3 text-left sm:grid-cols-[auto_minmax(0,1fr)] sm:items-center">
                   <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-muted">
                     {a.sourceType === "PDF" ? (
                       <FileText className="h-5 w-5 text-red-500" />
@@ -158,19 +166,19 @@ export function HistoryView() {
                       <FileSearch className="h-5 w-5 text-primary" />
                     )}
                   </div>
-                  <div className="min-w-0 flex-1">
+                  <div className="min-w-0">
                     <p className="truncate font-medium">{a.title}</p>
                     <p className="mt-0.5 line-clamp-1 text-xs text-muted-foreground">
-                      {a.summary || (a.status === "FAILED" ? "Analisis gagal" : "—")}
+                      {a.summary || (a.status === "FAILED" ? "Analisis gagal" : "-")}
                     </p>
                     <p className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-muted-foreground">
                       <span className="flex items-center gap-1">
                         <Clock className="h-3 w-3" />
                         {formatDistanceToNow(new Date(a.createdAt), { addSuffix: true, locale: idLocale })}
                       </span>
-                      <span>· {format(new Date(a.createdAt), "d MMM yyyy", { locale: idLocale })}</span>
-                      <span>· {a.findingsCount} temuan</span>
-                      <span>· {a.charCount.toLocaleString("id-ID")} karakter</span>
+                      <span>- {format(new Date(a.createdAt), "d MMM yyyy", { locale: idLocale })}</span>
+                      <span>- {a.findingsCount} temuan</span>
+                      <span>- {a.charCount.toLocaleString("id-ID")} karakter</span>
                     </p>
                   </div>
                 </button>
@@ -204,7 +212,7 @@ export function HistoryView() {
           <AlertDialogHeader>
             <AlertDialogTitle>Hapus analisis ini?</AlertDialogTitle>
             <AlertDialogDescription>
-              Tindakan ini permanen. Analisis & seluruh temuan akan dihapus selamanya.
+              Tindakan ini permanen. Analisis dan seluruh temuan akan dihapus selamanya.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -220,7 +228,7 @@ export function HistoryView() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </div>
+    </ViewShell>
   );
 }
 

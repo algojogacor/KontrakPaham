@@ -31,7 +31,7 @@ export function SiteFooter() {
               Bantu orang awam memahami kontrak sebelum tanda tangan. Edukasi, bukan nasihat hukum definitif.
             </p>
             <p className="text-xs text-background/40">
-              Dikelola oleh mahasiswa hukum tingkat akhir, bukan advokat berlisensi.
+              Dikelola oleh mahasiswa hukum UNAIR, bukan advokat berlisensi.
             </p>
           </div>
 

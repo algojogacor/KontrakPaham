@@ -54,7 +54,7 @@ export const TERMS_DOC: LegalDoc = {
       heading: "4. Hak & Kewajiban Anda",
       body: ["Hak Anda:"],
       list: [
-        "Menggunakan layanan sesuai paket yang dipilih (FREE: 3 analisis/bulan, PRO: tak terbatas via donasi)",
+        "Menggunakan layanan sesuai paket yang dipilih (FREE: 3 analisis/bulan, LITE: 20 analisis/bulan, PRO: 75 analisis/bulan)",
         "Mengakses, mengunduh ulang, dan menghapus data analisis Anda kapan saja",
         "Mendapatkan penjelasan yang jelas soal batasan layanan",
       ],
@@ -72,7 +72,7 @@ export const TERMS_DOC: LegalDoc = {
       heading: "6. Perubahan Layanan & Harga",
       body: [
         "Kami bisa mengubah fitur, batasan paket (mis. jumlah analisis gratis), atau model harga sewaktu-waktu. Untuk perubahan signifikan yang memengaruhi paket berbayar, kami beri tahu minimal 14 hari sebelumnya via email atau notifikasi di aplikasi.",
-        "Model saat ini: FREE (gratis, 3 analisis/bulan) dan PRO (donasi sukarela, analisis tak terbatas). Bukan langganan otomatis — tanpa lock-in.",
+        "Model saat ini: FREE (gratis), LITE, dan PRO. Paket berbayar diaktifkan manual memakai license code dengan durasi tertentu, bukan langganan otomatis.",
       ],
     },
     {
@@ -156,7 +156,7 @@ export const PRIVACY_DOC: LegalDoc = {
         "Anda sendiri (via akun Anda)",
         "Sistem otomatis KontrakPaham (untuk menjalankan analisis)",
         "Provider AI pihak ketiga (z-ai untuk LLM, model vision untuk OCR) — hanya teks/gambar kontrak yang dikirim, bukan data akun lain",
-        "Pengelola KontrakPaham (mahasiswa hukum tingkat akhir) — akses terbatas, hanya untuk dukungan teknis jika Anda minta, bukan akses rutin ke isi kontrak",
+        "Pengelola KontrakPaham (mahasiswa hukum UNAIR) — akses terbatas, hanya untuk dukungan teknis jika Anda minta, bukan akses rutin ke isi kontrak",
       ],
     },
     {
@@ -173,7 +173,7 @@ export const PRIVACY_DOC: LegalDoc = {
       heading: "8. Kepatuhan UU PDP",
       body: [
         "Kebijakan ini disusun dengan memperhatikan UU No. 27 Tahun 2022 tentang Perlindungan Data Pribadi (UU PDP). Kami berupaya transparan soal pengolahan data Anda, termasuk pengungkapan bahwa data kontrak dikirim ke provider AI pihak ketiga (lihat poin 2).",
-        "Karena layanan ini dikelola oleh mahasiswa hukum tingkat akhir (bukan korporasi), kapasitas kepatuhan terbatas. Untuk pertanyaan soal privasi, hubungi kami langsung.",
+        "Karena layanan ini dikelola oleh mahasiswa hukum UNAIR (bukan korporasi), kapasitas kepatuhan terbatas. Untuk pertanyaan soal privasi, hubungi kami langsung.",
       ],
     },
   ],
@@ -195,7 +195,7 @@ export const DISCLAIMER_DOC: LegalDoc = {
     {
       heading: "Siapa yang Mengelola Layanan Ini",
       body: [
-        "KontrakPaham dikelola oleh mahasiswa hukum tingkat akhir, BUKAN advokat berlisensi. Kami bisa membantu Anda memahami hasil analisis, memetakan opsi, dan menyiapkan pertanyaan klarifikasi untuk pihak kontrak.",
+        "KontrakPaham dikelola oleh mahasiswa hukum UNAIR, BUKAN advokat berlisensi. Kami bisa membantu Anda memahami hasil analisis, memetakan opsi, dan menyiapkan pertanyaan klarifikasi untuk pihak kontrak.",
         "Namun kami TIDAK memberikan nasihat hukum definitif dan TIDAK mewakili Anda secara hukum. Untuk keputusan penting, konsultasi dengan advokat berlisensi yang memahami konteks spesifik Anda.",
       ],
     },
@@ -223,7 +223,7 @@ export const DISCLAIMER_DOC: LegalDoc = {
     {
       heading: "Konsultasi Lanjutan",
       body: [
-        "Jika butuh diskusi lebih lanjut setelah analisis, Anda bisa hubungi pengelola via WhatsApp/IG/email (lihat footer). Ingat: ini dikelola mahasiswa hukum tingkat akhir, bukan advokat berlisensi. Kami bantu memahami, bukan memberi nasihat hukum definitif.",
+        "Jika butuh diskusi lebih lanjut setelah analisis, Anda bisa hubungi pengelola via WhatsApp/IG/email (lihat footer). Ingat: ini dikelola mahasiswa hukum UNAIR, bukan advokat berlisensi. Kami bantu memahami, bukan memberi nasihat hukum definitif.",
       ],
     },
   ],

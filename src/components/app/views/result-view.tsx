@@ -26,10 +26,11 @@ import {
 import { SeverityBadge, UrgencyBadge, ActionTypeBadge, RiskPill, ConfidenceBar } from "@/components/app/badges";
 import { ConsultationCard } from "@/components/app/consultation-card";
 import { CATEGORY_META } from "@/lib/types";
-import type { FindingDto } from "@/lib/types";
+import type { AnalysisDto, FindingDto } from "@/lib/types";
 import {
   Download, ArrowLeft, FileText, AlertTriangle, Info, Lightbulb,
   Languages, ShieldAlert, Loader2, Trash2, History, Sparkles, Copy, CheckCircle2, ListChecks,
+  ExternalLink, BookOpen, Quote,
 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { format } from "date-fns";
@@ -209,6 +210,8 @@ export function ResultView() {
         </CardContent>
       </Card>
 
+      <ResearchSourcesCard analysis={a} />
+
       {/* Findings */}
       <div className="mt-8">
         <div className="flex flex-wrap items-center justify-between gap-3">
@@ -283,6 +286,90 @@ export function ResultView() {
         <span>Analisis ini tersimpan di riwayat akun Anda ({user?.username}).</span>
       </div>
     </div>
+  );
+}
+
+function ResearchSourcesCard({ analysis }: { analysis: AnalysisDto }) {
+  const sources = analysis.researchSources || [];
+  if (!analysis.researchContent && sources.length === 0) return null;
+
+  const latency = analysis.researchLatencyMs ? `${(analysis.researchLatencyMs / 1000).toFixed(1)} dtk` : null;
+  const excerpt = (analysis.researchContent || "").slice(0, 1800);
+
+  return (
+    <Card className="mt-4 border-primary/20 bg-primary/5">
+      <CardHeader className="pb-3">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+          <div>
+            <CardTitle className="flex items-center gap-2 text-base">
+              <BookOpen className="h-4 w-4 text-primary" />
+              Sumber riset hukum
+            </CardTitle>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Konteks ini dipakai AI sebelum menyusun analisis. Buka sumbernya untuk cross-check.
+            </p>
+          </div>
+          <div className="flex flex-wrap gap-1.5 text-xs">
+            {analysis.researchEffort && (
+              <span className="rounded-full border bg-background px-2.5 py-1 font-medium">
+                effort: {analysis.researchEffort}
+              </span>
+            )}
+            {latency && (
+              <span className="rounded-full border bg-background px-2.5 py-1 font-medium">
+                riset: {latency}
+              </span>
+            )}
+          </div>
+        </div>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        {sources.length > 0 ? (
+          <div className="grid gap-2">
+            {sources.map((source, index) => (
+              <a
+                key={`${source.url}-${index}`}
+                href={source.url}
+                target="_blank"
+                rel="noreferrer"
+                className="group flex items-start justify-between gap-3 rounded-lg border bg-background p-3 text-sm transition-colors hover:border-primary/50 hover:bg-primary/5"
+              >
+                <span className="min-w-0">
+                  <span className="block font-medium text-foreground">{source.title}</span>
+                  <span className="mt-0.5 block break-all text-xs text-muted-foreground">{source.url}</span>
+                </span>
+                <ExternalLink className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground transition-colors group-hover:text-primary" />
+              </a>
+            ))}
+          </div>
+        ) : (
+          <Alert className="border-amber-300/60 bg-amber-50/70 dark:bg-amber-950/20">
+            <AlertTriangle className="h-4 w-4 text-amber-600" />
+            <AlertDescription className="text-sm">
+              Riset dipakai, tetapi tidak ada URL resmi yang bisa diverifikasi otomatis dari respons You.com.
+            </AlertDescription>
+          </Alert>
+        )}
+
+        {excerpt && (
+          <div className="rounded-lg border bg-background p-4">
+            <p className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+              <Quote className="h-3.5 w-3.5" /> Cuplikan riset dengan marker sitasi
+            </p>
+            <p className="mt-2 max-h-64 overflow-auto whitespace-pre-wrap text-sm leading-relaxed text-foreground/80">
+              {excerpt}
+              {(analysis.researchContent || "").length > excerpt.length ? "\n\n[...cuplikan dipotong di tampilan...]" : ""}
+            </p>
+          </div>
+        )}
+
+        {analysis.researchQuery && (
+          <p className="text-xs text-muted-foreground">
+            Query riset: {analysis.researchQuery}
+          </p>
+        )}
+      </CardContent>
+    </Card>
   );
 }
 

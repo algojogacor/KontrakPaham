@@ -66,6 +66,7 @@ export async function POST(req: NextRequest) {
       email: user.email,
       displayName: user.displayName,
       plan: user.plan,
+      planExpiresAt: user.planExpiresAt?.toISOString() || null,
       createdAt: user.createdAt.toISOString(),
     },
   });

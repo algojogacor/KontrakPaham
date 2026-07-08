@@ -38,7 +38,7 @@ export function ConsultationView() {
             <div>
               <h2 className="font-semibold">Transparansi kredensial</h2>
               <p className="mt-1 text-sm text-muted-foreground">
-                Konsultasi ini dikelola oleh <strong>mahasiswa hukum tingkat akhir</strong>,{" "}
+                Konsultasi ini dikelola oleh <strong>mahasiswa hukum UNAIR</strong>,{" "}
                 <strong>bukan advokat berlisensi</strong>. Kami bisa membantu Anda memahami hasil analisis,
                 memetakan opsi, dan menyiapkan pertanyaan untuk pihak kontrak. Namun kami{" "}
                 <strong>tidak memberikan nasihat hukum definitif</strong> dan tidak mewakili Anda secara hukum.

@@ -7,7 +7,6 @@ generator client {
 
 datasource db {
   provider = "sqlite"
-  url      = env("DATABASE_URL")
 }
 
 model User {
@@ -16,7 +15,8 @@ model User {
   email        String   @unique
   passwordHash String
   displayName  String?
-  plan         String   @default("FREE") // FREE | PRO
+  plan         String   @default("FREE") // FREE | LITE | PRO | ADMIN
+  planExpiresAt DateTime?
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
@@ -24,6 +24,54 @@ model User {
   quotas           Quota[]
   passwordResets   PasswordResetToken[]
   auditLogs        AuditLog[]
+  createdLicenses  LicenseCode[] @relation("LicenseCreator")
+  redeemedLicenses LicenseCode[] @relation("LicenseRedeemer")
+}
+
+model LicenseCode {
+  id              String    @id @default(cuid())
+  codeHash        String    @unique
+  codePrefix      String
+  plan            String    // LITE | PRO
+  durationMonths  Int       @default(1)
+  analysesLimit   Int
+  maxUses         Int       @default(1)
+  uses            Int       @default(0)
+  note            String?
+  expiresAt       DateTime?
+  redeemedAt      DateTime?
+  createdAt       DateTime  @default(now())
+  createdById     String?
+  redeemedById    String?
+
+  createdBy  User? @relation("LicenseCreator", fields: [createdById], references: [id], onDelete: SetNull)
+  redeemedBy User? @relation("LicenseRedeemer", fields: [redeemedById], references: [id], onDelete: SetNull)
+
+  @@index([plan])
+  @@index([createdAt])
+  @@index([redeemedById])
+}
+
+model LlmProvider {
+  id              String    @id @default(cuid())
+  name            String
+  provider        String
+  baseUrl         String
+  apiKey          String
+  model           String
+  enabled         Boolean   @default(true)
+  priority        Int       @default(10)
+  useJsonResponse Boolean   @default(true)
+  maxTokens       Int       @default(4096)
+  temperature     Float     @default(0.1)
+  timeoutMs       Int       @default(90000)
+  lastStatus      String?
+  lastLatencyMs   Int?
+  lastTestedAt    DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@index([enabled, priority])
 }
 
 model Analysis {
@@ -40,6 +88,11 @@ model Analysis {
   status       String   @default("COMPLETED") // PENDING | COMPLETED | FAILED
   errorMessage String?
   modelUsed    String?
+  researchEffort String?
+  researchQuery String?
+  researchLatencyMs Int?
+  researchContent String?
+  researchSources String?
   createdAt    DateTime @default(now())
 
   user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)

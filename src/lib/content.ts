@@ -11,7 +11,7 @@ export const FAQ_ITEMS: FAQItem[] = [
   {
     category: "umum",
     q: "Apakah hasil analisis KontrakPaham bisa dipakai sebagai nasihat hukum?",
-    a: "Tidak. KontrakPaham bersifat edukasi dan gambaran risiko, bukan nasihat hukum definitif. Platform ini dikelola oleh mahasiswa hukum tingkat akhir, bukan advokat berlisensi. Untuk keputusan penting (menandatangani kontrak bernilai besar, sengketa), konsultasikan dengan advokat berlisensi yang memahami konteks spesifik Anda.",
+    a: "Tidak. KontrakPaham bersifat edukasi dan gambaran risiko, bukan nasihat hukum definitif. Platform ini dikelola oleh mahasiswa hukum UNAIR, bukan advokat berlisensi. Untuk keputusan penting (menandatangani kontrak bernilai besar, sengketa), konsultasikan dengan advokat berlisensi yang memahami konteks spesifik Anda.",
   },
   {
     category: "umum",
@@ -36,12 +36,12 @@ export const FAQ_ITEMS: FAQItem[] = [
   {
     category: "teknis",
     q: "Berapa ukuran file maksimal?",
-    a: "Paket FREE: 5 MB. Paket PRO: 20 MB. Untuk teks yang ditempel: maksimal 50.000 karakter (FREE) atau 200.000 karakter (PRO). Jika file Anda lebih besar, coba kompres PDF atau pecah jadi bagian-bagian.",
+    a: "Paket FREE: 5 MB, LITE: 10 MB, PRO: 20 MB. Untuk teks yang ditempel: maksimal 50.000 karakter (FREE), 100.000 karakter (LITE), atau 200.000 karakter (PRO). Jika file Anda lebih besar, coba kompres PDF atau pecah jadi bagian-bagian.",
   },
   {
     category: "teknis",
     q: "Kenapa teks kontrak dipotong saat dianalisis?",
-    a: "Untuk menjaga kualitas analisis dan biaya API, teks sangat panjang (>30.000 karakter) akan dipotong. Bagian yang dipotong tidak dianalisis. Jika kontrak Anda sangat panjang, pertimbangkan menganalisis per pasal/bagian penting saja, atau upgrade ke PRO untuk batas lebih tinggi.",
+    a: "Untuk menjaga kualitas analisis dan biaya API, teks yang melewati batas paket akan dipotong. Bagian yang dipotong tidak dianalisis. Jika kontrak Anda sangat panjang, pertimbangkan menganalisis per pasal/bagian penting saja, atau upgrade ke LITE/PRO untuk batas lebih tinggi.",
   },
   {
     category: "hukum",
@@ -66,7 +66,7 @@ export const FAQ_ITEMS: FAQItem[] = [
   {
     category: "akun",
     q: "Berapa analisis gratis yang saya dapat?",
-    a: "Paket FREE mendapat 3 analisis per bulan kalender. Kuota ter-reset otomatis setiap awal bulan. Jika habis, Anda bisa menunggu reset bulan depan atau menghubungi kami untuk upgrade PRO (analisis tak terbatas via donasi sukarela).",
+    a: "Paket FREE mendapat 3 analisis per bulan kalender. Kuota ter-reset otomatis setiap awal bulan. Jika habis, Anda bisa menunggu reset bulan depan atau menghubungi kami untuk upgrade LITE/PRO lewat license code.",
   },
   {
     category: "akun",

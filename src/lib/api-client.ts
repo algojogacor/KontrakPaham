@@ -1,5 +1,89 @@
 import type { AnalysisDto, QuotaDto, UserDto } from "@/lib/types";
 
+export interface LicenseCodeDto {
+  id: string;
+  codePrefix: string;
+  plan: string;
+  durationMonths: number;
+  analysesLimit: number;
+  maxUses: number;
+  uses: number;
+  note?: string | null;
+  expiresAt?: string | null;
+  redeemedAt?: string | null;
+  createdAt: string;
+  redeemedBy?: { username: string; email: string } | null;
+  createdBy?: { username: string } | null;
+}
+
+export interface AdminUserDto {
+  id: string;
+  username: string;
+  email: string;
+  displayName?: string | null;
+  storedPlan: string;
+  plan: string;
+  planExpiresAt?: string | null;
+  createdAt: string;
+  totalAnalyses: number;
+  quota: {
+    used: number;
+    limit: number;
+    remaining: number;
+    month: number;
+    year: number;
+  };
+  lastAnalysis?: {
+    id: string;
+    title: string;
+    overallRisk?: string | null;
+    riskScore?: number | null;
+    createdAt: string;
+  } | null;
+}
+
+export interface AdminUsersSummaryDto {
+  totalUsers: number;
+  activeUsers: number;
+  paidUsers: number;
+  analysesThisMonth: number;
+  month: number;
+  year: number;
+}
+
+export interface LlmProviderDto {
+  id: string;
+  name: string;
+  provider: string;
+  baseUrl: string;
+  apiKeyMasked: string;
+  model: string;
+  enabled: boolean;
+  priority: number;
+  useJsonResponse: boolean;
+  maxTokens: number;
+  temperature: number;
+  timeoutMs: number;
+  lastStatus?: string | null;
+  lastLatencyMs?: number | null;
+  lastTestedAt?: string | null;
+  createdAt: string;
+}
+
+export interface LlmProviderInput {
+  name: string;
+  provider: string;
+  baseUrl: string;
+  apiKey?: string;
+  model: string;
+  enabled: boolean;
+  priority: number;
+  useJsonResponse: boolean;
+  maxTokens: number;
+  temperature: number;
+  timeoutMs: number;
+}
+
 export class ApiError extends Error {
   status: number;
   data: any;
@@ -90,7 +174,82 @@ export const api = {
   },
   async getQuota() {
     const res = await fetch("/api/quota", { cache: "no-store" });
-    return handle<{ quota: QuotaDto; limits: any; plan: string }>(res);
+    return handle<{ quota: QuotaDto; limits: any; plan: string; planExpiresAt?: string | null }>(res);
+  },
+  async redeemLicense(code: string) {
+    const res = await fetch("/api/license/redeem", {
+      method: "POST",
+      headers: MUTATION_HEADERS,
+      body: JSON.stringify({ code }),
+    });
+    return handle<{
+      user: UserDto;
+      license: { plan: string; durationMonths: number; planExpiresAt: string; analysesLimit: number };
+    }>(res);
+  },
+  async listLicenses() {
+    const res = await fetch("/api/admin/licenses", { cache: "no-store" });
+    return handle<{ licenses: LicenseCodeDto[] }>(res);
+  },
+  async createLicense(body: { plan: "LITE" | "PRO"; durationMonths: number; maxUses: number; expiresInDays?: number; note?: string }) {
+    const res = await fetch("/api/admin/licenses", {
+      method: "POST",
+      headers: MUTATION_HEADERS,
+      body: JSON.stringify(body),
+    });
+    return handle<{ license: LicenseCodeDto & { code: string } }>(res);
+  },
+  async deleteLicense(id: string, revokeUser = false) {
+    const res = await fetch(`/api/admin/licenses/${id}?revokeUser=${revokeUser ? "1" : "0"}`, {
+      method: "DELETE",
+      headers: MUTATION_HEADERS,
+    });
+    return handle<{ message: string }>(res);
+  },
+  async listAdminUsers() {
+    const res = await fetch("/api/admin/users", { cache: "no-store" });
+    return handle<{ users: AdminUserDto[]; summary: AdminUsersSummaryDto }>(res);
+  },
+  async listLlmProviders() {
+    const res = await fetch("/api/admin/llm-providers", { cache: "no-store" });
+    return handle<{ providers: LlmProviderDto[] }>(res);
+  },
+  async createLlmProvider(body: LlmProviderInput & { apiKey: string }) {
+    const res = await fetch("/api/admin/llm-providers", {
+      method: "POST",
+      headers: MUTATION_HEADERS,
+      body: JSON.stringify(body),
+    });
+    return handle<{ provider: LlmProviderDto }>(res);
+  },
+  async updateLlmProvider(id: string, body: Partial<LlmProviderInput>) {
+    const res = await fetch(`/api/admin/llm-providers/${id}`, {
+      method: "PATCH",
+      headers: MUTATION_HEADERS,
+      body: JSON.stringify(body),
+    });
+    return handle<{ ok: true }>(res);
+  },
+  async deleteLlmProvider(id: string) {
+    const res = await fetch(`/api/admin/llm-providers/${id}`, {
+      method: "DELETE",
+      headers: MUTATION_HEADERS,
+    });
+    return handle<{ ok: true }>(res);
+  },
+  async fetchLlmModels(id: string) {
+    const res = await fetch(`/api/admin/llm-providers/${id}/models`, {
+      method: "POST",
+      headers: MUTATION_HEADERS,
+    });
+    return handle<{ models: string[]; latencyMs: number }>(res);
+  },
+  async testLlmProvider(id: string) {
+    const res = await fetch(`/api/admin/llm-providers/${id}/test`, {
+      method: "POST",
+      headers: MUTATION_HEADERS,
+    });
+    return handle<{ ok: boolean; status?: number | string; latencyMs: number; model?: string; message: string; sample?: string }>(res);
   },
   async analyzeText(text: string) {
     const res = await fetch("/api/analyze", {

@@ -21,7 +21,8 @@ export type View =
   | "samples"
   | "insights"
   | "checklist"
-  | "legal";
+  | "legal"
+  | "admin";
 
 interface AppState {
   user: UserDto | null;
@@ -56,12 +57,21 @@ export const useApp = create<AppState>((set) => ({
         ? s.view === "signin" || s.view === "signup" || s.view === "forgot" || s.view === "reset"
           ? "dashboard"
           : s.view
-        : s.view === "dashboard" || s.view === "analyze" || s.view === "result" || s.view === "history" || s.view === "settings" || s.view === "insights"
+        : s.view === "dashboard" || s.view === "analyze" || s.view === "result" || s.view === "history" || s.view === "settings" || s.view === "insights" || s.view === "admin"
           ? "home"
           : s.view,
     })),
   setView: (view) => {
-    set({ view });
+    const update = () => set({ view });
+    if (
+      typeof document !== "undefined" &&
+      "startViewTransition" in document &&
+      !window.matchMedia("(prefers-reduced-motion: reduce)").matches
+    ) {
+      (document as Document & { startViewTransition: (callback: () => void) => void }).startViewTransition(update);
+    } else {
+      update();
+    }
     if (typeof window !== "undefined") {
       window.scrollTo({ top: 0, behavior: "smooth" });
     }
