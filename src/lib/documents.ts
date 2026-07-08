@@ -1,17 +1,17 @@
 import * as pdfjs from "pdfjs-dist/legacy/build/pdf.mjs";
-import { readFileSync, existsSync } from "fs";
+import { existsSync } from "fs";
 import { createRequire } from "module";
 import { resolve } from "path";
+import { pathToFileURL } from "url";
 import mammoth from "mammoth";
 import sharp from "sharp";
 import { logger } from "@/lib/logger";
 
 const require = createRequire(import.meta.url);
-// pdfjs worker resolution under Next.js/Turbopack is extremely fragile: Turbopack
-// rewrites require.resolve(), import.meta.url, and dynamic import() into mangled
-// virtual paths ([project]/node_modules/... [app-route] (ecmascript)) that fail
-// at runtime with ENOENT. The ONLY reliable approach: resolve the worker file via
-// process.cwd() (the project root in dev/prod), read its source, pass as data: URL.
+// pdfjs worker resolution under Next.js/Turbopack is fragile: Turbopack rewrites
+// require.resolve(), import.meta.url, etc. The most robust approach for both Node
+// and Bun is resolving the worker path using resolve(process.cwd(), ...) and passing
+// it as a file:// URL. base64 data: URLs throw "Invalid URL" under Bun.
 function setupPdfWorker() {
   const candidates = [
     resolve(process.cwd(), "node_modules/pdfjs-dist/legacy/build/pdf.worker.mjs"),
@@ -22,9 +22,7 @@ function setupPdfWorker() {
   } catch { /* ignore */ }
   for (const p of candidates) {
     if (existsSync(p)) {
-      const workerSrc = readFileSync(p, "utf8");
-      pdfjs.GlobalWorkerOptions.workerSrc =
-        "data:application/javascript;base64," + Buffer.from(workerSrc).toString("base64");
+      pdfjs.GlobalWorkerOptions.workerSrc = pathToFileURL(p).toString();
       return;
     }
   }
@@ -34,6 +32,7 @@ function setupPdfWorker() {
   });
 }
 setupPdfWorker();
+
 
 export interface ParsedDocument {
   text: string;
