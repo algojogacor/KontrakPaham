@@ -74,11 +74,15 @@ Balas HANYA JSON valid dengan struktur:
 function extractJson(text: string): any {
   let t = text.trim();
   if (t.startsWith("```")) {
-    t = t.replace(/^```(?:json)?\s*/i, "").replace(/```\s*$/i, "").trim();
+    t = t
+      .replace(/^```(?:json)?\s*/i, "")
+      .replace(/```\s*$/i, "")
+      .trim();
   }
   const first = t.indexOf("{");
   const last = t.lastIndexOf("}");
-  if (first === -1 || last === -1) throw new Error("Respons AI tidak mengandung JSON");
+  if (first === -1 || last === -1)
+    throw new Error("Respons AI tidak mengandung JSON");
   return JSON.parse(t.slice(first, last + 1));
 }
 
@@ -86,7 +90,11 @@ function clamp(n: number, min: number, max: number) {
   return Math.max(min, Math.min(max, n));
 }
 
-function oneOf<T extends string>(value: unknown, allowed: readonly T[], fallback: T): T {
+function oneOf<T extends string>(
+  value: unknown,
+  allowed: readonly T[],
+  fallback: T,
+): T {
   const normalized = String(value || "").toUpperCase();
   return allowed.includes(normalized as T) ? (normalized as T) : fallback;
 }
@@ -95,14 +103,26 @@ function normalizeFinding(raw: any): Finding {
   return {
     category: String(raw.category || "LAIN_LAIN").toUpperCase(),
     categoryLabel: String(raw.categoryLabel || raw.category || "Lainnya"),
-    severity: oneOf(raw.severity, ["RENDAH", "SEDANG", "TINGGI", "KRITIS"], "SEDANG"),
+    severity: oneOf(
+      raw.severity,
+      ["RENDAH", "SEDANG", "TINGGI", "KRITIS"],
+      "SEDANG",
+    ),
     confidence: clamp(Number(raw.confidence) || 50, 0, 100),
-    urgency: oneOf(raw.urgency, ["INFO", "PERHATIAN", "PERLU_TINDAKAN"], "PERHATIAN"),
+    urgency: oneOf(
+      raw.urgency,
+      ["INFO", "PERHATIAN", "PERLU_TINDAKAN"],
+      "PERHATIAN",
+    ),
     originalClause: String(raw.originalClause || "").slice(0, 2000),
     plainTranslation: String(raw.plainTranslation || "").slice(0, 2000),
     explanation: String(raw.explanation || "").slice(0, 2000),
     recommendation: String(raw.recommendation || "").slice(0, 2000),
-    actionType: oneOf(raw.actionType, ["INFO_UMUM", "BUTUH_NASIHAT"], "BUTUH_NASIHAT"),
+    actionType: oneOf(
+      raw.actionType,
+      ["INFO_UMUM", "BUTUH_NASIHAT"],
+      "BUTUH_NASIHAT",
+    ),
     location: raw.location ? String(raw.location).slice(0, 200) : undefined,
   };
 }
@@ -113,75 +133,76 @@ function normalizeRiskScore(value: unknown) {
   return clamp(score, 0, 100);
 }
 
-export async function analyzeContract(contractText: string, plan = "FREE", signal?: AbortSignal, quickMode = false): Promise<AnalysisResult> {
-  const tTotal0 = Date.now();
-  console.log(`[TIMING] analyzeContract START | chars=${contractText.length} | plan=${plan}`);
-
+export async function analyzeContract(
+  contractText: string,
+  plan = "FREE",
+  signal?: AbortSignal,
+  quickMode = false,
+): Promise<AnalysisResult> {
   const truncated =
     contractText.length > 30_000
       ? `${contractText.slice(0, 30_000)}\n\n[...dokumen dipotong karena panjang...]`
       : contractText;
 
-  if (contractText.length > 30_000) {
-    console.log(`[TIMING] text_truncated: original=${contractText.length} truncated=30000`);
-  }
-
   // --- Phase 1: Legal Research (skipped in Quick Mode) ---
-  const tResearch0 = Date.now();
   const research = quickMode
-    ? { enabled: false, warning: "Quick Mode aktif — riset hukum You.com dilewati untuk kecepatan." } as const
+    ? ({
+        enabled: false,
+        warning:
+          "Quick Mode aktif — riset hukum You.com dilewati untuk kecepatan.",
+      } as const)
     : await buildLegalResearchContext(contractText, plan);
-  const researchMs = Date.now() - tResearch0;
-  console.log(`[TIMING] research_total: ${researchMs}ms | quickMode=${quickMode} | enabled=${research.enabled} | effort=${'effort' in research ? research.effort : "none"} | youLatency=${'latencyMs' in research ? research.latencyMs : "n/a"}ms`);
 
-  const researchPrompt = ('content' in research && research.content)
-    ? `\n\n=== KONTEKS RISET HUKUM TERKINI ===\nEffort: ${'effort' in research ? research.effort : ''}\nQuery: ${'query' in research ? research.query : ''}\n${research.content}\n\nGunakan konteks riset ini untuk memperbarui analisis, tetapi jangan mengarang sumber. Jika konteks riset tidak cukup, nyatakan keterbatasan di notes.`
-    : research.warning
-      ? `\n\n=== CATATAN RISET HUKUM ===\n${research.warning}\n`
-      : "";
+  const researchPrompt =
+    "content" in research && research.content
+      ? `\n\n=== KONTEKS RISET HUKUM TERKINI ===\nEffort: ${"effort" in research ? research.effort : ""}\nQuery: ${"query" in research ? research.query : ""}\n${research.content}\n\nGunakan konteks riset ini untuk memperbarui analisis, tetapi jangan mengarang sumber. Jika konteks riset tidak cukup, nyatakan keterbatasan di notes.`
+      : research.warning
+        ? `\n\n=== CATATAN RISET HUKUM ===\n${research.warning}\n`
+        : "";
 
   // --- Phase 2: LLM Analysis (with retry) ---
   const maxRetries = 3;
   let lastError: Error | null = null;
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
     if (signal?.aborted) throw new Error("ABORTED");
-    const tAttempt0 = Date.now();
-    console.log(`[TIMING] llm_analysis_attempt START | attempt=${attempt}/${maxRetries}`);
     try {
       const completion = await createChatCompletion(
         [
           { role: "system", content: SYSTEM_PROMPT },
-          { role: "user", content: `Analisis kontrak berikut.${researchPrompt}\n\n=== KONTRAK ===\n${truncated}` },
+          {
+            role: "user",
+            content: `Analisis kontrak berikut.${researchPrompt}\n\n=== KONTRAK ===\n${truncated}`,
+          },
         ],
         signal,
         "analysis_llm",
       );
-      const llmMs = Date.now() - tAttempt0;
-      console.log(`[TIMING] llm_analysis_attempt DONE: ${llmMs}ms | attempt=${attempt} | provider=${completion.provider} | model=${completion.model}`);
 
       // --- Phase 3: JSON parse + normalize ---
-      const tParse0 = Date.now();
       const parsed = extractJson(completion.content);
       const findings: Finding[] = Array.isArray(parsed.findings)
-        ? parsed.findings.map(normalizeFinding).filter((f: Finding) => f.originalClause || f.explanation)
+        ? parsed.findings
+            .map(normalizeFinding)
+            .filter((f: Finding) => f.originalClause || f.explanation)
         : [];
-      const parseMs = Date.now() - tParse0;
-      console.log(`[TIMING] json_normalize: ${parseMs}ms | raw_findings=${Array.isArray(parsed.findings) ? parsed.findings.length : 0} | kept=${findings.length}`);
-
-      const totalMs = Date.now() - tTotal0;
-      console.log(`[TIMING] analyzeContract DONE: total=${totalMs}ms | breakdown: research=${researchMs}ms llm=${llmMs}ms parse=${parseMs}ms`);
 
       return {
         summary: String(parsed.summary || "Analisis selesai.").slice(0, 2000),
-        overallRisk: oneOf(parsed.overallRisk, ["RENDAH", "SEDANG", "TINGGI", "KRITIS"], "SEDANG"),
+        overallRisk: oneOf(
+          parsed.overallRisk,
+          ["RENDAH", "SEDANG", "TINGGI", "KRITIS"],
+          "SEDANG",
+        ),
         riskScore: normalizeRiskScore(parsed.riskScore),
         findings,
         modelUsed: `${completion.provider}:${completion.model}`,
         uncertain: Boolean(parsed.uncertain),
         research,
         notes: [
-          ...('content' in research && research.content
-            ? [`Riset hukum You.com dipakai (${'effort' in research ? research.effort : 'n/a'}, ${'latencyMs' in research ? research.latencyMs : '-'} ms).`]
+          ...("content" in research && research.content
+            ? [
+                `Riset hukum You.com dipakai (${"effort" in research ? research.effort : "n/a"}, ${"latencyMs" in research ? research.latencyMs : "-"} ms).`,
+              ]
             : research.warning
               ? [research.warning]
               : []),
@@ -195,12 +216,13 @@ export async function analyzeContract(contractText: string, plan = "FREE", signa
       if (signal?.aborted || lastError.message === "ABORTED") throw lastError;
       if (attempt === maxRetries) break;
       const delayMs = 2 ** (attempt - 1) * 1000;
-      const attemptMs = Date.now() - tAttempt0;
-      logger("warn", "analysis attempt failed, retrying", { attempt, delayMs, error: lastError.message });
-      console.log(`[TIMING] llm_analysis_attempt FAILED: ${attemptMs}ms | attempt=${attempt} | retryDelay=${delayMs}ms | error=${lastError.message.slice(0, 120)}`);
+      logger("warn", "analysis attempt failed, retrying", {
+        attempt,
+        delayMs,
+        error: lastError.message,
+      });
       await new Promise((r) => setTimeout(r, delayMs));
     }
   }
   throw lastError || new Error("Analisis gagal setelah beberapa percobaan.");
 }
-
