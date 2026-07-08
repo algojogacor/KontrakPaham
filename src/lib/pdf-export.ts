@@ -25,12 +25,12 @@ const SEVERITY_LABEL: Record<string, string> = {
 /** Strip markdown symbols so plain-text PDF looks clean */
 function stripMarkdown(text: string): string {
   return text
-    .replace(/\*\*([^*]+)\*\*/g, "$1")   // **bold** → bold
-    .replace(/\*([^*]+)\*/g, "$1")        // *italic* → italic
-    .replace(/\[\[\d+(?:,\s*\d+)*\]\]/g, "") // [[1]], [[1,2]] → remove
-    .replace(/^#{1,4}\s+/gm, "")          // ### heading → remove hashes
-    .replace(/^-{3,}$/gm, "─".repeat(40)) // --- divider → typographic rule
-    .replace(/\n{3,}/g, "\n\n")           // collapse extra blank lines
+    .replace(/\*\*([^*]+)\*\*/g, "$1")        // **bold** -> bold
+    .replace(/\*([^*]+)\*/g, "$1")             // *italic* -> italic
+    .replace(/\[\[\d+(?:,\s*\d+)*\]\]/g, "")  // [[1]], [[1,2]] -> remove
+    .replace(/^#{1,4}\s+/gm, "")              // ### heading -> remove hashes
+    .replace(/^-{3,}$/gm, "-".repeat(50))     // --- divider -> ASCII dashes
+    .replace(/\n{3,}/g, "\n\n")               // collapse extra blank lines
     .trim();
 }
 
@@ -188,8 +188,10 @@ export function generateAnalysisPdf(
       doc.setFont("helvetica", "normal");
       doc.setFontSize(8.5);
       doc.setTextColor(60, 60, 60);
-      // Strip markdown before rendering in PDF
-      const cleanResearch = stripMarkdown(analysis.researchContent);
+      // Strip markdown and cap length to keep PDF compact
+      const rawResearch = analysis.researchContent.slice(0, 2500);
+      const isTruncated = analysis.researchContent.length > 2500;
+      const cleanResearch = stripMarkdown(rawResearch) + (isTruncated ? "\n\n[...lihat selengkapnya di aplikasi KontrakPaham]" : "");
       const researchLines = doc.splitTextToSize(cleanResearch, contentW);
       for (const line of researchLines) {
         ensureSpace(11);
