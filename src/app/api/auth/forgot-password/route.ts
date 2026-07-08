@@ -5,8 +5,6 @@ import { rateLimit, getClientIp } from "@/lib/rate-limit";
 import { audit } from "@/lib/logger";
 import { randomBytes } from "crypto";
 
-// In this single-instance demo there's no email server. We generate a reset
-// token and return it (only when the email exists) so the user can reset.
 // In production you would email a link instead.
 export async function POST(req: NextRequest) {
   const ip = getClientIp(req);
@@ -14,7 +12,7 @@ export async function POST(req: NextRequest) {
   if (!rl.ok) {
     return NextResponse.json(
       { error: "Terlalu banyak permintaan reset. Coba lagi nanti." },
-      { status: 429 }
+      { status: 429 },
     );
   }
 
@@ -27,10 +25,15 @@ export async function POST(req: NextRequest) {
 
   const parsed = forgotPasswordSchema.safeParse(body);
   if (!parsed.success) {
-    return NextResponse.json({ error: formatZodErrors(parsed.error) }, { status: 400 });
+    return NextResponse.json(
+      { error: formatZodErrors(parsed.error) },
+      { status: 400 },
+    );
   }
 
-  const user = await db.user.findUnique({ where: { email: parsed.data.email } });
+  const user = await db.user.findUnique({
+    where: { email: parsed.data.email },
+  });
 
   // Always respond the same to avoid user enumeration
   if (user) {
@@ -43,18 +46,18 @@ export async function POST(req: NextRequest) {
       data: { userId: user.id, token, expiresAt },
     });
     await audit("password_reset_requested", { userId: user.id, ip });
-    // Return token directly (demo only — no mail server). Production: send email link.
+    // Production: send email link.
     return NextResponse.json({
-      message:
-        "Jika email terdaftar, tautan reset telah dibuat. (Mode demo) Gunakan token berikut untuk reset:",
-      resetToken: token,
-      expiresIn: "30 menit",
+      message: "Jika email terdaftar, instruksi reset telah dikirimkan.",
     });
   }
 
-  await audit("password_reset_requested_unknown", { ip, meta: { email: parsed.data.email }, level: "warn" });
+  await audit("password_reset_requested_unknown", {
+    ip,
+    meta: { email: parsed.data.email },
+    level: "warn",
+  });
   return NextResponse.json({
-    message:
-      "Jika email terdaftar, tautan reset telah dibuat. (Mode demo) Gunakan token dari email Anda.",
+    message: "Jika email terdaftar, instruksi reset telah dikirimkan.",
   });
 }
