@@ -352,8 +352,6 @@ export async function POST(req: NextRequest) {
       level: "warn",
     });
 
-    const routeTotalError = Date.now() - tRoute0;
-    console.log(`[TIMING] route_execution_total_error: ${routeTotalError}ms`);
 
     return NextResponse.json(
       { error: "Analisis gagal diproses. Kuota dikembalikan. Silakan coba lagi." },
