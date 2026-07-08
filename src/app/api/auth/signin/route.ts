@@ -35,7 +35,7 @@ export async function POST(req: NextRequest) {
   });
 
   // Timing-safe-ish: always run a hash compare even if user not found
-  const dummyHash = "$2a$12$000000000000000000000000000000000000000000000000000000";
+  const dummyHash = "$2b$12$rcbYtbfJgpAi4U8ZdethEOToE9n.BdIR02JtY/2kGD3bDruaUj3lO";
   const ok = user
     ? await verifyPassword(password, user.passwordHash)
     : await verifyPassword(password, dummyHash);
