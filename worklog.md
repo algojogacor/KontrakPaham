@@ -2473,6 +2473,79 @@ Verification:
 - All open PRs cleared. `gh pr list` returns empty.
 - `git status` on main branch: working tree clean.
 
+---
+Task ID: 44
+Agent: main (Codex) - Koyeb Docker Build Fix
+
+Task: Memperbaiki kegagalan build Docker/Koyeb pada step `RUN bunx prisma generate`
+karena `PrismaConfigEnvError: Cannot resolve environment variable: DATABASE_URL`.
+
+Work Log:
+- Menganalisis log Koyeb: dependency install berhasil, lalu builder gagal saat Prisma 7
+  memuat `prisma.config.ts` dan mengevaluasi `env("DATABASE_URL")`.
+- Mengecek `Dockerfile`, `prisma.config.ts`, `schema.prisma`, dan konfigurasi runtime DB.
+- Mengonfirmasi dari dokumentasi Prisma bahwa helper `env()` di `prisma.config.ts`
+  memang throw error jika env var tidak tersedia.
+- Memperbaiki `Dockerfile` dengan placeholder build-time non-secret hanya di stage
+  `builder`:
+  * `DATABASE_URL="file:./build.db"` untuk `bunx prisma generate`.
+  * `DATABASE_URL="file:./build.db"` dan `JWT_SECRET="build-time-only-placeholder-change-in-runtime"`
+    untuk `bun run build`, karena Next mengevaluasi sebagian server module saat build.
+- Menjaga stage runtime tetap tanpa default secret agar Koyeb tetap wajib memakai env
+  asli dari panel service.
+
+Verification:
+- `DATABASE_URL="file:./build.db" bunx prisma generate` -> pass.
+- `DATABASE_URL="file:./build.db" JWT_SECRET="build-time-only-placeholder-change-in-runtime" bun run build` -> pass.
+- Docker CLI tidak tersedia di mesin lokal ini, jadi full `docker build` belum bisa
+  diverifikasi lokal; perubahan ditargetkan langsung pada step Koyeb yang gagal.
+
+Stage Summary:
+- Error Koyeb terjadi karena env runtime tidak otomatis tersedia untuk step build Docker,
+  sementara `.env` juga sengaja dikecualikan oleh `.dockerignore`.
+- Dockerfile sekarang bisa membangun Prisma Client dan Next standalone tanpa membutuhkan
+  secret/DB production pada build stage.
+
+---
+Task ID: 45
+Agent: main (Codex) - PR #31 Security Audit
+
+Task: Mengecek PR terbuka, menganalisis apakah aman dan legitimate untuk digabung ke
+`main`, lalu mengambil tindakan yang sesuai.
+
+Work Log:
+- Mengecek GitHub PR terbuka dengan `gh pr list`; ditemukan satu PR:
+  * PR #31 `Sentinel: [CRITICAL] Fix password reset token leak`.
+- Mengecek metadata PR #31:
+  * Base `main`, head `sentinel-fix-forgot-password-token-leak-3926770469709793616`.
+  * Status mergeable GitHub: `CONFLICTING`.
+  * Tidak ada checks yang dilaporkan.
+- Membaca patch PR #31:
+  * Menambah `.jules/sentinel.md`.
+  * Mengubah `pr_message.txt`.
+  * Mengubah `src/app/api/auth/forgot-password/route.ts` agar token tidak dikirim
+    via response, tetapi masih dicetak ke `console.log` untuk mode demo.
+- Membandingkan dengan kode `main` saat ini:
+  * `forgot-password/route.ts` sudah mengembalikan pesan generik.
+  * Response tidak mengandung `resetToken`.
+  * Token reset juga tidak dicetak ke log server, sehingga lebih aman daripada patch PR.
+- Mengecek search repo untuk `resetToken`/forgot-password; tidak ditemukan leak response
+  di route forgot-password saat ini.
+- Menutup PR #31 dengan komentar karena redundant, conflicting, dan tidak aman untuk
+  di-merge apa adanya.
+
+Verification:
+- `gh pr view 31 --json ...` -> PR confirmed conflicting.
+- `gh pr diff 31 --patch` -> patch reviewed.
+- `rg "resetToken|Reset token|token reset|forgotPassword|forgot-password" src ...`
+  -> current route verified tidak mengembalikan reset token.
+- `gh pr close 31 --comment ...` -> PR #31 closed successfully.
+
+Stage Summary:
+- Tidak ada PR yang digabung ke `main` karena satu-satunya PR terbuka bukan kandidat
+  aman/legitimate.
+- Kondisi `main` sudah lebih aman daripada patch PR #31 untuk isu reset-token leak.
+
 
 
 
