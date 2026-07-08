@@ -243,8 +243,7 @@ export async function POST(req: NextRequest) {
     },
   });
 
-  // Consume quota up-front (refunded on failure)
-  const consumed = await consumeQuota(user.id);
+  const consumed = await consumeQuota(user.id, plan);
   if (!consumed) {
     await db.analysis.delete({ where: { id: analysis.id } }).catch(() => {});
     return NextResponse.json(
