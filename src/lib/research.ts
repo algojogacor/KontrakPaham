@@ -94,10 +94,8 @@ KONTRAK:
 ${compactContract(contractText)}`,
     },
   ], undefined, "research_planner");
-  console.log(`[TIMING] research_planner: ${Date.now() - t0}ms | plan=${plan}`);
   const parsed = parseJson(completion.content);
   const effort = capEffortForPlan(normalizeEffort(parsed?.research_effort), plan);
-  console.log(`[TIMING] research_planner_effort: chosen=${parsed?.research_effort} capped=${effort} plan=${plan}`);
   return {
     effort,
     query: withOfficialSourceInstruction(
@@ -156,16 +154,10 @@ export async function buildLegalResearchContext(contractText: string, plan: Rese
   const apiKey = process.env.YOU_API_KEY;
   if (!apiKey) return { enabled: false, warning: "YOU_API_KEY belum dikonfigurasi." };
 
-  const tResearch0 = Date.now();
-  console.log(`[TIMING] research_phase START | plan=${plan}`);
-
   try {
     const researchPlan = await chooseResearchPlan(contractText, plan);
-    const tPlannerDone = Date.now();
-    console.log(`[TIMING] research_planner_total: ${tPlannerDone - tResearch0}ms | effort=${researchPlan.effort}`);
 
     const started = Date.now();
-    console.log(`[TIMING] you_com_fetch START | effort=${researchPlan.effort} | timeoutMs=${effortTimeoutMs(researchPlan.effort)}`);
     const res = await fetch(process.env.YOU_RESEARCH_URL || "https://api.you.com/v1/research", {
       method: "POST",
       headers: {
@@ -180,11 +172,9 @@ export async function buildLegalResearchContext(contractText: string, plan: Rese
     });
 
     const latencyMs = Date.now() - started;
-    console.log(`[TIMING] you_com_fetch DONE: ${latencyMs}ms | status=${res.status} | effort=${researchPlan.effort}`);
 
     if (!res.ok) {
       const body = await res.text();
-      console.log(`[TIMING] research_phase FAILED: ${Date.now() - tResearch0}ms | reason=you_com_${res.status}`);
       return {
         enabled: true,
         effort: researchPlan.effort,
@@ -194,11 +184,8 @@ export async function buildLegalResearchContext(contractText: string, plan: Rese
       };
     }
 
-    const tParse0 = Date.now();
     const json = await res.json();
-    console.log(`[TIMING] you_com_parse: ${Date.now() - tParse0}ms`);
     const sources = extractOfficialSources(json);
-    console.log(`[TIMING] research_phase DONE: ${Date.now() - tResearch0}ms | official_sources=${sources.length}`);
     return {
       enabled: true,
       effort: researchPlan.effort,
@@ -208,7 +195,6 @@ export async function buildLegalResearchContext(contractText: string, plan: Rese
       latencyMs,
     };
   } catch (e) {
-    console.log(`[TIMING] research_phase ERROR: ${Date.now() - tResearch0}ms | error=${(e as Error).message.slice(0, 120)}`);
     return {
       enabled: true,
       warning: `You.com research dilewati: ${(e as Error).message}`,

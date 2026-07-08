@@ -19,7 +19,7 @@ export const runtime = "nodejs";
 export const maxDuration = 300;
 
 export async function POST(req: NextRequest) {
-  const tRoute0 = Date.now();
+
   const user = await getCurrentUser();
   if (!user) {
     return NextResponse.json({ error: "Belum masuk." }, { status: 401 });
@@ -38,9 +38,7 @@ export async function POST(req: NextRequest) {
   const plan = getEffectivePlan(user);
   const limits = getPlanLimits(plan);
 
-  const tQuotaCheck0 = Date.now();
   const quota = await getQuota(user.id, plan);
-  console.log(`[TIMING] quota_check: ${Date.now() - tQuotaCheck0}ms`);
 
   if (quota.remaining <= 0) {
     return NextResponse.json(
@@ -61,7 +59,6 @@ export async function POST(req: NextRequest) {
   let quickMode = false;
   const warnings: string[] = [];
 
-  const tParseDoc0 = Date.now();
   try {
     if (contentType.includes("multipart/form-data")) {
       const form = await req.formData();
@@ -163,9 +160,7 @@ export async function POST(req: NextRequest) {
         { status: 415 }
       );
     }
-    console.log(`[TIMING] document_parsing: ${Date.now() - tParseDoc0}ms | sourceType=${sourceType} | quickMode=${quickMode}`);
   } catch (e) {
-    console.log(`[TIMING] document_parsing FAILED: ${Date.now() - tParseDoc0}ms | error=${(e as Error).message.slice(0, 120)}`);
     if (e instanceof DocumentError) {
       return NextResponse.json({ error: e.message, code: e.code }, { status: 422 });
     }
@@ -209,7 +204,7 @@ export async function POST(req: NextRequest) {
   // consuming quota twice.
   const idempotencyKey = req.headers.get("idempotency-key");
   if (idempotencyKey) {
-    const tIdem0 = Date.now();
+
     const existing = await db.analysis.findFirst({
       where: {
         userId: user.id,
@@ -220,7 +215,6 @@ export async function POST(req: NextRequest) {
       },
       include: { findings: true },
     });
-    console.log(`[TIMING] idempotency_check: ${Date.now() - tIdem0}ms | key=${idempotencyKey.slice(0, 16)}`);
     if (existing) {
       if (existing.status === "COMPLETED") {
         return NextResponse.json({
@@ -240,7 +234,7 @@ export async function POST(req: NextRequest) {
   }
 
   // Create placeholder analysis record
-  const tDbPlaceholder0 = Date.now();
+
   const analysis = await db.analysis.create({
     data: {
       userId: user.id,
@@ -251,12 +245,10 @@ export async function POST(req: NextRequest) {
       status: "PENDING",
     },
   });
-  console.log(`[TIMING] db_create_placeholder: ${Date.now() - tDbPlaceholder0}ms`);
 
   // Consume quota up-front (refunded on failure)
-  const tQuotaConsume0 = Date.now();
+
   const consumed = await consumeQuota(user.id);
-  console.log(`[TIMING] quota_consume: ${Date.now() - tQuotaConsume0}ms`);
   if (!consumed) {
     await db.analysis.delete({ where: { id: analysis.id } }).catch(() => {});
     return NextResponse.json(
@@ -268,7 +260,6 @@ export async function POST(req: NextRequest) {
   try {
     const result = await analyzeContract(rawText, plan, undefined, quickMode);
 
-    const tDbUpdate0 = Date.now();
     const updated = await db.analysis.update({
       where: { id: analysis.id },
       data: {
@@ -300,9 +291,7 @@ export async function POST(req: NextRequest) {
       },
       include: { findings: true },
     });
-    console.log(`[TIMING] db_write_analysis_and_findings: ${Date.now() - tDbUpdate0}ms`);
 
-    const tAudit0 = Date.now();
     await audit("analysis_completed", {
       userId: user.id,
       ip,
@@ -314,10 +303,6 @@ export async function POST(req: NextRequest) {
         ocr: warnings.some((w) => w.includes("OCR")),
       },
     });
-    console.log(`[TIMING] audit_log_write: ${Date.now() - tAudit0}ms`);
-
-    const routeTotal = Date.now() - tRoute0;
-    console.log(`[TIMING] route_execution_total: ${routeTotal}ms`);
 
     return NextResponse.json({
       analysis: toAnalysisDto({ ...updated, createdAt: new Date(updated.createdAt) }),
@@ -331,7 +316,7 @@ export async function POST(req: NextRequest) {
       analysisId: analysis.id,
       error: (e as Error).message,
     });
-    const tDbFail0 = Date.now();
+
     await db.analysis.update({
       where: { id: analysis.id },
       data: {
@@ -339,11 +324,8 @@ export async function POST(req: NextRequest) {
         errorMessage: "Analisis gagal. Silakan coba lagi.",
       },
     });
-    console.log(`[TIMING] db_write_failed_status: ${Date.now() - tDbFail0}ms`);
 
-    const tRefund0 = Date.now();
     await refundQuota(user.id);
-    console.log(`[TIMING] quota_refund: ${Date.now() - tRefund0}ms`);
 
     await audit("analysis_failed", {
       userId: user.id,
@@ -351,9 +333,6 @@ export async function POST(req: NextRequest) {
       meta: { analysisId: analysis.id, error: (e as Error).message },
       level: "warn",
     });
-
-    const routeTotalError = Date.now() - tRoute0;
-    console.log(`[TIMING] route_execution_total_error: ${routeTotalError}ms`);
 
     return NextResponse.json(
       { error: "Analisis gagal diproses. Kuota dikembalikan. Silakan coba lagi." },

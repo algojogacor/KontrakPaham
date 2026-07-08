@@ -131,7 +131,6 @@ async function callProvider(
     body.response_format = { type: "json_object" };
   }
 
-  const t0 = Date.now();
   const res = await fetch(`${provider.baseUrl}/chat/completions`, {
     method: "POST",
     headers: {
@@ -141,24 +140,19 @@ async function callProvider(
     body: JSON.stringify(body),
     signal: combinedSignal,
   });
-  const httpMs = Date.now() - t0;
 
   if (!res.ok) {
     const bodyText = await res.text();
-    console.log(`[TIMING] llm_call FAILED: ${httpMs}ms | provider=${provider.name} | model=${provider.model}${attemptLabel ? ` | ${attemptLabel}` : ""} | status=${res.status}`);
     throw new Error(`${provider.name} ${res.status}: ${bodyText.slice(0, 240)}`);
   }
 
-  const t1 = Date.now();
   const json = await res.json();
-  const parseMs = Date.now() - t1;
+
   const content = json?.choices?.[0]?.message?.content;
   if (!content) {
-    console.log(`[TIMING] llm_call EMPTY: ${httpMs}ms | provider=${provider.name} | model=${provider.model}${attemptLabel ? ` | ${attemptLabel}` : ""}`);
     throw new Error(`${provider.name}: respons AI kosong`);
   }
 
-  console.log(`[TIMING] llm_call OK: http=${httpMs}ms json_parse=${parseMs}ms total=${Date.now() - t0}ms | provider=${provider.name} | model=${provider.model}${attemptLabel ? ` | ${attemptLabel}` : ""}`);
 
   return {
     content: typeof content === "string" ? content : JSON.stringify(content),
@@ -172,13 +166,8 @@ export async function createChatCompletion(
   signal?: AbortSignal,
   label = "llm",
 ): Promise<ChatCompletionResult> {
-  const t0 = Date.now();
+
   const providers = await getActiveProviders();
-  const providerFetchMs = Date.now() - t0;
-  if (providerFetchMs > 5) {
-    // Only log if it took meaningful time (DB fetch vs cache)
-    console.log(`[TIMING] get_providers: ${providerFetchMs}ms | label=${label} | count=${providers.length}`);
-  }
   if (providers.length === 0) {
     throw new Error("Belum ada provider LLM aktif.");
   }
@@ -189,11 +178,9 @@ export async function createChatCompletion(
     const attemptLabel = `label=${label} providerIdx=${i + 1}/${providers.length}`;
     try {
       const result = await callProvider(provider, messages, signal, attemptLabel);
-      console.log(`[TIMING] createChatCompletion DONE: ${Date.now() - t0}ms | label=${label} | winner=${provider.name}`);
       return result;
     } catch (e) {
       lastError = e as Error;
-      console.log(`[TIMING] provider_fallback: provider=${provider.name} | label=${label} | error=${(e as Error).message.slice(0, 120)}`);
     }
   }
 
