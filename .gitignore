@@ -65,3 +65,7 @@ server.log
 
 # temporary test scripts
 /scripts/test-*
+
+# local databases
+/db/
+*.db
