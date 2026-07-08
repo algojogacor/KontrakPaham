@@ -1,0 +1,11 @@
+🔒 [Security] Remove insecure hardcoded JWT secret fallback
+
+🎯 **What:**
+Removed the insecure, hardcoded fallback for the `JWT_SECRET` in `src/lib/auth.ts`.
+
+⚠️ **Risk:**
+Previously, if the `JWT_SECRET` environment variable was not set, the application would silently fallback to a known hardcoded string ("dev-only-insecure-secret-change-me"). This allowed anyone with knowledge of the codebase to forge session tokens and impersonate any user, compromising the entire application.
+
+🛡️ **Solution:**
+- Removed the hardcoded fallback completely.
+- Modified the application to fail fast by throwing a clear error unconditionally during initialization if `JWT_SECRET` is not provided, regardless of the environment.

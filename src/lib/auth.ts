@@ -7,16 +7,14 @@ const COOKIE_NAME = "kp_session";
 
 // SECURITY: Fail-fast if JWT_SECRET is missing in production.
 // Without this, all sessions can be forged using the hardcoded fallback key.
-if (process.env.NODE_ENV === "production" && !process.env.JWT_SECRET) {
+if (!process.env.JWT_SECRET) {
   throw new Error(
-    "[FATAL] JWT_SECRET env var tidak diset di mode production. " +
-    "Set JWT_SECRET ke string random 64+ karakter sebelum deploy."
+    "[FATAL] JWT_SECRET env var is not set. " +
+      "Set JWT_SECRET to a random string of 64+ characters.",
   );
 }
 
-const SECRET = new TextEncoder().encode(
-  process.env.JWT_SECRET || "dev-only-insecure-secret-change-me"
-);
+const SECRET = new TextEncoder().encode(process.env.JWT_SECRET);
 const EXPIRES_IN = Number(process.env.JWT_EXPIRES_IN_SECONDS || 2592000); // 30 days
 
 export interface SessionPayload {
@@ -32,7 +30,7 @@ export async function hashPassword(password: string): Promise<string> {
 
 export async function verifyPassword(
   password: string,
-  hash: string
+  hash: string,
 ): Promise<boolean> {
   return bcrypt.compare(password, hash);
 }
@@ -50,7 +48,7 @@ export async function createSessionToken(payload: {
 }
 
 export async function verifySessionToken(
-  token: string
+  token: string,
 ): Promise<SessionPayload | null> {
   try {
     const { payload } = await jwtVerify(token, SECRET);
