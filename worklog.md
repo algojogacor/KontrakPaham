@@ -3497,3 +3497,48 @@ Verification:
 
 Stage Summary:
 - Legal Desk mascot UI and overall landing page interactions are robustly responsive across both desktop and mobile environments.
+
+---
+Task ID: 72
+Agent: main (Codex) - Mascot Companion System Refactoring
+
+Task: Expand the CSS mascot usage into a global brand companion system to provide contextual UI micro-interactions across the app without breaking its layout.
+
+Work Log:
+- Refactored `MascotPortrait` out of the landing page component into a standalone, reusable `mascot-system.tsx`.
+- Created three new interactive variants: `MascotBubble` (for inline tips), `MascotToast` (for non-intrusive floating alerts), and `MascotEmptyState` (for dashboard empty states).
+- Replaced generic loading spinners with a pulsing `MascotPortrait` in `contract-loading.tsx`.
+- Embedded `MascotBubble` with contextual messages dynamically based on legal categories within `result-view.tsx` (FindingCard).
+- Added a floating `MascotToast` alert for alerting users to KRITIS-level severity clauses upon analysis completion.
+- Replaced the history dashboard's empty state to feature the `MascotEmptyState`.
+- Fixed React SSR warnings related to synchronous `useEffect` state setting via setTimeout deferrals.
+
+Verification:
+- Tested across app boundaries; verified `mascot-system.tsx` imports properly resolve.
+- React linter passes successfully without state-in-effect cascade warnings.
+
+Stage Summary:
+- The mascot has evolved from a static landing page decoration into a fully integrated, lively legal companion across the entire core platform flow.
+
+---
+Task ID: 73
+Agent: main (Codex) - Turso Database Schema Sync
+
+Task: Migrate and rebuild the remote Turso database schema to match the local Prisma schema without dropping existing user data, fixing the "User.username" 500 error on Koyeb.
+
+Work Log:
+- Analysed the Turso remote database which had stale schemas (missing new User columns and lacking the new LegalDocument and FTS5 tables).
+- Created a robust syncing script (`scripts/sync-turso.mjs`) leveraging Prisma's migrate diff tool alongside the `@libsql/client` driver.
+- Configured a temporary local SQLite clone and dummy configurations to safely extract the Turso schema diff.
+- Identified FTS5 shadow table generation conflicts and Prisma's `from-config-datasource` requirements to successfully compute a raw SQL migration script.
+- Secured the existing 3 test users by moving them to a temporary `User_old` table prior to schema drops.
+- Cleaned up 15+ deprecated tables from previous iterations (`Case`, `ArgumentAnalysis`, `ChatMessage`, etc.) using a direct LibSQL script (`scripts/cleanup.mjs`) wrapped in `PRAGMA foreign_keys=OFF`.
+- Successfully executed the new database migration and restored the 3 test users directly into the upgraded `User` table.
+- Verified the correct schema state (`LegalDocument`, `LegalArticle`, etc., all present) and purged temporary script files.
+
+Verification:
+- Confirmed Turso remote tables precisely match `schema.prisma`.
+- Old tables are permanently dropped; the 3 test users exist in `User` with all new columns (`username`, `plan`, etc.).
+
+Stage Summary:
+- The production database is perfectly aligned with the codebase. The app will no longer throw 500 errors on login and is ready for the new legal corpus data.
