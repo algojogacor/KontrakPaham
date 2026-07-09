@@ -1,4 +1,8 @@
 import { createChatCompletion } from "@/lib/llm";
+import {
+  getCachedLegalResearch,
+  saveLegalResearchCache,
+} from "@/lib/research-cache";
 
 export type ResearchEffort = "standard" | "deep" | "exhaustive";
 export type ResearchPlan = "FREE" | "LITE" | "PRO" | "ADMIN" | string;
@@ -164,6 +168,13 @@ export async function buildLegalResearchContext(contractText: string, plan: Rese
     const tPlannerDone = Date.now();
     console.log(`[TIMING] research_planner_total: ${tPlannerDone - tResearch0}ms | effort=${researchPlan.effort}`);
 
+    const cached = await getCachedLegalResearch(researchPlan);
+    if (cached) {
+      console.log(`[TIMING] legal_reference_cache HIT: ${Date.now() - tResearch0}ms | effort=${researchPlan.effort}`);
+      return cached;
+    }
+    console.log(`[TIMING] legal_reference_cache MISS | effort=${researchPlan.effort}`);
+
     const started = Date.now();
     console.log(`[TIMING] you_com_fetch START | effort=${researchPlan.effort} | timeoutMs=${effortTimeoutMs(researchPlan.effort)}`);
     const res = await fetch(process.env.YOU_RESEARCH_URL || "https://api.you.com/v1/research", {
@@ -198,12 +209,22 @@ export async function buildLegalResearchContext(contractText: string, plan: Rese
     const json = await res.json();
     console.log(`[TIMING] you_com_parse: ${Date.now() - tParse0}ms`);
     const sources = extractOfficialSources(json);
+    const content = buildResearchContextText(extractResearchContent(json), sources).slice(0, 9000);
+    await saveLegalResearchCache({
+      query: researchPlan.query,
+      effort: researchPlan.effort,
+      content,
+      sources,
+      latencyMs,
+    }).catch((cacheError) => {
+      console.log(`[TIMING] legal_reference_cache SAVE_FAILED: ${(cacheError as Error).message.slice(0, 120)}`);
+    });
     console.log(`[TIMING] research_phase DONE: ${Date.now() - tResearch0}ms | official_sources=${sources.length}`);
     return {
       enabled: true,
       effort: researchPlan.effort,
       query: researchPlan.query,
-      content: buildResearchContextText(extractResearchContent(json), sources).slice(0, 9000),
+      content,
       sources,
       latencyMs,
     };

@@ -2715,6 +2715,52 @@ Stage Summary:
 - User tidak akan menunggu ulang untuk dokumen identik dalam scope user+plan+quickMode+version.
 - Cache sengaja per-user, bukan global, untuk menghindari kebocoran privasi lintas akun.
 
+---
+Task ID: 50
+Agent: main (Codex) - Global Legal Reference Research Cache
+
+Task: Menambahkan cache global untuk hasil riset pasal/regulasi hukum agar query legal
+yang sudah pernah dicari tidak perlu memanggil You.com Research lagi.
+
+Work Log:
+- Mengklarifikasi scope: cache global hanya untuk hasil riset regulasi/legal reference,
+  bukan dokumen kontrak user dan bukan full analysis user.
+- Menggunakan TDD untuk helper cache:
+  * normalisasi query riset.
+  * cache key stabil untuk query setara.
+  * freshness/TTL cache.
+- Menambahkan model Prisma `LegalReferenceCache`:
+  * `cacheKey` unique.
+  * `normalizedQuery`, `query`, `effort`.
+  * `content`, `sources`, `latencyMs`.
+  * `hitCount`, `lastHitAt`, timestamps.
+- Menambahkan `src/lib/research-cache.ts`:
+  * `RESEARCH_CACHE_VERSION` dan `RESEARCH_CACHE_TTL_MS`.
+  * SHA-256 cache key berdasarkan normalized query + effort + version.
+  * `getCachedLegalResearch()` untuk hit cache global yang masih fresh.
+  * `saveLegalResearchCache()` untuk menyimpan hasil You.com yang berhasil.
+- Memperbarui `src/lib/research.ts`:
+  * Setelah planner menentukan query/effort, cek `LegalReferenceCache` dulu.
+  * Jika cache hit, return legal research context dari DB dan skip You.com.
+  * Jika cache miss, panggil You.com seperti biasa lalu simpan hasil content/sources ke cache.
+- Menambahkan `scripts/apply-legal-reference-cache-schema.mjs` untuk membuat tabel/index
+  di local SQLite dan Turso secara idempotent.
+- Menjalankan migration script; local dan Turso siap.
+
+Verification:
+- `bun test src/lib/research-cache.test.ts` -> 3 pass.
+- `DATABASE_URL="file:./build.db" bunx prisma generate` -> pass.
+- `node scripts/apply-legal-reference-cache-schema.mjs` -> local and turso schema ready.
+- `bun run lint` -> pass.
+- `DATABASE_URL="file:./build.db" TURSO_DATABASE_URL="" TURSO_AUTH_TOKEN="" JWT_SECRET="build-time-only-placeholder-change-in-runtime" bun run build` -> pass.
+
+Stage Summary:
+- Analisis pertama untuk query legal baru tetap bisa memakai You.com.
+- Analisis berikutnya dengan query/effort legal yang sama akan memakai cache global
+  legal reference dan menghindari latency You.com.
+- Cache ini tidak menyimpan dokumen user, sehingga lebih aman secara privasi daripada
+  global cache dokumen/kontrak.
+
 
 
 
