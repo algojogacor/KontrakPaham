@@ -2963,6 +2963,55 @@ Stage Summary:
 - Checklist di dokumen plan harus diperbarui setiap task implementasi selesai agar mudah
   dipindah tangan.
 
+---
+Task ID: 56
+Agent: main (Codex) - Legal Corpus Taxonomy and Google OAuth Guidance
+
+Task: Merevisi planning legal corpus agar tagging komprehensif sejak awal, menjadikan
+database pasal lokal sebagai sumber utama, dan memberi arahan pengisian OAuth Client ID
+Google Drive.
+
+Work Log:
+- Memperbarui `docs/superpowers/plans/2026-07-09-legal-corpus-index.md`.
+- Mengubah goal/architecture plan:
+  * Turso legal corpus menjadi sumber utama curated legal references.
+  * You.com menjadi additional/freshness layer saat confidence lokal rendah atau butuh
+    pembaruan regulasi.
+- Menambahkan taxonomy komprehensif sejak awal:
+  * contract formation.
+  * consumer protection.
+  * payment/penalty.
+  * termination/default.
+  * risk allocation.
+  * dispute resolution.
+  * privacy/data.
+  * digital/platform.
+  * employment/services.
+  * property/rent.
+  * financing/credit.
+  * financial services.
+  * corporate/commercial.
+  * intellectual property.
+  * public law/compliance.
+  * evidence/procedure.
+- Mengubah plan implementasi agar membuat `src/lib/legal-taxonomy.ts` sebagai modul
+  taxonomy terpisah, bukan alias kecil di helper search.
+- Menambahkan test planning untuk bahasa awam yang dipetakan ke banyak tag/family,
+  misalnya akun dibekukan, saldo ditahan, data KTP, refund, dan pengalihan risiko.
+- Menambahkan instruksi Google OAuth Client ID:
+  * Web application untuk integrasi browser/admin app.
+  * Desktop app sebagai alternatif lebih mudah untuk bootstrap refresh token lokal.
+  * Redirect URI lokal dan Koyeb harus exact match.
+
+Verification:
+- Placeholder scan pada dokumen plan untuk `TBD`, `TODO`, `implement later`,
+  `fill in`, `Similar to`, dan placeholder sejenis -> no matches.
+
+Stage Summary:
+- Plan sekarang mengunci arah: indexing lokal cepat dan komprehensif sebagai default,
+  dengan You.com hanya sebagai pendukung.
+- Belum ada implementasi runtime; perubahan ini adalah revisi planning/checklist.
+
 
 
 

@@ -2,9 +2,9 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Build a fast legal corpus database for Indonesian laws, articles, and legal references so KontrakPaham can retrieve relevant pasal context before calling You.com.
+**Goal:** Build a fast legal corpus database for Indonesian laws, articles, and legal references so KontrakPaham can use local indexed legal context as the primary source before calling You.com as an additional freshness layer.
 
-**Architecture:** Turso remains the fast query/index layer. Google Drive is optional cold storage for large source files, not the search engine. The app translates messy user/contract language into normalized legal issues, searches Turso indexes first, then falls back to You.com only when local confidence is low.
+**Architecture:** Turso remains the fast query/index layer and source of truth for curated legal references. Google Drive is optional cold storage for large source files, not the search engine. The app translates messy user/contract language into normalized legal issues, searches Turso indexes first, and calls You.com only as additional support when local confidence is low or the issue needs freshness beyond the curated corpus.
 
 **Tech Stack:** Next.js 16, Prisma 7 with `@prisma/adapter-libsql`, Turso/libSQL, Bun tests, optional Google Drive API OAuth.
 
@@ -21,10 +21,37 @@ contract text
   -> issue extraction (rules + optional LLM translator)
   -> Turso LegalArticleIndex keyword/tag search
   -> LegalArticle context returned with source/citation
-  -> if confidence is low, fallback to existing You.com research
+  -> if confidence is low or freshness is needed, call You.com as additional research
 ```
 
 Google Drive is used only after Turso has already found a record. Drive stores original PDFs, OCR text, or large snapshots. Turso stores the searchable metadata, pasal text, tags, normalized tokens, and Drive file IDs.
+
+The local legal corpus is the primary source. You.com is not the default source once a relevant local result has medium or high confidence. You.com remains useful for current-law freshness, newly issued regulation checks, or gaps in the curated corpus.
+
+## Comprehensive Tagging Taxonomy
+
+The tagging system must be broad from the first implementation. User wording is expected to be informal, incomplete, or emotionally phrased. The app should translate that wording into stable legal tags before searching.
+
+Tag families:
+
+- `contract_formation`: `syarat_sah_perjanjian`, `kesepakatan`, `kecakapan`, `objek_tertentu`, `sebab_halal`, `itikad_baik`, `wanprestasi`, `perbuatan_melawan_hukum`.
+- `consumer_protection`: `perlindungan_konsumen`, `klausul_baku`, `pengalihan_tanggung_jawab`, `pembatasan_ganti_rugi`, `larangan_pengembalian`, `pembuktian_sepihak`, `perubahan_sepihak`.
+- `payment_and_penalty`: `denda`, `bunga`, `biaya_tersembunyi`, `keterlambatan_pembayaran`, `penagihan`, `refund`, `deposit`, `pembayaran_berulang`, `auto_debit`.
+- `termination_and_default`: `pemutusan_sepihak`, `pembatalan`, `pengakhiran`, `cidera_janji`, `masa_tenggang`, `somasi`, `akselerasi_pembayaran`.
+- `risk_allocation`: `pengalihan_risiko`, `indemnity`, `hold_harmless`, `limitation_of_liability`, `force_majeure`, `asuransi`, `kerusakan_barang`.
+- `dispute_resolution`: `sengketa`, `arbitrase`, `mediasi`, `forum_hukum`, `domisili_hukum`, `choice_of_law`, `pengadilan`, `bani`, `small_claim`.
+- `privacy_and_data`: `data_pribadi`, `persetujuan_data`, `pemrosesan_data`, `transfer_data`, `retensi_data`, `kebocoran_data`, `hak_subjek_data`, `nik_ktp`, `nomor_hp`.
+- `digital_and_platform`: `akun`, `suspensi_akun`, `moderasi_konten`, `e_commerce`, `marketplace`, `tanda_tangan_elektronik`, `transaksi_elektronik`, `akses_layanan`.
+- `employment_and_services`: `hubungan_kerja`, `kontraktor_independen`, `upah`, `lembur`, `non_compete`, `non_solicit`, `kerahasiaan`, `hak_kekayaan_intelektual`.
+- `property_and_rent`: `sewa`, `deposit_sewa`, `pengosongan`, `perawatan`, `kerusakan_properti`, `kenaikan_sewa`, `jaminan`.
+- `financing_and_credit`: `pinjaman`, `jaminan_fidusia`, `agunan`, `cicilan`, `restrukturisasi`, `kolektibilitas`, `pinjol`, `leasing`.
+- `financial_services`: `perbankan`, `ojk`, `bi`, `asuransi`, `fintech`, `paylater`, `investasi`, `sekuritas`, `anti_pencucian_uang`.
+- `corporate_and_commercial`: `jual_beli`, `distribusi`, `agen`, `franchise`, `saham`, `direksi`, `komisaris`, `kuasa`, `perizinan_usaha`.
+- `intellectual_property`: `hak_cipta`, `merek`, `paten`, `lisensi`, `royalti`, `pengalihan_hak`, `konten`, `software`.
+- `public_law_and_compliance`: `perizinan`, `sanksi_administratif`, `pidana`, `pajak`, `kepatuhan`, `pelaporan`, `larangan`, `kewajiban_regulator`.
+- `evidence_and_procedure`: `alat_bukti`, `dokumen_elektronik`, `tanda_tangan`, `notaris`, `legalisasi`, `pembuktian`, `surat_kuasa`.
+
+Each tag should have aliases in Bahasa Indonesia casual wording, formal legal terms, English loanwords, and common typo-ish phrases. The first version should not aim for perfect semantic search; it should aim for broad deterministic coverage and clear citations.
 
 ## Google Drive Connection Model
 
@@ -40,6 +67,31 @@ Google Drive API keys alone are not enough for private Drive files. For a person
 
 Service accounts are not the best default for Google One personal storage because they do not simply inherit a personal account's Google One quota. They are better for Workspace/domain-managed setups. For this project, OAuth user consent is the practical route.
 
+### Google Console OAuth Client Setup
+
+If the Google Console screen is **Create OAuth client ID**:
+
+Recommended for this project:
+
+- Application type: `Web application`
+- Name: `KontrakPaham Drive Archive`
+- Authorized JavaScript origins:
+  - `http://localhost:3000`
+  - `https://original-gypsy-bot-ternak-gacor-a8fada76.koyeb.app`
+- Authorized redirect URIs:
+  - `http://localhost:3000/api/google-drive/oauth/callback`
+  - `https://original-gypsy-bot-ternak-gacor-a8fada76.koyeb.app/api/google-drive/oauth/callback`
+
+Use the production Koyeb domain that is actually attached to the service if it changes. Google redirect URIs must match exactly, including scheme, host, path, and trailing slash behavior.
+
+Alternative for a one-time local bootstrap only:
+
+- Application type: `Desktop app`
+- Name: `KontrakPaham Drive Archive Local Bootstrap`
+- No JavaScript origins or redirect URIs are needed.
+
+The `Desktop app` route is easier for getting a refresh token locally. The `Web application` route is better if the app will later have an admin page/button to connect Google Drive from the browser.
+
 ## Files To Create Or Modify
 
 - Modify: `prisma/schema.prisma`
@@ -50,10 +102,12 @@ Service accounts are not the best default for Google One personal storage becaus
   - Idempotent schema migration for local SQLite and Turso.
 - Create: `src/lib/legal-corpus.ts`
   - Normalization, issue extraction, index search, scoring, and context formatting.
+- Create: `src/lib/legal-taxonomy.ts`
+  - Comprehensive tag taxonomy and alias mapping for layperson-to-legal issue translation.
 - Create: `src/lib/legal-corpus.test.ts`
   - Unit tests for query normalization, issue aliases, scoring, and context formatting.
 - Modify: `src/lib/research.ts`
-  - Search legal corpus before You.com.
+  - Search legal corpus before You.com and treat You.com as additional research.
 - Create: `src/lib/legal-corpus-seed.ts`
   - Seed helpers for known legal documents/articles.
 - Create: `scripts/seed-legal-corpus.mjs`
@@ -71,6 +125,7 @@ Service accounts are not the best default for Google One personal storage becaus
 
 **Files:**
 - Create: `src/lib/legal-corpus.test.ts`
+- Create later in Task 2: `src/lib/legal-taxonomy.ts`
 - Create later in Task 2: `src/lib/legal-corpus.ts`
 
 - [ ] **Step 1: Write failing tests**
@@ -98,6 +153,25 @@ describe("legal corpus helpers", () => {
     expect(signals.tags).toContain("denda");
     expect(signals.tags).toContain("pemutusan_sepihak");
     expect(signals.keywords).toContain("telat bayar");
+  });
+
+  test("maps layperson complaints into comprehensive legal tag families", () => {
+    const signals = extractLegalIssueSignals(
+      "Akun saya tiba-tiba dibekukan, saldo ditahan, data KTP dipakai, refund ditolak, katanya semua risiko saya tanggung.",
+    );
+
+    expect(signals.tags).toContain("suspensi_akun");
+    expect(signals.tags).toContain("data_pribadi");
+    expect(signals.tags).toContain("refund");
+    expect(signals.tags).toContain("pengalihan_risiko");
+    expect(signals.tagFamilies).toEqual(
+      expect.arrayContaining([
+        "digital_and_platform",
+        "privacy_and_data",
+        "payment_and_penalty",
+        "risk_allocation",
+      ]),
+    );
   });
 
   test("scores exact tags higher than loose keyword matches", () => {
@@ -153,16 +227,169 @@ git commit -m "test: define legal corpus retrieval helpers"
 ### Task 2: Legal Corpus Helper Implementation
 
 **Files:**
+- Create: `src/lib/legal-taxonomy.ts`
 - Create: `src/lib/legal-corpus.ts`
 
-- [ ] **Step 1: Implement minimal helper module**
+- [ ] **Step 1: Create comprehensive taxonomy module**
+
+Create `src/lib/legal-taxonomy.ts`:
 
 ```ts
+export interface LegalTagDefinition {
+  tag: string;
+  family: string;
+  aliases: string[];
+}
+
+export const LEGAL_TAG_DEFINITIONS: LegalTagDefinition[] = [
+  { tag: "syarat_sah_perjanjian", family: "contract_formation", aliases: ["syarat sah", "perjanjian sah", "kontrak sah", "pasal 1320"] },
+  { tag: "kesepakatan", family: "contract_formation", aliases: ["sepakat", "setuju", "persetujuan", "dipaksa tanda tangan", "tidak sadar setuju"] },
+  { tag: "kecakapan", family: "contract_formation", aliases: ["belum dewasa", "anak di bawah umur", "tidak cakap", "wali"] },
+  { tag: "objek_tertentu", family: "contract_formation", aliases: ["objek tidak jelas", "barang tidak jelas", "jasa tidak jelas", "yang diperjanjikan tidak jelas"] },
+  { tag: "sebab_halal", family: "contract_formation", aliases: ["melanggar hukum", "tujuan ilegal", "sebab terlarang", "perjanjian ilegal"] },
+  { tag: "itikad_baik", family: "contract_formation", aliases: ["itikad baik", "tidak fair", "tidak jujur", "menjebak", "menipu"] },
+  { tag: "wanprestasi", family: "contract_formation", aliases: ["ingkar janji", "tidak memenuhi janji", "wanprestasi", "gagal memenuhi kewajiban"] },
+  { tag: "perbuatan_melawan_hukum", family: "contract_formation", aliases: ["melawan hukum", "merugikan", "perbuatan melawan hukum", "pmh"] },
+
+  { tag: "perlindungan_konsumen", family: "consumer_protection", aliases: ["konsumen", "pelanggan", "pembeli", "penyewa", "pengguna layanan"] },
+  { tag: "klausul_baku", family: "consumer_protection", aliases: ["klausul baku", "syarat sepihak", "tidak bisa dinegosiasi", "take it or leave it", "aturan sepihak"] },
+  { tag: "pengalihan_tanggung_jawab", family: "consumer_protection", aliases: ["tanggung jawab dialihkan", "semua risiko saya", "tidak bertanggung jawab", "lepas tanggung jawab"] },
+  { tag: "pembatasan_ganti_rugi", family: "consumer_protection", aliases: ["ganti rugi dibatasi", "kompensasi kecil", "tidak dapat ganti rugi", "maksimal penggantian"] },
+  { tag: "larangan_pengembalian", family: "consumer_protection", aliases: ["tidak boleh retur", "barang tidak bisa dikembalikan", "no return", "pengembalian ditolak"] },
+  { tag: "pembuktian_sepihak", family: "consumer_protection", aliases: ["bukti sepihak", "keputusan final sepihak", "catatan perusahaan yang berlaku", "menentukan sendiri"] },
+  { tag: "perubahan_sepihak", family: "consumer_protection", aliases: ["ubah sepihak", "syarat bisa berubah", "harga bisa berubah", "ketentuan berubah sewaktu waktu"] },
+
+  { tag: "denda", family: "payment_and_penalty", aliases: ["denda", "penalty", "penalti", "sanksi uang", "biaya hukuman"] },
+  { tag: "bunga", family: "payment_and_penalty", aliases: ["bunga", "interest", "bunga harian", "bunga berjalan"] },
+  { tag: "biaya_tersembunyi", family: "payment_and_penalty", aliases: ["biaya tersembunyi", "admin fee", "biaya admin", "biaya tambahan", "charge tambahan"] },
+  { tag: "keterlambatan_pembayaran", family: "payment_and_penalty", aliases: ["telat bayar", "terlambat bayar", "nunggak", "jatuh tempo", "keterlambatan"] },
+  { tag: "penagihan", family: "payment_and_penalty", aliases: ["ditagih", "debt collector", "kolektor", "penagihan kasar", "diteror"] },
+  { tag: "refund", family: "payment_and_penalty", aliases: ["refund", "pengembalian dana", "uang kembali", "refund ditolak", "dana ditahan"] },
+  { tag: "deposit", family: "payment_and_penalty", aliases: ["deposit", "uang jaminan", "jaminan ditahan", "security deposit"] },
+  { tag: "pembayaran_berulang", family: "payment_and_penalty", aliases: ["langganan", "subscription", "tagihan bulanan", "perpanjang otomatis"] },
+  { tag: "auto_debit", family: "payment_and_penalty", aliases: ["auto debit", "debet otomatis", "potong otomatis", "kartu ditagih"] },
+
+  { tag: "pemutusan_sepihak", family: "termination_and_default", aliases: ["putus sepihak", "diputus sepihak", "mengakhiri sepihak", "kontrak dihentikan sepihak"] },
+  { tag: "pembatalan", family: "termination_and_default", aliases: ["batal", "dibatalkan", "pembatalan", "cancel"] },
+  { tag: "pengakhiran", family: "termination_and_default", aliases: ["pengakhiran", "berakhir", "terminasi", "termination"] },
+  { tag: "cidera_janji", family: "termination_and_default", aliases: ["cidera janji", "cedera janji", "default", "breach"] },
+  { tag: "masa_tenggang", family: "termination_and_default", aliases: ["masa tenggang", "grace period", "waktu perbaikan", "kesempatan memperbaiki"] },
+  { tag: "somasi", family: "termination_and_default", aliases: ["somasi", "teguran", "surat peringatan", "peringatan tertulis"] },
+  { tag: "akselerasi_pembayaran", family: "termination_and_default", aliases: ["langsung lunas", "semua cicilan jatuh tempo", "akselerasi", "pelunasan dipercepat"] },
+
+  { tag: "pengalihan_risiko", family: "risk_allocation", aliases: ["risiko ditanggung saya", "semua risiko saya", "pengalihan risiko", "beban risiko"] },
+  { tag: "indemnity", family: "risk_allocation", aliases: ["indemnity", "ganti rugi semua", "membebaskan dari tuntutan", "menanggung klaim"] },
+  { tag: "hold_harmless", family: "risk_allocation", aliases: ["hold harmless", "tidak menuntut", "membebaskan tanggung jawab"] },
+  { tag: "limitation_of_liability", family: "risk_allocation", aliases: ["batas tanggung jawab", "liability dibatasi", "tanggung jawab maksimal"] },
+  { tag: "force_majeure", family: "risk_allocation", aliases: ["force majeure", "keadaan kahar", "bencana", "di luar kuasa", "wabah"] },
+  { tag: "asuransi", family: "risk_allocation", aliases: ["asuransi", "pertanggungan", "klaim asuransi", "polis"] },
+  { tag: "kerusakan_barang", family: "risk_allocation", aliases: ["barang rusak", "kerusakan", "hilang", "cacat barang"] },
+
+  { tag: "sengketa", family: "dispute_resolution", aliases: ["sengketa", "perselisihan", "dispute", "masalah hukum"] },
+  { tag: "arbitrase", family: "dispute_resolution", aliases: ["arbitrase", "bani", "arbitration", "arbiter"] },
+  { tag: "mediasi", family: "dispute_resolution", aliases: ["mediasi", "mediator", "musyawarah", "negosiasi sengketa"] },
+  { tag: "forum_hukum", family: "dispute_resolution", aliases: ["forum hukum", "pengadilan mana", "kompetensi pengadilan", "venue"] },
+  { tag: "domisili_hukum", family: "dispute_resolution", aliases: ["domisili hukum", "kedudukan hukum", "alamat hukum"] },
+  { tag: "choice_of_law", family: "dispute_resolution", aliases: ["hukum yang berlaku", "choice of law", "governing law", "hukum asing"] },
+  { tag: "pengadilan", family: "dispute_resolution", aliases: ["pengadilan", "pn", "gugatan", "litigasi"] },
+  { tag: "small_claim", family: "dispute_resolution", aliases: ["gugatan sederhana", "small claim", "nilai kecil"] },
+
+  { tag: "data_pribadi", family: "privacy_and_data", aliases: ["data pribadi", "nik", "ktp", "privasi", "nomor hp", "foto ktp"] },
+  { tag: "persetujuan_data", family: "privacy_and_data", aliases: ["izin data", "persetujuan data", "consent", "setuju data dipakai"] },
+  { tag: "pemrosesan_data", family: "privacy_and_data", aliases: ["olah data", "pemrosesan data", "data dipakai", "profiling"] },
+  { tag: "transfer_data", family: "privacy_and_data", aliases: ["data dibagikan", "transfer data", "pihak ketiga", "data dijual"] },
+  { tag: "retensi_data", family: "privacy_and_data", aliases: ["data disimpan", "hapus data", "retensi", "berapa lama data"] },
+  { tag: "kebocoran_data", family: "privacy_and_data", aliases: ["data bocor", "kebocoran", "diretas", "leak"] },
+  { tag: "hak_subjek_data", family: "privacy_and_data", aliases: ["hak akses data", "hak hapus", "koreksi data", "tarik persetujuan"] },
+
+  { tag: "akun", family: "digital_and_platform", aliases: ["akun", "account", "login", "profil"] },
+  { tag: "suspensi_akun", family: "digital_and_platform", aliases: ["akun dibekukan", "akun ditutup", "suspend", "banned", "saldo ditahan"] },
+  { tag: "moderasi_konten", family: "digital_and_platform", aliases: ["konten dihapus", "moderasi", "take down", "pelanggaran konten"] },
+  { tag: "e_commerce", family: "digital_and_platform", aliases: ["ecommerce", "e-commerce", "marketplace", "toko online"] },
+  { tag: "tanda_tangan_elektronik", family: "digital_and_platform", aliases: ["tanda tangan elektronik", "esign", "e-sign", "tte"] },
+  { tag: "transaksi_elektronik", family: "digital_and_platform", aliases: ["transaksi elektronik", "online", "digital", "sistem elektronik"] },
+  { tag: "akses_layanan", family: "digital_and_platform", aliases: ["akses layanan", "layanan tidak bisa dipakai", "downtime", "fitur dicabut"] },
+
+  { tag: "hubungan_kerja", family: "employment_and_services", aliases: ["karyawan", "hubungan kerja", "pegawai", "phk"] },
+  { tag: "kontraktor_independen", family: "employment_and_services", aliases: ["freelance", "kontraktor", "mitra", "bukan karyawan"] },
+  { tag: "upah", family: "employment_and_services", aliases: ["upah", "gaji", "honor", "fee jasa"] },
+  { tag: "lembur", family: "employment_and_services", aliases: ["lembur", "overtime", "jam kerja lebih"] },
+  { tag: "non_compete", family: "employment_and_services", aliases: ["non compete", "tidak boleh kerja di pesaing", "larangan bersaing"] },
+  { tag: "non_solicit", family: "employment_and_services", aliases: ["non solicit", "tidak boleh ajak klien", "tidak boleh rekrut"] },
+  { tag: "kerahasiaan", family: "employment_and_services", aliases: ["rahasia", "nda", "confidential", "kerahasiaan"] },
+  { tag: "hak_kekayaan_intelektual", family: "employment_and_services", aliases: ["hak cipta kerja", "ip milik perusahaan", "hasil kerja milik"] },
+
+  { tag: "sewa", family: "property_and_rent", aliases: ["sewa", "kontrak rumah", "ruko", "apartemen", "kos"] },
+  { tag: "deposit_sewa", family: "property_and_rent", aliases: ["deposit sewa", "uang jaminan sewa", "deposit kos"] },
+  { tag: "pengosongan", family: "property_and_rent", aliases: ["pengosongan", "diusir", "keluar dari rumah", "vacate"] },
+  { tag: "perawatan", family: "property_and_rent", aliases: ["perawatan", "maintenance", "perbaikan", "renovasi"] },
+  { tag: "kerusakan_properti", family: "property_and_rent", aliases: ["kerusakan properti", "tembok rusak", "barang sewaan rusak"] },
+  { tag: "kenaikan_sewa", family: "property_and_rent", aliases: ["sewa naik", "kenaikan sewa", "harga sewa berubah"] },
+
+  { tag: "pinjaman", family: "financing_and_credit", aliases: ["pinjaman", "utang", "loan", "kredit"] },
+  { tag: "jaminan_fidusia", family: "financing_and_credit", aliases: ["fidusia", "jaminan fidusia", "bpkb", "objek jaminan"] },
+  { tag: "agunan", family: "financing_and_credit", aliases: ["agunan", "jaminan", "collateral", "sertifikat"] },
+  { tag: "cicilan", family: "financing_and_credit", aliases: ["cicilan", "angsuran", "installment", "bayar bulanan"] },
+  { tag: "restrukturisasi", family: "financing_and_credit", aliases: ["restrukturisasi", "keringanan", "reschedule", "renegosiasi utang"] },
+  { tag: "kolektibilitas", family: "financing_and_credit", aliases: ["slik", "bi checking", "kolektibilitas", "skor kredit"] },
+  { tag: "pinjol", family: "financing_and_credit", aliases: ["pinjol", "pinjaman online", "fintech lending", "galbay"] },
+  { tag: "leasing", family: "financing_and_credit", aliases: ["leasing", "pembiayaan", "kredit motor", "kredit mobil"] },
+
+  { tag: "perbankan", family: "financial_services", aliases: ["bank", "rekening", "perbankan", "tabungan"] },
+  { tag: "ojk", family: "financial_services", aliases: ["ojk", "otoritas jasa keuangan", "regulator keuangan"] },
+  { tag: "bi", family: "financial_services", aliases: ["bank indonesia", "bi", "qris", "sistem pembayaran"] },
+  { tag: "asuransi_keuangan", family: "financial_services", aliases: ["asuransi jiwa", "asuransi kesehatan", "premi", "klaim ditolak"] },
+  { tag: "paylater", family: "financial_services", aliases: ["paylater", "bayar nanti", "spaylater", "gopaylater"] },
+  { tag: "investasi", family: "financial_services", aliases: ["investasi", "return", "profit", "modal", "robot trading"] },
+  { tag: "anti_pencucian_uang", family: "financial_services", aliases: ["aml", "pencucian uang", "kyc", "sumber dana"] },
+
+  { tag: "jual_beli", family: "corporate_and_commercial", aliases: ["jual beli", "pembelian", "penjualan", "purchase"] },
+  { tag: "distribusi", family: "corporate_and_commercial", aliases: ["distributor", "distribusi", "reseller", "stokis"] },
+  { tag: "agen", family: "corporate_and_commercial", aliases: ["agen", "agency", "perwakilan"] },
+  { tag: "franchise", family: "corporate_and_commercial", aliases: ["franchise", "waralaba", "franchisor", "franchisee"] },
+  { tag: "saham", family: "corporate_and_commercial", aliases: ["saham", "shareholder", "pemegang saham", "equity"] },
+  { tag: "direksi", family: "corporate_and_commercial", aliases: ["direksi", "direktur", "pengurus perusahaan"] },
+  { tag: "komisaris", family: "corporate_and_commercial", aliases: ["komisaris", "dewan komisaris", "pengawas"] },
+  { tag: "kuasa", family: "corporate_and_commercial", aliases: ["kuasa", "surat kuasa", "power of attorney", "wakil"] },
+  { tag: "perizinan_usaha", family: "corporate_and_commercial", aliases: ["izin usaha", "nib", "oss", "perizinan usaha"] },
+
+  { tag: "hak_cipta", family: "intellectual_property", aliases: ["hak cipta", "copyright", "ciptaan", "konten saya"] },
+  { tag: "merek", family: "intellectual_property", aliases: ["merek", "brand", "trademark", "nama dagang"] },
+  { tag: "paten", family: "intellectual_property", aliases: ["paten", "invensi", "patent"] },
+  { tag: "lisensi", family: "intellectual_property", aliases: ["lisensi", "license", "izin pakai", "hak pakai"] },
+  { tag: "royalti", family: "intellectual_property", aliases: ["royalti", "royalty", "bagi hasil ip"] },
+  { tag: "pengalihan_hak", family: "intellectual_property", aliases: ["hak dialihkan", "assignment", "alih hak", "milik sepenuhnya"] },
+  { tag: "software", family: "intellectual_property", aliases: ["software", "aplikasi", "source code", "kode sumber"] },
+
+  { tag: "perizinan", family: "public_law_and_compliance", aliases: ["izin", "lisensi usaha", "izin pemerintah", "persetujuan regulator"] },
+  { tag: "sanksi_administratif", family: "public_law_and_compliance", aliases: ["sanksi administratif", "denda administratif", "teguran regulator"] },
+  { tag: "pidana", family: "public_law_and_compliance", aliases: ["pidana", "penjara", "lapor polisi", "tindak pidana"] },
+  { tag: "pajak", family: "public_law_and_compliance", aliases: ["pajak", "ppn", "pph", "npwp", "faktur"] },
+  { tag: "kepatuhan", family: "public_law_and_compliance", aliases: ["compliance", "kepatuhan", "wajib patuh", "aturan regulator"] },
+  { tag: "pelaporan", family: "public_law_and_compliance", aliases: ["lapor", "pelaporan", "laporan berkala", "notifikasi regulator"] },
+  { tag: "larangan", family: "public_law_and_compliance", aliases: ["dilarang", "larangan", "tidak boleh", "prohibited"] },
+  { tag: "kewajiban_regulator", family: "public_law_and_compliance", aliases: ["wajib", "kewajiban regulator", "harus memenuhi", "mandatory"] },
+
+  { tag: "alat_bukti", family: "evidence_and_procedure", aliases: ["bukti", "alat bukti", "evidence", "rekaman", "chat"] },
+  { tag: "dokumen_elektronik", family: "evidence_and_procedure", aliases: ["dokumen elektronik", "email", "screenshot", "whatsapp"] },
+  { tag: "tanda_tangan", family: "evidence_and_procedure", aliases: ["tanda tangan", "ttd", "ditandatangani", "signature"] },
+  { tag: "notaris", family: "evidence_and_procedure", aliases: ["notaris", "akta", "waarmerking", "legalisasi"] },
+  { tag: "legalisasi", family: "evidence_and_procedure", aliases: ["legalisasi", "apostille", "pengesahan", "dilegalisir"] },
+  { tag: "pembuktian", family: "evidence_and_procedure", aliases: ["membuktikan", "beban pembuktian", "siapa yang harus bukti"] },
+  { tag: "surat_kuasa", family: "evidence_and_procedure", aliases: ["surat kuasa", "kuasa khusus", "wakil hukum"] },
+];
+```
+
+- [ ] **Step 2: Implement helper module**
+
+```ts
+import { LEGAL_TAG_DEFINITIONS } from "@/lib/legal-taxonomy";
 import type { ResearchSource } from "@/lib/research";
 
 export interface LegalIssueSignals {
   normalizedQuery: string;
   tags: string[];
+  tagFamilies: string[];
   keywords: string[];
 }
 
@@ -189,16 +416,6 @@ export interface LegalCorpusContext {
   confidence: "low" | "medium" | "high";
 }
 
-const ISSUE_ALIASES: Array<{ tag: string; phrases: string[] }> = [
-  { tag: "denda", phrases: ["denda", "penalty", "telat bayar", "terlambat bayar", "keterlambatan"] },
-  { tag: "pemutusan_sepihak", phrases: ["putus sepihak", "diputus sepihak", "mengakhiri sepihak", "pembatalan sepihak"] },
-  { tag: "klausul_baku", phrases: ["klausul baku", "syarat sepihak", "tidak bisa dinegosiasi", "take it or leave it"] },
-  { tag: "perlindungan_konsumen", phrases: ["konsumen", "pelanggan", "pembeli", "penyewa"] },
-  { tag: "data_pribadi", phrases: ["data pribadi", "nik", "ktp", "privasi", "nomor hp"] },
-  { tag: "sengketa", phrases: ["sengketa", "arbitrase", "pengadilan", "domisili hukum"] },
-  { tag: "force_majeure", phrases: ["force majeure", "keadaan kahar", "bencana", "di luar kuasa"] },
-];
-
 export function normalizeLegalSearchText(text: string) {
   return text
     .toLowerCase()
@@ -211,12 +428,14 @@ export function normalizeLegalSearchText(text: string) {
 export function extractLegalIssueSignals(text: string): LegalIssueSignals {
   const normalizedQuery = normalizeLegalSearchText(text);
   const tags = new Set<string>();
+  const tagFamilies = new Set<string>();
   const keywords = new Set<string>();
 
-  for (const alias of ISSUE_ALIASES) {
-    for (const phrase of alias.phrases) {
+  for (const definition of LEGAL_TAG_DEFINITIONS) {
+    for (const phrase of definition.aliases) {
       if (normalizedQuery.includes(normalizeLegalSearchText(phrase))) {
-        tags.add(alias.tag);
+        tags.add(definition.tag);
+        tagFamilies.add(definition.family);
         keywords.add(phrase);
       }
     }
@@ -229,6 +448,7 @@ export function extractLegalIssueSignals(text: string): LegalIssueSignals {
   return {
     normalizedQuery,
     tags: [...tags],
+    tagFamilies: [...tagFamilies],
     keywords: [...keywords].slice(0, 24),
   };
 }
@@ -281,16 +501,16 @@ export function buildLegalCorpusContext(results: LegalCorpusResult[]): LegalCorp
 }
 ```
 
-- [ ] **Step 2: Run helper tests**
+- [ ] **Step 3: Run helper tests**
 
 Run: `bun test src/lib/legal-corpus.test.ts`
 
 Expected: PASS.
 
-- [ ] **Step 3: Commit helper implementation**
+- [ ] **Step 4: Commit helper implementation**
 
 ```bash
-git add src/lib/legal-corpus.ts src/lib/legal-corpus.test.ts
+git add src/lib/legal-taxonomy.ts src/lib/legal-corpus.ts src/lib/legal-corpus.test.ts
 git commit -m "feat: add legal corpus retrieval helpers"
 ```
 
@@ -782,7 +1002,7 @@ git commit -m "feat: search legal corpus index"
 
 ---
 
-### Task 6: Use Legal Corpus Before You.com
+### Task 6: Use Legal Corpus As Primary Source Before You.com
 
 **Files:**
 - Modify: `src/lib/research.ts`
@@ -807,17 +1027,17 @@ Inside `buildLegalResearchContext`, after the research plan is chosen and before
         enabled: true,
         effort: researchPlan.effort,
         query: researchPlan.query,
-        content: `Riset hukum lokal dari database pasal:\n\n${localCorpus.content}`,
+        content: `Database pasal lokal sebagai sumber utama:\n\n${localCorpus.content}`,
         sources: localCorpus.sources,
         latencyMs: localCorpus.latencyMs,
-        warning: "Konteks hukum diambil dari database pasal lokal.",
+        warning: "Konteks hukum diambil dari database pasal lokal; You.com tidak dipanggil karena confidence cukup.",
       };
     }
 ```
 
-- [ ] **Step 3: Keep fallback behavior unchanged**
+- [ ] **Step 3: Keep additional research behavior**
 
-Confirm the existing flow still calls `getCachedLegalResearch(researchPlan)` and You.com after a low-confidence corpus miss.
+Confirm the existing flow still calls `getCachedLegalResearch(researchPlan)` and You.com after a low-confidence corpus miss. You.com should be described as additional/freshness research, not the primary source.
 
 - [ ] **Step 4: Run focused tests**
 
@@ -959,8 +1179,7 @@ git push origin main
 
 - Do not store secrets in git.
 - Do not read from Google Drive during request-time search.
-- Do not call You.com when local legal corpus confidence is medium or high.
+- Do not call You.com when local legal corpus confidence is medium or high unless a future task adds an explicit "freshness check required" flag.
 - Keep initial corpus small and curated; quality matters more than volume.
 - Treat legal corpus citations as context, not legal advice.
 - If an implementation worker changes the plan, update this checklist in the same commit.
-
