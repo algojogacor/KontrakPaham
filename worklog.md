@@ -3299,3 +3299,29 @@ Stage Summary:
 - Hero visual sekarang tidak lagi terlihat seperti GLB kecil yang salah orientasi.
 - Dokumen contoh tidak kosong; ia menampilkan konten kontrak dan highlight risiko yang
   lebih komunikatif.
+
+---
+Task ID: 64
+Agent: main (Codex) - Mascot Mouth and Loading Layout Fix
+
+Task: Memperbaiki dua feedback visual: posisi mulut maskot terlalu naik dan tampilan
+loading masih hancur/terlalu besar hingga bertabrakan dengan footer.
+
+Work Log:
+- Menurunkan posisi snout dan smile pada `MascotPortrait` agar mulut lebih berada di
+  bagian bawah wajah.
+- Mengubah default `ContractLoading` menjadi compact.
+- Mengubah auth-loading di `src/app/page.tsx` agar memakai compact loading eksplisit
+  dan tidak merender footer selama loading.
+- Menggeser compact analysis track agar tidak berdesakan dengan maskot compact.
+
+Verification:
+- `bun run lint` -> pass.
+- Production build dengan placeholder env -> pass.
+- Playwright CLI screenshot desktop pada server production lokal -> hero tetap rapi
+  dan posisi mulut maskot lebih turun.
+
+Stage Summary:
+- Maskot lebih natural secara proporsi wajah.
+- Loading awal aplikasi tidak lagi memakai scene hero besar dan tidak turun menabrak
+  footer.

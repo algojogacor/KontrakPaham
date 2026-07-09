@@ -56,10 +56,9 @@ export default function Home() {
     return (
       <div className="flex min-h-screen flex-col">
         <SiteNav />
-        <div className="flex flex-1 items-center justify-center px-4">
-          <ContractLoading title="Memuat KontrakPaham..." detail="Menyiapkan sesi, kuota, dan ruang kerja Anda." />
+        <div className="flex min-h-[calc(100dvh-7rem)] flex-1 items-center justify-center px-4 py-10">
+          <ContractLoading compact title="Memuat KontrakPaham..." detail="Menyiapkan sesi, kuota, dan ruang kerja Anda." />
         </div>
-        <SiteFooter />
       </div>
     );
   }

@@ -6,7 +6,7 @@ import { cn } from "@/lib/utils";
 export function ContractLoading({
   title = "Membaca kontrak...",
   detail = "Sistem sedang menyiapkan dokumen dan konteks akun Anda.",
-  compact = false,
+  compact = true,
   className,
 }: {
   title?: string;
