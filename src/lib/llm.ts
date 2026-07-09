@@ -121,23 +121,61 @@ async function callProvider(
 ): Promise<ChatCompletionResult> {
   const timeoutSignal = AbortSignal.timeout(provider.timeoutMs);
   const combinedSignal = signal ? AbortSignal.any([signal, timeoutSignal]) : timeoutSignal;
-  const body: Record<string, unknown> = {
-    model: provider.model,
-    messages,
-    temperature: provider.temperature,
-    max_tokens: provider.maxTokens,
+  
+  const base = cleanBaseUrl(provider.baseUrl);
+  const isAnthropic = provider.provider === "anthropic" || base.includes("anthropic.com");
+
+  let url = "";
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
   };
-  if (provider.useJsonResponse) {
-    body.response_format = { type: "json_object" };
+  let body: Record<string, unknown> = {};
+
+  if (isAnthropic) {
+    // Anthropic Endpoint
+    if (base.endsWith("/v1")) {
+      url = `${base}/messages`;
+    } else {
+      url = `${base}/v1/messages`;
+    }
+    headers["x-api-key"] = provider.apiKey;
+    headers["anthropic-version"] = "2023-06-01";
+
+    const systemMessage = messages.find((m) => m.role === "system");
+    const system = systemMessage ? String(systemMessage.content) : undefined;
+    const filteredMessages = messages
+      .filter((m) => m.role !== "system")
+      .map((m) => ({
+        role: m.role === "assistant" ? "assistant" : "user",
+        content: m.content,
+      }));
+
+    body = {
+      model: provider.model,
+      system,
+      messages: filteredMessages,
+      temperature: provider.temperature,
+      max_tokens: provider.maxTokens,
+    };
+  } else {
+    // OpenAI Compatible
+    url = `${base}/chat/completions`;
+    headers["Authorization"] = `Bearer ${provider.apiKey}`;
+    body = {
+      model: provider.model,
+      messages,
+      temperature: provider.temperature,
+      max_tokens: provider.maxTokens,
+    };
+    if (provider.useJsonResponse) {
+      body.response_format = { type: "json_object" };
+    }
   }
 
   const t0 = Date.now();
-  const res = await fetch(`${provider.baseUrl}/chat/completions`, {
+  const res = await fetch(url, {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${provider.apiKey}`,
-    },
+    headers,
     body: JSON.stringify(body),
     signal: combinedSignal,
   });
@@ -152,7 +190,14 @@ async function callProvider(
   const t1 = Date.now();
   const json = await res.json();
   const parseMs = Date.now() - t1;
-  const content = json?.choices?.[0]?.message?.content;
+
+  let content = "";
+  if (isAnthropic) {
+    content = json?.content?.[0]?.text;
+  } else {
+    content = json?.choices?.[0]?.message?.content;
+  }
+
   if (!content) {
     console.log(`[TIMING] llm_call EMPTY: ${httpMs}ms | provider=${provider.name} | model=${provider.model}${attemptLabel ? ` | ${attemptLabel}` : ""}`);
     throw new Error(`${provider.name}: respons AI kosong`);
@@ -202,8 +247,23 @@ export async function createChatCompletion(
 
 export async function listModels(baseUrl: string, apiKey: string) {
   const started = Date.now();
-  const res = await fetch(`${cleanBaseUrl(baseUrl)}/models`, {
-    headers: { Authorization: `Bearer ${apiKey}` },
+  const base = cleanBaseUrl(baseUrl);
+  const isAnthropic = base.includes("anthropic.com");
+  
+  const url = isAnthropic 
+    ? (base.endsWith("/v1") ? `${base}/models` : `${base}/v1/models`)
+    : `${base}/models`;
+
+  const headers: Record<string, string> = {};
+  if (isAnthropic) {
+    headers["x-api-key"] = apiKey;
+    headers["anthropic-version"] = "2023-06-01";
+  } else {
+    headers["Authorization"] = `Bearer ${apiKey}`;
+  }
+
+  const res = await fetch(url, {
+    headers,
     signal: AbortSignal.timeout(30_000),
   });
   const latencyMs = Date.now() - started;

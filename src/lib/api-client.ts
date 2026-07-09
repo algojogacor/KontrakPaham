@@ -292,10 +292,33 @@ export const api = {
     });
     return handle<{ models: string[]; latencyMs: number }>(res);
   },
+  async detectLlmModels(baseUrl: string, apiKey: string) {
+    const res = await fetch(`/api/admin/llm-providers/detect-models`, {
+      method: "POST",
+      headers: MUTATION_HEADERS,
+      body: JSON.stringify({ baseUrl, apiKey }),
+    });
+    return handle<{ models: string[]; latencyMs: number }>(res);
+  },
   async testLlmProvider(id: string) {
     const res = await fetch(`/api/admin/llm-providers/${id}/test`, {
       method: "POST",
       headers: MUTATION_HEADERS,
+    });
+    return handle<{
+      ok: boolean;
+      status?: number | string;
+      latencyMs: number;
+      model?: string;
+      message: string;
+      sample?: string;
+    }>(res);
+  },
+  async testLlmConnection(body: LlmProviderInput & { apiKey: string }) {
+    const res = await fetch(`/api/admin/llm-providers/test-connection`, {
+      method: "POST",
+      headers: MUTATION_HEADERS,
+      body: JSON.stringify(body),
     });
     return handle<{
       ok: boolean;

@@ -226,6 +226,54 @@ export function AdminView() {
     }
   };
 
+  const handleFormFetchModels = async () => {
+    if (!providerForm.baseUrl || !providerForm.apiKey) {
+      toast({ title: "Base URL dan API key wajib diisi untuk mendeteksi model.", variant: "destructive" });
+      return;
+    }
+    setProviderBusyId("form-busy");
+    try {
+      const result = await api.detectLlmModels(providerForm.baseUrl, providerForm.apiKey);
+      setModelOptions(result.models);
+      toast({ title: `/models berhasil: ${result.models.length} model`, description: `${result.latencyMs} ms` });
+    } catch (e) {
+      toast({ title: friendlyError(e), variant: "destructive" });
+    } finally {
+      setProviderBusyId(null);
+    }
+  };
+
+  const handleFormTestConnection = async () => {
+    if (!providerForm.baseUrl || !providerForm.apiKey || !providerForm.model) {
+      toast({ title: "Base URL, API key, dan Model wajib diisi untuk tes.", variant: "destructive" });
+      return;
+    }
+    setProviderBusyId("form-busy");
+    try {
+      const result = await api.testLlmConnection({
+        name: providerForm.name || "Test Connection",
+        provider: providerForm.provider,
+        baseUrl: providerForm.baseUrl,
+        apiKey: providerForm.apiKey,
+        model: providerForm.model,
+        enabled: providerForm.enabled,
+        priority: providerForm.priority,
+        useJsonResponse: providerForm.useJsonResponse,
+        maxTokens: providerForm.maxTokens,
+        temperature: providerForm.temperature,
+        timeoutMs: providerForm.timeoutMs,
+      });
+      toast({ 
+        title: result.ok ? "Koneksi sehat." : "Koneksi gagal.", 
+        description: `${result.latencyMs} ms - ${result.message}` 
+      });
+    } catch (e) {
+      toast({ title: friendlyError(e), variant: "destructive" });
+    } finally {
+      setProviderBusyId(null);
+    }
+  };
+
   const removeProvider = async (provider: LlmProviderDto) => {
     if (!window.confirm(`Hapus provider ${provider.name}?`)) return;
     setProviderBusyId(provider.id);
@@ -346,6 +394,9 @@ export function AdminView() {
               form={providerForm}
               setForm={setProviderForm}
               modelOptions={modelOptions}
+              busy={providerBusyId === "form-busy"}
+              onFetchModels={handleFormFetchModels}
+              onTestConnection={handleFormTestConnection}
               onSubmit={saveProvider}
               onReset={resetProviderForm}
             />
@@ -571,12 +622,18 @@ function LlmProviderForm({
   form,
   setForm,
   modelOptions,
+  busy,
+  onFetchModels,
+  onTestConnection,
   onSubmit,
   onReset,
 }: {
   form: LlmProviderInput & { id?: string; apiKey: string };
   setForm: React.Dispatch<React.SetStateAction<LlmProviderInput & { id?: string; apiKey: string }>>;
   modelOptions: string[];
+  busy: boolean;
+  onFetchModels: () => void;
+  onTestConnection: () => void;
   onSubmit: (e: React.FormEvent) => void;
   onReset: () => void;
 }) {
@@ -595,7 +652,7 @@ function LlmProviderForm({
               <Input value={form.name} onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))} placeholder="DeepSeek V4 Pro" />
             </Field>
             <Field label="Provider tag">
-              <Input value={form.provider} onChange={(e) => setForm((f) => ({ ...f, provider: e.target.value }))} placeholder="deepseek / nvidia / iamhc" />
+              <Input value={form.provider} onChange={(e) => setForm((f) => ({ ...f, provider: e.target.value }))} placeholder="deepseek / nvidia / iamhc / anthropic" />
             </Field>
           </div>
           <Field label="Base URL">
@@ -611,16 +668,30 @@ function LlmProviderForm({
           </Field>
           <div className="grid gap-4 sm:grid-cols-[1fr_auto]">
             <Field label="Model">
-              {modelOptions.length > 0 ? (
-                <Select value={form.model} onValueChange={(v) => setForm((f) => ({ ...f, model: v }))}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    {modelOptions.map((m) => <SelectItem key={m} value={m}>{m}</SelectItem>)}
-                  </SelectContent>
-                </Select>
-              ) : (
-                <Input value={form.model} onChange={(e) => setForm((f) => ({ ...f, model: e.target.value }))} placeholder="Tulis model manual" />
-              )}
+              <div className="flex gap-2">
+                <div className="flex-1">
+                  {modelOptions.length > 0 ? (
+                    <Select value={form.model} onValueChange={(v) => setForm((f) => ({ ...f, model: v }))}>
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        {modelOptions.map((m) => <SelectItem key={m} value={m}>{m}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  ) : (
+                    <Input value={form.model} onChange={(e) => setForm((f) => ({ ...f, model: e.target.value }))} placeholder="Tulis model manual" />
+                  )}
+                </div>
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="gap-2"
+                  disabled={busy}
+                  onClick={onFetchModels}
+                >
+                  {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
+                  Cek Model
+                </Button>
+              </div>
             </Field>
             <Field label="Priority">
               <Input className="w-28" type="number" min={1} max={999} value={form.priority} onChange={(e) => setForm((f) => ({ ...f, priority: Number(e.target.value) }))} />
@@ -651,9 +722,19 @@ function LlmProviderForm({
             Priority kecil dicoba lebih dulu. Untuk DeepSeek V4 Pro, matikan response_format JSON bila output kosong/finish length.
           </p>
           <div className="flex flex-col gap-2 sm:flex-row">
-            <Button type="submit" className="gap-2">
+            <Button type="submit" className="gap-2" disabled={busy}>
               <Save className="h-4 w-4" />
               {form.id ? "Simpan provider" : "Tambah provider"}
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              className="gap-2"
+              disabled={busy}
+              onClick={onTestConnection}
+            >
+              {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
+              Test Koneksi
             </Button>
             <Button type="button" variant="outline" onClick={onReset}>Reset form</Button>
           </div>
