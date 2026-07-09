@@ -1696,13 +1696,12 @@
   }
 
   .analysis-ribbon-side {
-    top: 196px;
+    top: auto;
+    bottom: 0;
     right: 12px;
     width: auto;
-  }
-
-  .analysis-ribbon-side .mascot-portrait {
-    zoom: 0.6;
+    transform: scale(0.6);
+    transform-origin: bottom right;
   }
 
   .analysis-ribbon-source {
