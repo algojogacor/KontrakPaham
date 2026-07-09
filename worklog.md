@@ -2840,6 +2840,66 @@ Stage Summary:
 - Jika ingin pindah ke org/token baru, langkah aman berikutnya adalah create database baru,
   apply schema, migrate data dari database lama, lalu update Koyeb env.
 
+---
+Task ID: 53
+Agent: main (Codex) - Switch Local Turso Runtime to Aryariap Database
+
+Task: Menggunakan database Turso baru `kontrakpaham-aryariap` agar app memakai kuota
+free-tier 5GB, menyiapkan schema, dan mengevaluasi kemungkinan Google storage.
+
+Work Log:
+- Menerima database auth token dan URL libSQL baru dari user, lalu memperlakukannya
+  sebagai secret.
+- Memperbarui `.env` lokal:
+  * `DATABASE_URL` mengarah ke database Turso baru.
+  * `TURSO_DATABASE_URL` mengarah ke database Turso baru.
+  * `TURSO_AUTH_TOKEN` memakai token database baru.
+- Mengecek database baru dengan `node scripts/verify-turso.mjs`; koneksi berhasil tetapi
+  database masih kosong dan belum memiliki tabel inti.
+- Mencoba `bunx prisma db push`, tetapi Prisma schema engine tetap gagal untuk target
+  libSQL/Turso seperti kasus sebelumnya.
+- Menambahkan `scripts/apply-core-schema.mjs` sebagai schema bootstrap idempotent untuk
+  tabel inti Prisma:
+  * `User`, `LicenseCode`, `LlmProvider`, `Analysis`, `Finding`, `Quota`,
+    `PasswordResetToken`, dan `AuditLog`.
+  * Unique/index dasar yang dibutuhkan app.
+- Menjalankan bootstrap schema ke local SQLite dan Turso baru.
+- Menjalankan ulang schema patch existing:
+  * `scripts/apply-research-schema.mjs`.
+  * `scripts/apply-share-schema.mjs`.
+  * `scripts/apply-chat-schema.mjs`.
+  * `scripts/apply-analysis-cache-schema.mjs`.
+  * `scripts/apply-legal-reference-cache-schema.mjs`.
+- Men-seed 2 provider LLM aktif dari `.env` ke tabel `LlmProvider` Turso baru tanpa
+  mencetak API key.
+- Menjalankan `scripts/seed-admin.mjs` agar admin UI tetap bisa diakses setelah switch DB.
+- Mengecek opsi Google storage:
+  * Google Drive/Google One dapat diakses via Drive API, tetapi lebih cocok sebagai
+    penyimpanan file pengguna, bukan database/object storage backend produksi.
+  * Google Cloud Storage adalah produk backend yang tepat, tetapi Always Free hanya
+    5GB-month dan berbeda dari kuota Google One pribadi.
+
+Verification:
+- `node scripts/apply-core-schema.mjs` -> local and turso core schema ready.
+- `node scripts/apply-research-schema.mjs` -> local and turso research schema ready.
+- `node scripts/apply-share-schema.mjs` -> local and turso share schema ready.
+- `node scripts/apply-chat-schema.mjs` -> local and turso chat schema ready.
+- `node scripts/apply-analysis-cache-schema.mjs` -> local and turso analysis cache schema ready.
+- `node scripts/apply-legal-reference-cache-schema.mjs` -> local and turso legal reference cache schema ready.
+- `node scripts/seed-llm-providers.mjs` -> 2 providers upserted.
+- `node scripts/seed-admin.mjs` -> admin ready.
+- `node scripts/verify-turso.mjs` -> `{ users: 1, analyses: 0, findings: 0, quotas: 0, auditLogs: 0, llmProviders: 2 }`.
+- `bun run lint` -> pass.
+- PowerShell build with build-time placeholders -> pass.
+
+Stage Summary:
+- Local development sudah diarahkan ke database Turso baru dan database baru sudah siap
+  dipakai app.
+- Koyeb masih perlu di-update manual/terpisah pada Environment Variables agar production
+  juga memakai `TURSO_DATABASE_URL` dan `TURSO_AUTH_TOKEN` baru.
+- Database baru belum memuat history analisis lama; jika history lama perlu dipertahankan,
+  perlu migrasi remote-to-remote dari database lama sebelum switch final production.
+
 
 
 
