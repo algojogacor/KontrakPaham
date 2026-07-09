@@ -3012,6 +3012,41 @@ Stage Summary:
   dengan You.com hanya sebagai pendukung.
 - Belum ada implementasi runtime; perubahan ini adalah revisi planning/checklist.
 
+---
+Task ID: 57
+Agent: main (Codex) - Google Drive OAuth Bootstrap Setup
+
+Task: Menyimpan credential OAuth Google Drive secara lokal, menyiapkan helper untuk
+mendapatkan refresh token, dan memperbarui checklist planning.
+
+Work Log:
+- Menerima OAuth Web Client JSON dari user dan memperlakukannya sebagai secret.
+- Memperbarui `.env` lokal dengan:
+  * `GOOGLE_DRIVE_CLIENT_ID`.
+  * `GOOGLE_DRIVE_CLIENT_SECRET`.
+  * `GOOGLE_DRIVE_ARCHIVE_FOLDER_ID`.
+  * `GOOGLE_DRIVE_REDIRECT_URI`.
+- Tidak menulis nilai client secret ke git/worklog.
+- Menambahkan `scripts/google-drive-oauth.mjs`:
+  * `--auth-url` mencetak URL consent Google.
+  * `--code` atau `--callback` menukar authorization code/callback URL menjadi
+    `GOOGLE_DRIVE_REFRESH_TOKEN`.
+  * Menggunakan scope Drive untuk archive folder.
+- Memperbarui checklist di
+  `docs/superpowers/plans/2026-07-09-legal-corpus-index.md`:
+  * Step env names ditandai selesai.
+  * Step OAuth bootstrap script ditandai selesai.
+
+Verification:
+- `node scripts/google-drive-oauth.mjs` -> usage output seperti yang diharapkan.
+- `node scripts/google-drive-oauth.mjs --auth-url` -> berhasil membuat Google consent URL.
+- `bun run lint` -> pass.
+
+Stage Summary:
+- Akses API Google Drive belum lengkap sampai user menjalankan consent URL dan memberi
+  callback/code untuk ditukar menjadi `GOOGLE_DRIVE_REFRESH_TOKEN`.
+- Setelah refresh token didapat, env yang sama perlu disalin ke Koyeb.
+
 
 
 

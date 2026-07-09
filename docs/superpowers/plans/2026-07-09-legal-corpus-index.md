@@ -114,7 +114,7 @@ The `Desktop app` route is easier for getting a refresh token locally. The `Web 
   - CLI seed script for curated pasal data.
 - Optional create: `src/lib/google-drive-archive.ts`
   - OAuth client and file metadata helper for archive-only use.
-- Optional create: `scripts/google-drive-auth.mjs`
+- Optional create: `scripts/google-drive-oauth.mjs`
   - One-time local OAuth helper to obtain refresh token.
 - Modify: `worklog.md`
   - Record each completed implementation task.
@@ -1072,11 +1072,11 @@ git commit -m "feat: use local legal corpus before web research"
 
 **Files:**
 - Create: `src/lib/google-drive-archive.ts`
-- Create: `scripts/google-drive-auth.mjs`
+- Create: `scripts/google-drive-oauth.mjs`
 - Modify: `.env.example` if it exists in this repo at implementation time.
 - Modify: `worklog.md`
 
-- [ ] **Step 1: Add env names to deployment notes**
+- [x] **Step 1: Add env names to deployment notes**
 
 Use these env vars:
 
@@ -1087,7 +1087,18 @@ GOOGLE_DRIVE_REFRESH_TOKEN=
 GOOGLE_DRIVE_ARCHIVE_FOLDER_ID=
 ```
 
-- [ ] **Step 2: Create archive helper**
+- [x] **Step 2: Create local OAuth bootstrap script**
+
+Created `scripts/google-drive-oauth.mjs` with two modes:
+
+```bash
+node scripts/google-drive-oauth.mjs --auth-url
+node scripts/google-drive-oauth.mjs --code "PASTE_CODE_OR_CALLBACK_URL"
+```
+
+The script reads Google OAuth settings from `.env`, prints a consent URL, and exchanges the callback `code` for `GOOGLE_DRIVE_REFRESH_TOKEN`.
+
+- [ ] **Step 3: Create archive helper**
 
 Create `src/lib/google-drive-archive.ts`:
 
@@ -1107,11 +1118,11 @@ export function googleDriveArchiveWarning() {
 }
 ```
 
-- [ ] **Step 3: Defer upload implementation until OAuth is available**
+- [ ] **Step 4: Defer upload implementation until OAuth is available**
 
 Do not call Drive API from the analyze hot path. Add upload/download only after the OAuth refresh token is available and tested locally.
 
-- [ ] **Step 4: Commit archive config helper**
+- [ ] **Step 5: Commit archive config helper**
 
 ```bash
 git add src/lib/google-drive-archive.ts worklog.md
