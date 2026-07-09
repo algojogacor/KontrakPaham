@@ -231,14 +231,44 @@ const statements = [
   END;`,
   `INSERT INTO "LegalArticleFts"("rowid", "text", "plainSummary", "tags", "normalizedText")
    SELECT "rowid", "text", "plainSummary", "tags", "normalizedText" FROM "LegalArticle"
-   WHERE "rowid" NOT IN (SELECT "rowid" FROM "LegalArticleFts")`
+   WHERE "rowid" NOT IN (SELECT "rowid" FROM "LegalArticleFts")`,
+  `CREATE TABLE IF NOT EXISTS "LegalArticleQuarantine" (
+    "id" TEXT NOT NULL PRIMARY KEY,
+    "documentId" TEXT NOT NULL,
+    "articleNumber" TEXT NOT NULL,
+    "title" TEXT,
+    "text" TEXT NOT NULL,
+    "plainSummary" TEXT,
+    "tags" TEXT NOT NULL,
+    "normalizedText" TEXT NOT NULL,
+    "sourceUrl" TEXT,
+    "contentHash" TEXT NOT NULL,
+    "quarantineReason" TEXT NOT NULL,
+    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" DATETIME NOT NULL,
+    CONSTRAINT "LegalArticleQuarantine_documentId_fkey" FOREIGN KEY ("documentId") REFERENCES "LegalDocument" ("id") ON DELETE CASCADE ON UPDATE CASCADE
+  )`,
+  `CREATE UNIQUE INDEX IF NOT EXISTS "LegalArticleQuarantine_contentHash_key" ON "LegalArticleQuarantine"("contentHash")`,
+  `CREATE INDEX IF NOT EXISTS "LegalArticleQuarantine_documentId_articleNumber_idx" ON "LegalArticleQuarantine"("documentId", "articleNumber")`
 ];
+
+async function addColumnIfNotExists(client, tableName, columnName, columnDefinition) {
+  const info = await client.execute(`PRAGMA table_info("${tableName}")`);
+  const exists = info.rows.some(row => row.name === columnName);
+  if (!exists) {
+    await client.execute(`ALTER TABLE "${tableName}" ADD COLUMN "${columnName}" ${columnDefinition}`);
+  }
+}
 
 async function applyCoreSchema(client, label) {
   await client.execute("PRAGMA foreign_keys = OFF");
   for (const statement of statements) {
     await client.execute(statement);
   }
+  
+  await addColumnIfNotExists(client, "LegalDocument", "legalStatus", "TEXT NOT NULL DEFAULT 'ACTIVE'");
+  await addColumnIfNotExists(client, "LegalDocument", "amendedBy", "TEXT");
+  
   await client.execute("PRAGMA foreign_keys = ON");
   console.log(`${label}: core schema ready`);
 }

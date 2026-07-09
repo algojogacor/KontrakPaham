@@ -240,10 +240,13 @@ model LegalDocument {
   status          String   @default("ACTIVE")
   driveFileId     String?
   contentHash     String?
+  legalStatus     String   @default("ACTIVE")
+  amendedBy       String?
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
-  articles LegalArticle[]
+  articles           LegalArticle[]
+  quarantineArticles LegalArticleQuarantine[]
 
   @@index([type, year])
   @@index([sourceHost])
@@ -265,6 +268,26 @@ model LegalArticle {
 
   document LegalDocument @relation(fields: [documentId], references: [id], onDelete: Cascade)
   indexRows LegalArticleIndex[]
+
+  @@index([documentId, articleNumber])
+}
+
+model LegalArticleQuarantine {
+  id              String   @id @default(cuid())
+  documentId      String
+  articleNumber   String
+  title           String?
+  text            String
+  plainSummary    String?
+  tags            String
+  normalizedText  String
+  sourceUrl       String?
+  contentHash     String   @unique
+  quarantineReason String
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  document LegalDocument @relation(fields: [documentId], references: [id], onDelete: Cascade)
 
   @@index([documentId, articleNumber])
 }
