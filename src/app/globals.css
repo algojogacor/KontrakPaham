@@ -767,12 +767,11 @@
   display: grid;
   gap: 8px;
   justify-items: center;
-  border-top: 1px solid var(--border);
-  padding-top: 14px;
   text-align: center;
   font-size: 11px;
   line-height: 1.35;
   color: var(--ink-soft);
+  max-width: 140px;
 }
 
 .analysis-ribbon-shell {
