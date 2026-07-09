@@ -3396,3 +3396,46 @@ Verification:
 Stage Summary:
 - Loading animation sekarang punya visual khusus yang stabil dan tidak mewarisi layout
   hero/analysis scene yang terlalu kompleks.
+
+---
+Task ID: 68
+Agent: main (Codex) - Branded PDF Cover Export
+
+Task: Mengecek skill visual lokal, membaca referensi Tipografi dan cover sampul, lalu
+menerapkan cover brand pada setiap export PDF.
+
+Work Log:
+- Mengecek `.agents/skills/` dan membaca skill yang relevan untuk pekerjaan visual:
+  `brandkit`, `image-to-code`, dan `imagegen-frontend-web`.
+- Membaca referensi `image/Tipografi.png` untuk sistem tipografi, hierarki, dan
+  palette brand:
+  * Warm Ivory `#F7F4ED`
+  * Ink Black Brown `#1F1B16`
+  * Forest Green `#1E4D3B`
+  * Muted Amber `#C58A2E`
+  * Stone `#D9D5CC`
+- Membaca referensi `image/cover sampul.png` sebagai arah cover laporan:
+  panel hijau editorial, judul serif besar, metadata laporan, dan objek dokumen
+  dengan seal amber.
+- Menambahkan cover page programatik di `src/lib/pdf-export.ts` melalui
+  `drawCoverPage`, sehingga semua export yang memakai `generateAnalysisPdf`
+  otomatis mendapat sampul brand.
+- Menerapkan tipografi PDF dengan pendekatan font bawaan jsPDF:
+  * Times untuk display serif / judul laporan.
+  * Helvetica untuk body, label UI, dan tagline.
+  * Courier untuk metadata dokumen.
+- Mengubah nomor halaman agar sampul tidak dihitung sebagai halaman isi.
+- Membuat preview mock PDF di `.next/pdf-cover-preview.pdf` dan screenshot visual
+  `.next/pdf-cover-preview.png` untuk mengecek layout cover.
+
+Verification:
+- `bun run lint` -> pass.
+- Production build dengan placeholder env -> pass.
+- Preview PDF mock berhasil dibuat dan screenshot cover menunjukkan layout sesuai
+  referensi utama: panel hijau kiri, judul editorial, metadata, dokumen, dan seal.
+
+Stage Summary:
+- Setiap export PDF kini diawali sampul KontrakPaham.
+- Tipografi referensi sudah diterapkan ke cover PDF secara dekat memakai font bawaan
+  jsPDF; embedding font TTF custom bisa menjadi tahap lanjutan jika ingin presisi
+  penuh terhadap brand guideline.

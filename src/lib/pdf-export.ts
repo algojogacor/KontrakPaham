@@ -1,6 +1,16 @@
 import { jsPDF } from "jspdf";
 import type { AnalysisWithFindings } from "@/lib/types";
 
+const BRAND = {
+  ivory: [247, 244, 237] as [number, number, number],
+  ink: [31, 27, 22] as [number, number, number],
+  forest: [30, 77, 59] as [number, number, number],
+  amber: [197, 138, 46] as [number, number, number],
+  stone: [217, 213, 204] as [number, number, number],
+  muted: [102, 96, 88] as [number, number, number],
+  paperLine: [187, 179, 164] as [number, number, number],
+};
+
 const SEVERITY_COLORS: Record<string, [number, number, number]> = {
   RENDAH: [34, 139, 87],
   SEDANG: [202, 138, 4],
@@ -38,6 +48,105 @@ function hex(rgb: [number, number, number]) {
   return rgb;
 }
 
+function drawCoverPage(doc: jsPDF, analysis: AnalysisWithFindings, userLabel: string) {
+  const pageW = doc.internal.pageSize.getWidth();
+  const pageH = doc.internal.pageSize.getHeight();
+  const splitX = pageW * 0.565;
+  const leftPad = 70;
+  const dateStr = new Date(analysis.createdAt).toLocaleDateString("id-ID", {
+    dateStyle: "long",
+    timeZone: "Asia/Jakarta",
+  });
+  const documentName = analysis.title || analysis.fileName || "Analisis Kontrak";
+
+  doc.setFillColor(...BRAND.ivory);
+  doc.rect(0, 0, pageW, pageH, "F");
+  doc.setFillColor(...BRAND.forest);
+  doc.rect(0, 0, splitX, pageH, "F");
+  doc.setFillColor(255, 255, 255);
+  doc.setDrawColor(...BRAND.stone);
+  doc.rect(splitX, 0, pageW - splitX, pageH, "FD");
+
+  const paperX = splitX + 74;
+  const paperY = 178;
+  const paperW = 162;
+  const paperH = 396;
+  doc.setFillColor(248, 244, 234);
+  doc.setDrawColor(214, 207, 193);
+  doc.roundedRect(paperX, paperY, paperW, paperH, 10, 10, "FD");
+  doc.setFillColor(255, 252, 244);
+  doc.triangle(paperX, paperY, paperX + 78, paperY, paperX, paperY + 78, "F");
+  doc.setDrawColor(218, 209, 194);
+  doc.line(paperX, paperY + 78, paperX + 78, paperY);
+  doc.setDrawColor(...BRAND.paperLine);
+  for (let i = 0; i < 6; i++) {
+    const lineY = paperY + 138 + i * 42;
+    doc.line(paperX + 42, lineY, paperX + paperW - 34, lineY);
+  }
+
+  doc.setFillColor(...BRAND.amber);
+  doc.circle(paperX + paperW - 54, paperY + paperH - 74, 38, "F");
+  doc.setDrawColor(142, 89, 32);
+  doc.setLineWidth(2);
+  doc.circle(paperX + paperW - 54, paperY + paperH - 74, 30, "S");
+  doc.setFont("times", "bold");
+  doc.setFontSize(34);
+  doc.setTextColor(104, 67, 32);
+  doc.text("K", paperX + paperW - 64, paperY + paperH - 62);
+  doc.setLineWidth(1);
+
+  doc.setTextColor(...BRAND.ivory);
+  doc.setFont("times", "bold");
+  doc.setFontSize(34);
+  doc.text("K", leftPad, 110);
+  doc.setFontSize(24);
+  doc.text("KontrakPaham", leftPad, 148);
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(9);
+  doc.setTextColor(...BRAND.amber);
+  doc.text("CLARITY BEFORE SIGNATURE", leftPad, 170, { charSpace: 4 });
+
+  doc.setFont("times", "bold");
+  doc.setFontSize(54);
+  doc.setTextColor(...BRAND.ivory);
+  ["Ringkasan", "Tinjauan", "Kontrak"].forEach((line, index) => {
+    doc.text(line, leftPad, 290 + index * 58);
+  });
+  doc.setDrawColor(...BRAND.amber);
+  doc.setLineWidth(1.2);
+  doc.line(leftPad, 476, leftPad + 42, 476);
+
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(17);
+  doc.setTextColor(239, 232, 219);
+  doc.text("Pahami. Nilai. Kendalikan.", leftPad, 514);
+
+  const metadata = [
+    ["DOKUMEN:", documentName],
+    ["TANGGAL ANALISIS:", dateStr],
+    ["DISIAPKAN UNTUK:", userLabel],
+  ];
+  metadata.forEach(([label, value], index) => {
+    const y = 585 + index * 67;
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(9);
+    doc.setTextColor(...BRAND.amber);
+    doc.text(label, leftPad, y, { charSpace: 2.4 });
+    doc.setFont("times", "bold");
+    doc.setFontSize(17);
+    doc.setTextColor(...BRAND.ivory);
+    const lines = doc.splitTextToSize(value, splitX - leftPad - 78).slice(0, 2);
+    doc.text(lines, leftPad, y + 24);
+    doc.setDrawColor(218, 185, 116);
+    doc.line(leftPad, y + 44, leftPad + 170, y + 44);
+  });
+
+  doc.setFont("courier", "normal");
+  doc.setFontSize(8);
+  doc.setTextColor(226, 216, 196);
+  doc.text(`DOC-${new Date(analysis.createdAt).getFullYear()}-${analysis.id.slice(0, 6).toUpperCase()}`, leftPad, pageH - 42);
+}
+
 export function generateAnalysisPdf(
   analysis: AnalysisWithFindings,
   userLabel: string
@@ -55,6 +164,9 @@ export function generateAnalysisPdf(
       y = margin;
     }
   };
+
+  drawCoverPage(doc, analysis, userLabel);
+  doc.addPage();
 
   // Header band
   doc.setFillColor(24, 24, 27);
@@ -371,11 +483,12 @@ export function generateAnalysisPdf(
   // Footer page numbers
   const pages = doc.getNumberOfPages();
   for (let i = 1; i <= pages; i++) {
+    if (i === 1) continue;
     doc.setPage(i);
     doc.setFont("helvetica", "normal");
     doc.setFontSize(8);
     doc.setTextColor(150, 150, 150);
-    doc.text(`KontrakPaham · Halaman ${i} dari ${pages}`, pageW / 2, pageH - 20, {
+    doc.text(`KontrakPaham - Halaman ${i - 1} dari ${pages - 1}`, pageW / 2, pageH - 20, {
       align: "center",
     });
   }
