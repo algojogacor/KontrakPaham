@@ -3478,3 +3478,22 @@ Verification:
 
 Stage Summary:
 - Security auditing is now drastically more informative, directly allowing tracking of "who" and "where" users are connecting from across the entire app.
+
+---
+Task ID: 71
+Agent: main (Codex) - UI Polish (Legal Desk Mascot & CSS Layout)
+
+Task: Fix overlapping text and layout clipping on the Legal Desk component's mascot CSS art for both desktop and mobile views.
+
+Work Log:
+- Adjusted `.analysis-ribbon-document` right absolute boundary from 164px to 184px to prevent the document card's edge from visibly slicing through the mascot's textual subtitle.
+- Removed arbitrary `border-top` and constrained `max-width` on `.analysis-ribbon-source` text container to stop CSS word-wrap from causing text overlaps.
+- Replaced non-standard `zoom` responsive rules in mobile views with standard `transform: scale(0.6)` on the parent `.analysis-ribbon-side` to gracefully shrink the pure CSS mascot without breaking internal absolute layout measurements.
+- Prevented mobile `.analysis-ribbon-board` overflow clipping by dynamically increasing `.analysis-ribbon-scene` height to properly contain expanding document heights.
+
+Verification:
+- The mascot correctly layers above the document edges and the text renders cleanly without any straight cuts or overlaps.
+- Tested responsive scales (down to 320px screen width) ensuring the intricate CSS mascot doesn't get squished or cropped.
+
+Stage Summary:
+- Legal Desk mascot UI and overall landing page interactions are robustly responsive across both desktop and mobile environments.
