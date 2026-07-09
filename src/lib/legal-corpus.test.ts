@@ -1,10 +1,29 @@
-import { describe, expect, test } from "bun:test";
+import { describe, expect, test, mock } from "bun:test";
+import { createClient } from "@libsql/client";
+
+const realLibsql = createClient({
+  url: process.env.LOCAL_SQLITE_URL || "file:db/custom.db",
+});
+
+mock.module("@/lib/db", () => {
+  return {
+    db: {
+      $queryRaw: async (strings: TemplateStringsArray, ...values: any[]) => {
+        const sql = strings.join("?");
+        const res = await realLibsql.execute({ sql, args: values });
+        return res.rows;
+      }
+    }
+  };
+});
+
 import {
   buildLegalCorpusContext,
   extractLegalIssueSignals,
   normalizeLegalSearchText,
   scoreLegalArticle,
   parseStoredTags,
+  searchLegalCorpus,
 } from "./legal-corpus";
 
 describe("legal corpus helpers", () => {
@@ -83,5 +102,19 @@ describe("legal corpus helpers", () => {
     };
 
     expect(parseStoredTags(row.tags)).toEqual(["denda", "klausul_baku"]);
+  });
+
+  test("searches legal corpus using FTS5 and verifies correctness and latency", async () => {
+    const start = performance.now();
+    const result = await searchLegalCorpus("klausul baku sepihak");
+    const latency = performance.now() - start;
+
+    expect(result).not.toBeNull();
+    if (result) {
+      expect(result.confidence).toBe("medium");
+      expect(result.content).toContain("Undang-Undang Nomor 8 Tahun 1999 tentang Perlindungan Konsumen");
+      expect(result.content).toContain("Pasal 18");
+      expect(latency).toBeLessThan(200); // Target latency under 200ms
+    }
   });
 });
