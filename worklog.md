@@ -2929,6 +2929,40 @@ Stage Summary:
 - Google One/Drive bisa dimanfaatkan, tetapi sebaiknya bukan pengganti Turso untuk data
   transaksional app.
 
+---
+Task ID: 55
+Agent: main (Codex) - Legal Corpus Index Planning
+
+Task: Membuat planning/checklist implementasi database pasal, perundang-undangan, dan
+legal reference dengan indexing cepat serta opsi Google Drive sebagai archive.
+
+Work Log:
+- Mengklarifikasi bahwa user tidak perlu memakai bahasa hukum formal; pencarian akan
+  memakai issue extraction/LLM translator untuk mengubah bahasa awam menjadi tag/query
+  hukum stabil.
+- Menetapkan desain retrieval:
+  * Turso menyimpan metadata, pasal, tag, normalized text, dan index.
+  * Google Drive/Google One hanya menjadi cold storage untuk dokumen besar/source blob.
+  * Request analyze tidak melakukan scan/search langsung ke Google Drive.
+  * You.com tetap menjadi fallback jika local legal corpus confidence rendah.
+- Menjawab model koneksi Google Drive:
+  * API key saja tidak cukup untuk file private.
+  * Untuk Google One personal storage, jalur praktis adalah OAuth 2.0 dan refresh token.
+  * Service account lebih cocok untuk Workspace/domain-managed setup.
+- Membuat dokumen planning dengan checklist implementasi:
+  `docs/superpowers/plans/2026-07-09-legal-corpus-index.md`.
+- Dokumen mencakup schema, migration script, helper TDD, seed corpus awal, integrasi ke
+  `research.ts`, opsi Google Drive archive, verifikasi, dan worklog.
+
+Verification:
+- Placeholder scan pada dokumen planning untuk `TBD`, `TODO`, `implement later`,
+  `fill in`, dan pola placeholder lain -> no matches.
+
+Stage Summary:
+- Belum ada implementasi runtime legal corpus; pekerjaan saat ini hanya planning/handoff.
+- Checklist di dokumen plan harus diperbarui setiap task implementasi selesai agar mudah
+  dipindah tangan.
+
 
 
 
