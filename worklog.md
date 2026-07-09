@@ -3325,3 +3325,25 @@ Stage Summary:
 - Maskot lebih natural secara proporsi wajah.
 - Loading awal aplikasi tidak lagi memakai scene hero besar dan tidak turun menabrak
   footer.
+
+---
+Task ID: 65
+Agent: main (Codex) - Browser Icon Branding
+
+Task: Mengganti favicon/app icon browser dari logo Z lama ke logo KontrakPaham.
+
+Work Log:
+- Menemukan metadata app masih menunjuk ke `/logo.svg`, yang berisi ikon Z lama.
+- Membuat icon PNG turunan dari logo brand:
+  * `public/favicon-32x32.png`
+  * `public/apple-touch-icon.png`
+  * `public/icon-192.png`
+  * `public/icon-512.png`
+- Mengubah `src/app/layout.tsx` metadata `icons` agar memakai icon PNG KontrakPaham.
+
+Verification:
+- `bun run lint` -> pass.
+- Production build dengan placeholder env -> pass.
+
+Stage Summary:
+- Browser tab/sidebar/PWA icon sekarang diarahkan ke logo KontrakPaham, bukan logo Z lama.
