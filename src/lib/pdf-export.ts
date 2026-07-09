@@ -1,4 +1,6 @@
 import { jsPDF } from "jspdf";
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import type { AnalysisWithFindings } from "@/lib/types";
 
 const BRAND = {
@@ -17,6 +19,21 @@ const SEVERITY_COLORS: Record<string, [number, number, number]> = {
   TINGGI: [220, 90, 50],
   KRITIS: [185, 28, 28],
 };
+
+let cachedLogoDataUrl: string | null | undefined;
+
+function getLogoDataUrl() {
+  if (cachedLogoDataUrl !== undefined) return cachedLogoDataUrl;
+
+  try {
+    const logoPath = join(process.cwd(), "public", "brand", "kontrakpaham-logo-transparent.png");
+    cachedLogoDataUrl = `data:image/png;base64,${readFileSync(logoPath).toString("base64")}`;
+  } catch {
+    cachedLogoDataUrl = null;
+  }
+
+  return cachedLogoDataUrl;
+}
 
 // Human-readable labels for enum values
 const URGENCY_LABEL: Record<string, string> = {
@@ -84,34 +101,51 @@ function drawCoverPage(doc: jsPDF, analysis: AnalysisWithFindings, userLabel: st
     doc.line(paperX + 42, lineY, paperX + paperW - 34, lineY);
   }
 
+  // Golden Stamp on the paper
   doc.setFillColor(...BRAND.amber);
   doc.circle(paperX + paperW - 54, paperY + paperH - 74, 38, "F");
   doc.setDrawColor(142, 89, 32);
   doc.setLineWidth(2);
   doc.circle(paperX + paperW - 54, paperY + paperH - 74, 30, "S");
   doc.setFont("times", "bold");
-  doc.setFontSize(34);
+  doc.setFontSize(36);
   doc.setTextColor(104, 67, 32);
-  doc.text("K", paperX + paperW - 64, paperY + paperH - 62);
+  doc.text("K", paperX + paperW - 68, paperY + paperH - 62);
   doc.setLineWidth(1);
 
-  doc.setTextColor(...BRAND.ivory);
+  // Logo & Brand Header on the left
+  const logoDataUrl = getLogoDataUrl();
+  const boxSize = 48;
+  const logoSize = 36;
+  if (logoDataUrl) {
+    doc.setFillColor(255, 255, 255); // Pure white box for crispness
+    doc.setDrawColor(218, 209, 194);
+    doc.roundedRect(leftPad - 8, 82, boxSize, boxSize, 8, 8, "FD");
+    doc.addImage(logoDataUrl, "PNG", leftPad - 8 + (boxSize - logoSize)/2, 82 + (boxSize - logoSize)/2, logoSize, logoSize);
+  } else {
+    doc.setTextColor(...BRAND.ivory);
+    doc.setFont("times", "bold");
+    doc.setFontSize(34);
+    doc.text("K", leftPad, 110);
+  }
+  
   doc.setFont("times", "bold");
-  doc.setFontSize(34);
-  doc.text("K", leftPad, 110);
   doc.setFontSize(24);
-  doc.text("KontrakPaham", leftPad, 148);
+  doc.setTextColor(...BRAND.ivory);
+  doc.text("KontrakPaham", leftPad, 154);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(9);
   doc.setTextColor(...BRAND.amber);
-  doc.text("CLARITY BEFORE SIGNATURE", leftPad, 170, { charSpace: 4 });
+  doc.text("CLARITY BEFORE SIGNATURE", leftPad, 174, { charSpace: 4 });
 
+  // Main Titles
   doc.setFont("times", "bold");
   doc.setFontSize(54);
   doc.setTextColor(...BRAND.ivory);
   ["Ringkasan", "Tinjauan", "Kontrak"].forEach((line, index) => {
     doc.text(line, leftPad, 290 + index * 58);
   });
+  
   doc.setDrawColor(...BRAND.amber);
   doc.setLineWidth(1.2);
   doc.line(leftPad, 476, leftPad + 42, 476);
@@ -121,6 +155,7 @@ function drawCoverPage(doc: jsPDF, analysis: AnalysisWithFindings, userLabel: st
   doc.setTextColor(239, 232, 219);
   doc.text("Pahami. Nilai. Kendalikan.", leftPad, 514);
 
+  // Metadata Section
   const metadata = [
     ["DOKUMEN:", documentName],
     ["TANGGAL ANALISIS:", dateStr],
@@ -138,13 +173,28 @@ function drawCoverPage(doc: jsPDF, analysis: AnalysisWithFindings, userLabel: st
     const lines = doc.splitTextToSize(value, splitX - leftPad - 78).slice(0, 2);
     doc.text(lines, leftPad, y + 24);
     doc.setDrawColor(218, 185, 116);
+    doc.setLineWidth(0.5);
     doc.line(leftPad, y + 44, leftPad + 170, y + 44);
   });
 
+  // Footer Section
   doc.setFont("courier", "normal");
   doc.setFontSize(8);
   doc.setTextColor(226, 216, 196);
-  doc.text(`DOC-${new Date(analysis.createdAt).getFullYear()}-${analysis.id.slice(0, 6).toUpperCase()}`, leftPad, pageH - 42);
+  doc.text(`DOC-${new Date(analysis.createdAt).getFullYear()}-${analysis.id.slice(0, 6).toUpperCase()}`, leftPad, pageH - 90);
+
+  // Custom Contact Info
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(8);
+  doc.setTextColor(...BRAND.ivory);
+  const contactInfo = [
+    "WhatsApp: 08999021644",
+    "Instagram: @aryarizky04",
+    "Email: aryarizkyardhipratama@gmail.com"
+  ];
+  contactInfo.forEach((line, i) => {
+    doc.text(line, leftPad, pageH - 64 + (i * 12));
+  });
 }
 
 export function generateAnalysisPdf(
