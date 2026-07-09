@@ -129,60 +129,58 @@ export function parseStoredTags(value: string | null): string[] {
 export async function searchLegalCorpus(text: string, limit = 6): Promise<LegalCorpusContext | null> {
   const started = Date.now();
   const signals = extractLegalIssueSignals(text);
-  if (!signals.tags.length && !signals.keywords.length) return null;
+  
+  // Combine tags and query words into unique tokens
+  const queryWords = signals.normalizedQuery.split(" ").filter(w => w.length >= 3);
+  const uniqueTokens = [...new Set([...signals.tags, ...queryWords])];
+  if (!uniqueTokens.length) return null;
 
-  const tokens = [...new Set([...signals.tags, ...signals.keywords.map(normalizeLegalSearchText)])]
-    .filter((token) => token.length >= 3)
-    .slice(0, 24);
+  // Build FTS MATCH query joined by OR
+  const ftsQuery = uniqueTokens
+    .map(t => `"${t.replace(/"/g, '""')}"`)
+    .join(" OR ");
 
-  const indexRows = await db.legalArticleIndex.findMany({
-    where: {
-      OR: [
-        { token: { in: tokens } },
-        { tag: { in: signals.tags } },
-      ],
-    },
-    include: {
-      article: {
-        include: { document: true },
-      },
-    },
-    take: 80,
-  });
-
-  const byArticle = new Map<string, LegalCorpusResult & { tags: string[]; normalizedText: string }>();
-  for (const row of indexRows) {
-    const article = row.article;
-    const tags = parseStoredTags(article.tags);
-    const existing = byArticle.get(article.id);
-    const baseScore = scoreLegalArticle(
-      { tags, normalizedText: article.normalizedText },
-      signals,
-    ) + row.weight;
-
-    if (!existing || baseScore > existing.score) {
-      byArticle.set(article.id, {
-        documentTitle: article.document.title,
-        articleNumber: article.articleNumber,
-        articleText: article.text,
-        plainSummary: article.plainSummary,
-        sourceUrl: article.sourceUrl || article.document.sourceUrl,
-        score: baseScore,
-        tags,
-        normalizedText: article.normalizedText,
-      });
-    }
-  }
-
-  const results = [...byArticle.values()]
-    .sort((a, b) => b.score - a.score)
-    .slice(0, limit);
+  const results = await db.$queryRaw<any[]>`
+    SELECT 
+      a.id,
+      a."documentId" AS documentId,
+      a."articleNumber" AS articleNumber,
+      a.title,
+      a.text,
+      a."plainSummary" AS plainSummary,
+      a.tags,
+      a."sourceUrl" AS sourceUrl,
+      d.title AS documentTitle,
+      fts.rank AS rank
+    FROM "LegalArticle" a
+    JOIN "LegalDocument" d ON a."documentId" = d.id
+    JOIN "LegalArticleFts" fts ON a.rowid = fts.rowid
+    WHERE "LegalArticleFts" MATCH ${ftsQuery}
+    ORDER BY fts.rank ASC
+    LIMIT ${limit};
+  `;
 
   if (!results.length) return null;
-  const context = buildLegalCorpusContext(results);
+
+  const formattedResults: LegalCorpusResult[] = results.map((row) => ({
+    documentTitle: row.documentTitle || "",
+    articleNumber: row.articleNumber || "",
+    articleText: row.text || "",
+    plainSummary: row.plainSummary || null,
+    sourceUrl: row.sourceUrl || null,
+    score: scoreLegalArticle(
+      { tags: parseStoredTags(row.tags), normalizedText: `${row.text} ${row.plainSummary || ""} ${row.tags}` },
+      signals
+    )
+  }));
+
+  const sortedResults = formattedResults.sort((a, b) => b.score - a.score);
+  const context = buildLegalCorpusContext(sortedResults);
+
   return {
     ...context,
     query: signals.normalizedQuery,
     latencyMs: Date.now() - started,
+    enabled: true,
   };
 }
