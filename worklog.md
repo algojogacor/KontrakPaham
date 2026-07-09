@@ -2655,6 +2655,66 @@ Follow-up Result:
   * `NODE_OPTIONS=--max-old-space-size=384` untuk menjaga heap tetap terkendali.
   * Build stage tetap Bun, jadi proses install/build tidak berubah.
 
+---
+Task ID: 49
+Agent: main (Codex) - Provider DB Loader Cleanup and Content-Hash Cache
+
+Task: Menindaklanjuti profiling analyze pipeline: memastikan provider LLM production
+dibaca dari Turso DB/admin UI, bukan hardcoded `.env`, dan menambahkan cache analisis
+berbasis content hash agar dokumen yang sama tidak memicu riset/LLM 80 detik lagi.
+
+Work Log:
+- Mengecek `src/lib/llm.ts`: `getActiveProviders()` sudah memakai provider aktif dari
+  tabel Turso `LlmProvider`; `.env` hanya fallback jika tabel provider kosong.
+- Mengecek provider aktif di Turso tanpa menampilkan key:
+  * Prioritas 1: DeepSeek V4 Flash.
+  * Prioritas 2-3: NVIDIA.
+  * Prioritas 4: iamhc Qwen.
+  * Prioritas 5: NVIDIA Mistral.
+- Kesimpulan provider: normalnya request tidak memakai iamhc dulu; iamhc hanya dipakai
+  jika provider prioritas sebelumnya gagal atau dinonaktifkan.
+- Menghapus isi lama `scripts/seed-llm-providers.mjs` yang berisi provider/key statis.
+- Mengganti script seed menjadi loader aman dari file JSON lokal atau env
+  `LLM_PROVIDERS_JSON`, lalu upsert ke tabel Turso `LlmProvider`. Tidak ada key yang
+  hardcoded di repo.
+- Menambahkan schema cache di `Analysis`:
+  * `textHash`
+  * `cacheKey`
+  * `cacheHit`
+  * `cacheSourceId`
+  * `analysisVersion`
+  * index `(userId, cacheKey, status)` dan `(userId, textHash, status)`
+- Menambahkan `src/lib/analysis-cache.ts`:
+  * normalisasi teks ringan sebelum hash.
+  * SHA-256 hash.
+  * cache key versi-aware berdasarkan `ANALYSIS_CACHE_VERSION`, plan, quickMode, dan hash.
+  * lookup cache hanya untuk analysis user yang sama dan `status=COMPLETED`.
+  * clone result ke `Analysis` baru agar history user tetap rapi dan tidak memakai ID lama.
+- Memperbarui `/api/analyze`:
+  * Setelah parsing/validasi, backend menghitung hash dan cache key.
+  * Jika cache hit, backend clone result+findings, audit `analysis_cache_hit`, dan return
+    response cepat tanpa memanggil You.com/LLM dan tanpa consume quota.
+  * Jika cache miss, flow lama tetap berjalan, tetapi metadata hash/cache/version disimpan.
+- Menambahkan `scripts/apply-analysis-cache-schema.mjs` untuk apply kolom/index ke local
+  SQLite dan Turso secara idempotent.
+- Menjalankan migration script; local DB kosong di-skip, Turso sukses ditambahkan kolom
+  dan index cache.
+
+Verification:
+- `bun scripts/check-db-providers.mjs` -> provider aktif Turso terbaca tanpa key.
+- `rg 'sk-|nvapi-|ydc-' scripts src prisma package.json` -> tidak ada hardcoded key nyata;
+  hanya placeholder UI dan copy/CSS yang match.
+- `DATABASE_URL="file:./build.db" bunx prisma generate` -> pass.
+- `node scripts/apply-analysis-cache-schema.mjs` -> Turso columns/indexes applied.
+- `bun run lint` -> pass.
+- `DATABASE_URL="file:./build.db" TURSO_DATABASE_URL="" TURSO_AUTH_TOKEN="" JWT_SECRET="build-time-only-placeholder-change-in-runtime" bun run build` -> pass.
+
+Stage Summary:
+- Provider LLM production sekarang jelas dikelola via DB/admin UI; `.env` tetap hanya fallback
+  jika DB provider kosong.
+- User tidak akan menunggu ulang untuk dokumen identik dalam scope user+plan+quickMode+version.
+- Cache sengaja per-user, bukan global, untuk menghindari kebocoran privasi lintas akun.
+
 
 
 

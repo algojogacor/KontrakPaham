@@ -96,6 +96,11 @@ model Analysis {
   researchContent String?
   researchSources String?
   shareToken   String?  @unique  // Read-only public share token
+  textHash     String?
+  cacheKey     String?
+  cacheHit     Boolean  @default(false)
+  cacheSourceId String?
+  analysisVersion String?
   createdAt    DateTime @default(now())
 
   user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -104,6 +109,8 @@ model Analysis {
   chatMessages AnalysisChatMessage[]
 
   @@index([userId, createdAt])
+  @@index([userId, cacheKey, status])
+  @@index([userId, textHash, status])
 }
 
 model AnalysisChatThread {

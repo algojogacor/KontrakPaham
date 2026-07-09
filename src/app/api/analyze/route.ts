@@ -12,6 +12,13 @@ import {
   DocumentError,
 } from "@/lib/documents";
 import { analyzeContract } from "@/lib/analyze";
+import {
+  ANALYSIS_CACHE_VERSION,
+  buildAnalysisCacheKey,
+  cloneAnalysisFromCache,
+  findCompletedAnalysisCache,
+  hashAnalysisText,
+} from "@/lib/analysis-cache";
 import { toAnalysisDto } from "@/lib/types";
 
 export const runtime = "nodejs";
@@ -197,6 +204,10 @@ export async function POST(req: NextRequest) {
   const title = fileName
     ? fileName.replace(/\.(pdf|docx)$/i, "")
     : rawText.slice(0, 60).replace(/\s+/g, " ").trim() + (rawText.length > 60 ? "…" : "");
+  const sanitizedTitle = sanitizeText(title).slice(0, 200) || "Analisis Kontrak";
+  const sanitizedFileName = fileName ? sanitizeText(fileName).slice(0, 300) : null;
+  const textHash = hashAnalysisText(rawText);
+  const cacheKey = buildAnalysisCacheKey({ textHash, plan, quickMode });
 
   // Idempotency: if client sends Idempotency-Key header, check for existing
   // analysis with same key. Prevents double-submit (e.g. double-click) from
@@ -231,15 +242,59 @@ export async function POST(req: NextRequest) {
     }
   }
 
+  const cached = await findCompletedAnalysisCache({
+    userId: user.id,
+    cacheKey,
+  });
+  if (cached) {
+    const cloned = await cloneAnalysisFromCache({
+      userId: user.id,
+      sourceAnalysisId: cached.id,
+      title: sanitizedTitle,
+      sourceType,
+      fileName: sanitizedFileName,
+      charCount,
+      textHash,
+      cacheKey,
+    });
+
+    if (cloned) {
+      await audit("analysis_cache_hit", {
+        userId: user.id,
+        ip,
+        meta: {
+          analysisId: cloned.id,
+          sourceAnalysisId: cached.id,
+          sourceType,
+          quickMode,
+          analysisVersion: ANALYSIS_CACHE_VERSION,
+        },
+      });
+
+      return NextResponse.json({
+        analysis: toAnalysisDto({ ...cloned, createdAt: new Date(cloned.createdAt) }),
+        warnings,
+        notes: [
+          "Dokumen yang sama pernah dianalisis sebelumnya. Hasil dikembalikan dari cache agar tidak menunggu ulang.",
+        ],
+        uncertain: false,
+        cached: true,
+      });
+    }
+  }
+
   // Create placeholder analysis record
   const analysis = await db.analysis.create({
     data: {
       userId: user.id,
-      title: sanitizeText(title).slice(0, 200) || "Analisis Kontrak",
+      title: sanitizedTitle,
       sourceType,
-      fileName: fileName ? sanitizeText(fileName).slice(0, 300) : null,
+      fileName: sanitizedFileName,
       charCount,
       status: "PENDING",
+      textHash,
+      cacheKey,
+      analysisVersion: ANALYSIS_CACHE_VERSION,
     },
   });
 
