@@ -3188,3 +3188,46 @@ Detail:
 Stage Summary:
 - Corpus hukum diambil langsung dari pasal.id API (structured), bukan scraping BPK.
 - Tidak ada PDF download, tidak ada regex parser, tidak ada ID hunting.
+
+---
+Task ID: 61
+Agent: main (Codex) - Visual Polish and Hamburger Menu Redesign
+
+Task: Merespons kritik desain "AI slop", menghapus rasa sticker-floating, memperbaiki
+mobile micro-interactions, loading layout, mascot visual, sample layout, dan navbar.
+
+Work Log:
+- Membaca `worklog.md`, status git, dan konteks plan legal corpus sebelum mengubah UI.
+- Melakukan grounding singkat pada pola visual storytelling dan microinteraction:
+  horizontal flow dipakai sebagai visual rail, bukan memaksa horizontal page scroll.
+- Mengganti visual hero/loading menjadi `LegalDeskScene` berbasis analysis ribbon:
+  dokumen, garis scan, node OCR/denda/sepihak/saran, dan guardian seal yang menyatu
+  dengan komposisi.
+- Merapikan global loading agar centered, ringkas, dan tidak memakai spinner generik.
+- Mengganti `ContractLoading` agar memakai compact analysis ribbon yang sama.
+- Mengubah feature section home dari grid card generik menjadi clause anatomy panel
+  dengan active feature state, anatomy cursor, dan touch/hover micro-interactions.
+- Mengubah halaman contoh kontrak dari grid card + emoji menjadi sample ledger/list
+  yang lebih editorial, mobile-friendly, dan punya tombol aksi jelas.
+- Merombak navbar menjadi brand kiri + avatar/theme + hamburger menu kanan untuk semua
+  ukuran layar.
+- Memoles hamburger drawer:
+  * menghapus double close icon dari custom close button karena `SheetContent` sudah
+    menyediakan close bawaan.
+  * menambahkan section "Ruang kerja/Mulai" dan "Bantuan".
+  * memperhalus active indicator, icon reaction, close button, sticky action area, dan
+    tap feedback mobile.
+- Tidak menyentuh untracked corpus/scrape artifacts.
+
+Verification:
+- `bun run lint` -> pass.
+- Production build dengan placeholder env -> pass.
+- `http://localhost:3000/` -> 200.
+- `bunx tsc --noEmit` pernah dicek dan masih gagal pada isu lama non-visual:
+  missing `socket.io` example deps, DTO severity typing, `xs` button size, zod test
+  issue shape, dan opsi pdfjs. Perubahan visual ini tidak memperluas scope ke sana.
+
+Stage Summary:
+- UI utama sekarang memakai navigation drawer kanan dan visual analysis ribbon yang lebih
+  menyatu, tanpa sticker-floating yang dominan.
+- Loading, feature section, dan samples page sudah lebih rapi untuk mobile/touch.

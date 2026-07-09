@@ -1,9 +1,11 @@
 "use client";
 
+import { useState } from "react";
 import { useApp } from "@/lib/store";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { LegalDeskScene } from "@/components/app/legal-desk-scene";
 import {
   AlertTriangle,
   ArrowRight,
@@ -11,7 +13,6 @@ import {
   BookOpen,
   Brain,
   Check,
-  CircleDot,
   Clock,
   FileDown,
   FileText,
@@ -180,26 +181,7 @@ export function HomeView() {
 
       <section className="border-b border-border">
         <div className="mx-auto max-w-6xl px-4 py-16 sm:py-20">
-          <div className="max-w-2xl">
-            <SectionEyebrow>Fitur</SectionEyebrow>
-            <h2 className="mt-3 font-display text-3xl font-semibold leading-tight tracking-tight text-ink sm:text-4xl">
-              Dibuat untuk orang awam,
-              <br />
-              <span className="text-ink-soft">bukan untuk developer.</span>
-            </h2>
-          </div>
-          <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {[
-              { icon: ScanText, title: "OCR untuk PDF scan", desc: "Foto atau scan kontrak lama bisa dibaca otomatis tanpa mengetik ulang." },
-              { icon: FileText, title: "Klausul asli + bahasa awam", desc: "Teks asli berdampingan dengan penjelasan sederhana." },
-              { icon: AlertTriangle, title: "Tingkat risiko dan urgensi", desc: "Setiap temuan punya label RENDAH sampai KRITIS." },
-              { icon: FileDown, title: "Export PDF rapi", desc: "Simpan dan bagikan laporan ke keluarga, penjamin, atau pihak terkait." },
-              { icon: History, title: "Riwayat dan chat tersimpan", desc: "Lihat ulang hasil analisis dan tanya lanjutan per akun." },
-              { icon: Lock, title: "Kontrol akun", desc: "Password di-hash, rate limiting, dan data bisa dihapus." },
-            ].map((f, i) => (
-              <FeatureCard key={f.title} {...f} delay={(i % 6) + 1} />
-            ))}
-          </div>
+          <ClauseAnatomyFeatures />
         </div>
       </section>
 
@@ -308,127 +290,101 @@ function HeroMeta({ label, value }: { label: string; value: string }) {
 }
 
 function ContractAnnotationVisual() {
-  return (
-    <div className="relative">
-      <div className="absolute -left-2 -top-4 z-20 rotate-[-4deg] animate-fade-in stagger-4 sm:-left-5">
-        <div className="flex items-center gap-2 rounded-xl bg-ink px-3 py-2 text-background shadow-ink">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-red-500/90 text-sm font-bold text-white">75</div>
-          <div className="leading-tight">
-            <p className="text-[10px] uppercase tracking-wider text-background/60">Skor risiko</p>
-            <p className="text-xs font-semibold">TINGGI</p>
-          </div>
-        </div>
-      </div>
-
-      <div className="rounded-[1.75rem] border border-border/70 bg-card/45 p-2 shadow-ink">
-        <Card className="relative overflow-hidden rounded-[1.35rem] border-border/60 bg-card shadow-[inset_0_1px_0_oklch(1_0_0/0.55)]">
-          <div className="flex items-center justify-between border-b border-border bg-muted/40 px-4 py-2.5">
-            <div className="flex gap-1.5">
-              <div className="h-2.5 w-2.5 rounded-full bg-red-400" />
-              <div className="h-2.5 w-2.5 rounded-full bg-amber-400" />
-              <div className="h-2.5 w-2.5 rounded-full bg-emerald-400" />
-            </div>
-            <span className="font-mono text-[10px] text-muted-foreground">kontrak-sewa.pdf / halaman 2</span>
-          </div>
-
-          <CardContent className="p-5 sm:p-6">
-            <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-border bg-background/70 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
-              <CircleDot className="h-3 w-3 text-primary" />
-              Mode review risiko
-            </div>
-            <p className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">Pasal 4 - Denda Keterlambatan</p>
-            <p className="mt-3 font-display text-[15px] leading-[1.7] text-ink">
-              Apabila Pihak Kedua terlambat membayar sewa, Pihak Kedua dikenakan denda{" "}
-              <span className="risk-underline font-medium">sebesar 2% per hari</span> dari nilai sewa bulanan.
-              Keterlambatan lebih dari 7 hari memberikan{" "}
-              <span className="marker-amber font-medium">hak kepada Pihak Pertama untuk memutuskan kontrak sepihak</span>{" "}
-              dan mengosongkan rumah tanpa proses pengadilan.
-            </p>
-
-            <div className="mt-5 space-y-2.5">
-              <AnnotationRow
-                color="red"
-                label="Denda 2%/hari"
-                detail="Setara sekitar 730%/tahun. Jauh di atas kewajaran bunga harian."
-              />
-              <AnnotationRow
-                color="amber"
-                label="Pemutusan sepihak"
-                detail="Hanya Pihak Pertama yang bisa memutus tanpa proses pengadilan."
-              />
-            </div>
-
-            <div className="mt-5 flex items-start gap-2.5 rounded-xl border border-primary/30 bg-primary/5 p-3">
-              <Lightbulb className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
-              <div>
-                <p className="text-[11px] font-semibold uppercase tracking-wide text-primary">Saran</p>
-                <p className="mt-0.5 text-xs leading-relaxed text-ink-soft">
-                  Negosiasi maksimal 0,1%/hari atau denda nominal tetap. Tambah klausul grace period 3 hari.
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      <div className="absolute -bottom-3 -right-3 z-20 rotate-[3deg] animate-fade-in stagger-5">
-        <div className="rounded-xl bg-primary px-3 py-2 text-primary-foreground shadow-ink">
-          <p className="text-[10px] uppercase tracking-wider opacity-80">Ditemukan</p>
-          <p className="text-sm font-bold">6 klausul berisiko</p>
-        </div>
-      </div>
-    </div>
-  );
+  return <LegalDeskScene />;
 }
 
-function AnnotationRow({ color, label, detail }: { color: "red" | "amber"; label: string; detail: string }) {
-  const styles = {
-    red: "border-red-500/30 bg-red-500/5",
-    amber: "border-amber-500/30 bg-amber-500/5",
-  };
-  const dot = {
-    red: "bg-red-500",
-    amber: "bg-amber-500",
-  };
-  return (
-    <div className={`flex items-start gap-2.5 rounded-lg border ${styles[color]} p-2.5`}>
-      <span className={`mt-1 h-2 w-2 shrink-0 rounded-full ${dot[color]}`} />
-      <div className="min-w-0">
-        <p className="text-xs font-semibold text-ink">{label}</p>
-        <p className="text-[11px] leading-relaxed text-ink-soft">{detail}</p>
-      </div>
-    </div>
-  );
-}
-
-function FeatureCard({
-  icon: Icon,
-  title,
-  desc,
-  delay,
-}: {
+const featureItems: Array<{
   icon: LucideIcon;
   title: string;
   desc: string;
-  delay: number;
-}) {
+  status: string;
+  marker: string;
+}> = [
+  { icon: ScanText, title: "OCR untuk PDF scan", desc: "Foto atau scan kontrak lama dibaca otomatis tanpa mengetik ulang.", status: "terbaca", marker: "Halaman scan" },
+  { icon: FileText, title: "Klausul asli + bahasa awam", desc: "Teks asli berdampingan dengan penjelasan yang bisa dipakai bicara.", status: "diterjemahkan", marker: "Pasal 4" },
+  { icon: AlertTriangle, title: "Tingkat risiko dan urgensi", desc: "Temuan diberi prioritas agar Anda tahu mana yang harus dinego dulu.", status: "diprioritaskan", marker: "Risiko tinggi" },
+  { icon: FileDown, title: "Export PDF rapi", desc: "Laporan bisa dibagikan ke keluarga, penjamin, atau pihak terkait.", status: "siap export", marker: "Report" },
+  { icon: History, title: "Riwayat dan chat tersimpan", desc: "Hasil analisis dan tanya lanjutan tetap bisa dibuka kembali.", status: "tersimpan", marker: "Arsip akun" },
+  { icon: Lock, title: "Kontrol akun", desc: "Password di-hash, rate limiting aktif, dan data bisa dihapus.", status: "terkunci", marker: "Kontrol data" },
+];
+
+function ClauseAnatomyFeatures() {
+  const [active, setActive] = useState(0);
+  const ActiveIcon = featureItems[active].icon;
+
   return (
-    <Card className={`group relative overflow-hidden border-border/60 py-0 transition-all hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-soft animate-fade-in-up stagger-${delay}`}>
-      <CardContent className="flex min-h-[172px] flex-col p-5">
-        <div className="flex items-start gap-4">
-          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-accent/60 text-accent-foreground transition-transform group-hover:scale-105">
-            <Icon className="h-5 w-5" />
+    <div>
+      <div className="max-w-2xl">
+        <SectionEyebrow>Fitur</SectionEyebrow>
+        <h2 className="mt-3 font-display text-3xl font-semibold leading-tight tracking-tight text-ink sm:text-4xl">
+          Dibuat untuk orang awam,
+          <br />
+          <span className="text-ink-soft">bukan untuk developer.</span>
+        </h2>
+      </div>
+
+      <div className="clause-anatomy mt-10 grid gap-5 lg:grid-cols-[1.1fr_0.9fr]">
+        <div className="clause-anatomy__paper relative overflow-hidden rounded-[1.75rem] border border-border bg-card p-5 shadow-ink">
+          <div className="flex items-center justify-between border-b border-border/70 pb-4">
+            <div>
+              <p className="font-mono text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">anatomy mode</p>
+              <h3 className="mt-1 font-display text-2xl font-semibold text-ink">Satu kontrak, enam alat baca.</h3>
+            </div>
+            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+              <ActiveIcon className="h-5 w-5" />
+            </div>
           </div>
-          <div className="min-w-0">
-            <h3 className="font-display text-base font-semibold text-ink">{title}</h3>
-            <p className="mt-1.5 text-sm leading-relaxed text-ink-soft">{desc}</p>
+
+          <div className="relative mt-6 min-h-[280px] rounded-[1.25rem] border border-border/70 bg-background/70 p-5">
+            <div className="space-y-3">
+              <span className="block h-2 w-24 rounded-full bg-ink/25" />
+              <span className="block h-2 w-full rounded-full bg-muted" />
+              <span className="block h-2 w-11/12 rounded-full bg-muted" />
+              <span className="anatomy-highlight block h-4 rounded-full" style={{ width: `${62 + active * 4}%` }} />
+              <span className="block h-2 w-10/12 rounded-full bg-muted" />
+              <span className="block h-2 w-8/12 rounded-full bg-muted" />
+            </div>
+
+            <div className="absolute bottom-5 left-5 right-5 rounded-2xl border border-primary/25 bg-primary/5 p-4 transition-all duration-300">
+              <p className="font-mono text-[10px] font-semibold uppercase tracking-[0.16em] text-primary">{featureItems[active].marker}</p>
+              <h4 className="mt-1 font-display text-xl font-semibold text-ink">{featureItems[active].title}</h4>
+              <p className="mt-2 text-sm leading-relaxed text-ink-soft">{featureItems[active].desc}</p>
+            </div>
+
+            <div className="anatomy-cursor" style={{ left: `${18 + active * 12}%` }}>
+              <span />
+            </div>
           </div>
         </div>
-        <div className="mt-auto pt-5">
-          <div className="h-px w-full bg-gradient-to-r from-primary/25 via-border to-transparent" />
+
+        <div className="grid gap-2">
+          {featureItems.map((item, index) => {
+            const Icon = item.icon;
+            const isActive = active === index;
+
+            return (
+              <button
+                key={item.title}
+                type="button"
+                onFocus={() => setActive(index)}
+                onMouseEnter={() => setActive(index)}
+                className={`feature-rail-item group text-left ${isActive ? "is-active" : ""}`}
+              >
+                <span className="feature-rail-item__index">{String(index + 1).padStart(2, "0")}</span>
+                <span className="feature-rail-item__icon">
+                  <Icon className="h-4 w-4" />
+                </span>
+                <span className="min-w-0 flex-1">
+                  <span className="block font-display text-base font-semibold text-ink">{item.title}</span>
+                  <span className="mt-1 block text-sm leading-relaxed text-ink-soft">{item.desc}</span>
+                </span>
+                <span className="feature-rail-item__status">{item.status}</span>
+              </button>
+            );
+          })}
         </div>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }
 

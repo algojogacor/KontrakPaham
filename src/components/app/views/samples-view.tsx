@@ -22,9 +22,9 @@ import { cn } from "@/lib/utils";
 import { toast } from "@/hooks/use-toast";
 
 const DIFFICULTY_META: Record<string, { label: string; cls: string }> = {
-  pemula: { label: "Pemula", cls: "bg-emerald-100 text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-300" },
-  menengah: { label: "Menengah", cls: "bg-amber-100 text-amber-800 dark:bg-amber-950/50 dark:text-amber-300" },
-  lanjutan: { label: "Lanjutan", cls: "bg-red-100 text-red-800 dark:bg-red-950/50 dark:text-red-300" },
+  pemula: { label: "Pemula", cls: "border-primary/25 text-primary" },
+  menengah: { label: "Menengah", cls: "border-amber-500/35 text-amber-700 dark:text-amber-300" },
+  lanjutan: { label: "Lanjutan", cls: "border-red-500/35 text-red-700 dark:text-red-300" },
 };
 
 export function SamplesView() {
@@ -76,11 +76,13 @@ export function SamplesView() {
         <Card className="border-border/70 shadow-soft-lg">
           <CardContent className="p-5 sm:p-6">
             <div className="flex items-start gap-3">
-              <span className="text-3xl">{preview.emoji}</span>
+              <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-primary/20 bg-primary/8 text-primary">
+                <FileText className="h-5 w-5" />
+              </div>
               <div className="min-w-0 flex-1">
                 <div className="flex flex-wrap gap-2">
                   <Badge variant="secondary">{preview.category}</Badge>
-                  <span className={cn("rounded-full px-2.5 py-0.5 text-xs font-medium", DIFFICULTY_META[preview.difficulty].cls)}>
+                  <span className={cn("rounded-full border px-2.5 py-0.5 text-xs font-medium", DIFFICULTY_META[preview.difficulty].cls)}>
                     {DIFFICULTY_META[preview.difficulty].label}
                   </span>
                   <Badge variant="outline">{preview.charCount.toLocaleString("id-ID")} karakter</Badge>
@@ -152,30 +154,36 @@ export function SamplesView() {
         </Card>
       )}
 
-      <div className="grid gap-4 sm:grid-cols-2">
-        {SAMPLE_CONTRACTS.map((s) => (
-          <Card key={s.id} className="group flex flex-col border-border/70 transition-all hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-soft">
-            <CardContent className="flex flex-1 flex-col p-5">
-              <div className="flex items-start justify-between gap-2">
-                <span className="text-3xl">{s.emoji}</span>
-                <span className={cn("rounded-full px-2.5 py-0.5 text-xs font-medium", DIFFICULTY_META[s.difficulty].cls)}>
+      <div className="sample-ledger overflow-hidden rounded-[1.5rem] border border-border bg-card shadow-soft-lg">
+        {SAMPLE_CONTRACTS.map((s, index) => (
+          <article key={s.id} className="sample-ledger-row">
+            <div className="sample-ledger-row__index">{String(index + 1).padStart(2, "0")}</div>
+            <div className="sample-ledger-row__icon">
+              <FileText className="h-5 w-5" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <div className="flex flex-wrap items-center gap-2">
+                <h3 className="font-display text-xl font-semibold leading-tight text-ink">{s.title}</h3>
+                <span className={cn("rounded-full border px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em]", DIFFICULTY_META[s.difficulty].cls)}>
                   {DIFFICULTY_META[s.difficulty].label}
                 </span>
               </div>
-              <h3 className="mt-3 font-display text-lg font-semibold leading-tight text-ink">{s.title}</h3>
-              <Badge variant="secondary" className="mt-1.5 w-fit text-[10px]">{s.category}</Badge>
-              <p className="mt-2 flex-1 text-sm leading-relaxed text-muted-foreground">{s.description}</p>
-              <div className="mt-4 flex flex-col gap-2 sm:flex-row">
-                <Button variant="outline" size="sm" className="gap-1.5" onClick={() => setPreview(s)}>
-                  <Eye className="h-4 w-4" /> Lihat teks
-                </Button>
-                <Button size="sm" className="gap-1.5 flex-1" onClick={() => runSample(s)} disabled={analyzing === s.id}>
-                  {analyzing === s.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Play className="h-4 w-4" />}
-                  Analisis
-                </Button>
+              <p className="mt-2 max-w-2xl text-sm leading-relaxed text-muted-foreground">{s.description}</p>
+              <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
+                <span>{s.category}</span>
+                <span>{s.charCount.toLocaleString("id-ID")} karakter</span>
               </div>
-            </CardContent>
-          </Card>
+            </div>
+            <div className="sample-ledger-row__actions">
+              <Button variant="outline" size="sm" className="h-10 gap-1.5 rounded-xl" onClick={() => setPreview(s)}>
+                <Eye className="h-4 w-4" /> Lihat
+              </Button>
+              <Button size="sm" className="h-10 gap-1.5 rounded-xl" onClick={() => runSample(s)} disabled={analyzing === s.id}>
+                {analyzing === s.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Play className="h-4 w-4" />}
+                Analisis
+              </Button>
+            </div>
+          </article>
         ))}
       </div>
 
