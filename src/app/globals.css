@@ -1696,21 +1696,13 @@
   }
 
   .analysis-ribbon-side {
-    right: 22px;
-    top: 232px;
+    top: 196px;
+    right: 12px;
     width: auto;
-    grid-template-columns: auto 1fr;
-    align-items: center;
-  }
-
-  .analysis-ribbon-side {
-    top: 212px;
-    right: 16px;
   }
 
   .analysis-ribbon-side .mascot-portrait {
-    width: 82px;
-    height: 114px;
+    zoom: 0.6;
   }
 
   .analysis-ribbon-source {
