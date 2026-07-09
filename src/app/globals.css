@@ -1679,7 +1679,7 @@
   }
 
   .analysis-ribbon-scene:not(.analysis-ribbon-scene--compact) {
-    height: 330px;
+    height: 380px;
     max-width: 360px;
   }
 
