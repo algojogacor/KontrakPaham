@@ -3368,3 +3368,31 @@ Verification:
 Stage Summary:
 - Copy section fitur sekarang menekankan kemudahan memahami kontrak, bukan
   membandingkan kelompok pengguna.
+
+---
+Task ID: 67
+Agent: main (Codex) - Dedicated Loading Illustration
+
+Task: Mengganti loading animation yang terlihat seperti maskot terpotong/berantakan.
+
+Work Log:
+- Mengidentifikasi penyebab visual: `ContractLoading` masih memakai compact
+  `LegalDeskScene`, sehingga maskot berada di container `overflow: hidden` dan hanya
+  terlihat sebagian.
+- Mengekspor `MascotPortrait` agar bisa dipakai sebagai elemen brand tanpa membawa
+  seluruh scene kontrak.
+- Membuat `ContractLoadingMark` khusus untuk loading:
+  * kartu loading kecil dengan dokumen mini.
+  * maskot terlihat utuh, tidak terpotong.
+  * titik progress berdenyut dan scan highlight halus.
+- Mengubah `src/app/loading.tsx` agar memakai `ContractLoading`, bukan scene analisis
+  compact secara langsung.
+
+Verification:
+- `bun run lint` -> pass.
+- Production build dengan placeholder env -> pass.
+- Server production lokal di `http://127.0.0.1:3010/` start tanpa error.
+
+Stage Summary:
+- Loading animation sekarang punya visual khusus yang stabil dan tidak mewarisi layout
+  hero/analysis scene yang terlalu kompleks.

@@ -89,9 +89,9 @@ export function LegalDeskScene({
   );
 }
 
-function MascotPortrait({ compact = false }: { compact?: boolean }) {
+export function MascotPortrait({ compact = false, className }: { compact?: boolean; className?: string }) {
   return (
-    <div className={cn("mascot-portrait", compact ? "mascot-portrait--compact" : "")}>
+    <div className={cn("mascot-portrait", compact ? "mascot-portrait--compact" : "", className)}>
       <span className="mascot-portrait__horn mascot-portrait__horn--left" />
       <span className="mascot-portrait__horn mascot-portrait__horn--right" />
       <div className="mascot-portrait__head">
