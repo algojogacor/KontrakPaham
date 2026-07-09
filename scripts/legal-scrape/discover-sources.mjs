@@ -37,7 +37,7 @@ const DISCOVERED_MAPPING = {
       number: "7",
       year: 2011,
       jurisdiction: "ID",
-      sourceUrl: "https://peraturan.bpk.go.id/Details/39062/uu-no-7-tahun-2011",
+      sourceUrl: "https://peraturan.bpk.go.id/Details/39182/uu-no-7-tahun-2011",
       sourceHost: "peraturan.bpk.go.id"
     }
   ],
@@ -66,7 +66,7 @@ const DISCOVERED_MAPPING = {
       number: "30",
       year: 1999,
       jurisdiction: "ID",
-      sourceUrl: "https://peraturan.bpk.go.id/Details/45310/uu-no-30-tahun-1999",
+      sourceUrl: "https://peraturan.bpk.go.id/Details/45361/uu-no-30-tahun-1999",
       sourceHost: "peraturan.bpk.go.id"
     }
   ],
@@ -77,7 +77,7 @@ const DISCOVERED_MAPPING = {
       number: "27",
       year: 2022,
       jurisdiction: "ID",
-      sourceUrl: "https://peraturan.bpk.go.id/Details/229044/uu-no-27-tahun-2022",
+      sourceUrl: "https://peraturan.bpk.go.id/Details/229798/uu-no-27-tahun-2022",
       sourceHost: "peraturan.bpk.go.id"
     }
   ],
@@ -88,7 +88,7 @@ const DISCOVERED_MAPPING = {
       number: "11",
       year: 2008,
       jurisdiction: "ID",
-      sourceUrl: "https://peraturan.bpk.go.id/Details/39031/uu-no-11-tahun-2008",
+      sourceUrl: "https://peraturan.bpk.go.id/Details/38557/uu-no-11-tahun-2008",
       sourceHost: "peraturan.bpk.go.id"
     },
     {
@@ -97,7 +97,7 @@ const DISCOVERED_MAPPING = {
       number: "1",
       year: 2024,
       jurisdiction: "ID",
-      sourceUrl: "https://peraturan.bpk.go.id/Details/274431/uu-no-1-tahun-2024",
+      sourceUrl: "https://peraturan.bpk.go.id/Details/274494/uu-no-1-tahun-2024",
       sourceHost: "peraturan.bpk.go.id"
     },
     {
@@ -117,7 +117,7 @@ const DISCOVERED_MAPPING = {
       number: "13",
       year: 2003,
       jurisdiction: "ID",
-      sourceUrl: "https://peraturan.bpk.go.id/Details/43973/uu-no-13-tahun-2003",
+      sourceUrl: "https://peraturan.bpk.go.id/Details/43013/uu-no-13-tahun-2003",
       sourceHost: "peraturan.bpk.go.id"
     },
     {
@@ -126,7 +126,7 @@ const DISCOVERED_MAPPING = {
       number: "6",
       year: 2023,
       jurisdiction: "ID",
-      sourceUrl: "https://peraturan.bpk.go.id/Details/246473/uu-no-6-tahun-2023",
+      sourceUrl: "https://peraturan.bpk.go.id/Details/246523/uu-no-6-tahun-2023",
       sourceHost: "peraturan.bpk.go.id"
     }
   ],
@@ -144,7 +144,7 @@ const DISCOVERED_MAPPING = {
       number: "44",
       year: 1994,
       jurisdiction: "ID",
-      sourceUrl: "https://peraturan.bpk.go.id/Details/55365/pp-no-44-tahun-1994",
+      sourceUrl: "https://peraturan.bpk.go.id/Details/53549/pp-no-44-tahun-1994",
       sourceHost: "peraturan.bpk.go.id"
     }
   ],
@@ -155,7 +155,7 @@ const DISCOVERED_MAPPING = {
       number: "42",
       year: 1999,
       jurisdiction: "ID",
-      sourceUrl: "https://peraturan.bpk.go.id/Details/45322/uu-no-42-tahun-1999",
+      sourceUrl: "https://peraturan.bpk.go.id/Details/45374/uu-no-42-tahun-1999",
       sourceHost: "peraturan.bpk.go.id"
     },
     {
@@ -164,7 +164,7 @@ const DISCOVERED_MAPPING = {
       number: "4",
       year: 1996,
       jurisdiction: "ID",
-      sourceUrl: "https://peraturan.bpk.go.id/Details/45143/uu-no-4-tahun-1996",
+      sourceUrl: "https://peraturan.bpk.go.id/Details/46093/uu-no-4-tahun-1996",
       sourceHost: "peraturan.bpk.go.id"
     }
   ],
@@ -175,7 +175,7 @@ const DISCOVERED_MAPPING = {
       number: "21",
       year: 2011,
       jurisdiction: "ID",
-      sourceUrl: "https://peraturan.bpk.go.id/Details/39203/uu-no-21-tahun-2011",
+      sourceUrl: "https://peraturan.bpk.go.id/Details/39566/uu-no-21-tahun-2011",
       sourceHost: "peraturan.bpk.go.id"
     },
     {
@@ -184,7 +184,7 @@ const DISCOVERED_MAPPING = {
       number: "4",
       year: 2023,
       jurisdiction: "ID",
-      sourceUrl: "https://peraturan.bpk.go.id/Details/232490/uu-no-4-tahun-2023",
+      sourceUrl: "https://peraturan.bpk.go.id/Details/241695/uu-no-4-tahun-2023",
       sourceHost: "peraturan.bpk.go.id"
     }
   ],
@@ -195,7 +195,7 @@ const DISCOVERED_MAPPING = {
       number: "40",
       year: 2007,
       jurisdiction: "ID",
-      sourceUrl: "https://peraturan.bpk.go.id/Details/39908/uu-no-40-tahun-2007",
+      sourceUrl: "https://peraturan.bpk.go.id/Details/39563/uu-no-40-tahun-2007",
       sourceHost: "peraturan.bpk.go.id"
     },
     {
@@ -204,7 +204,7 @@ const DISCOVERED_MAPPING = {
       number: "42",
       year: 2007,
       jurisdiction: "ID",
-      sourceUrl: "https://peraturan.bpk.go.id/Details/50630/pp-no-42-tahun-2007",
+      sourceUrl: "https://peraturan.bpk.go.id/Details/5144/pp-no-42-tahun-2007",
       sourceHost: "peraturan.bpk.go.id"
     }
   ],
@@ -215,7 +215,7 @@ const DISCOVERED_MAPPING = {
       number: "28",
       year: 2014,
       jurisdiction: "ID",
-      sourceUrl: "https://peraturan.bpk.go.id/Details/46312/uu-no-28-tahun-2014",
+      sourceUrl: "https://peraturan.bpk.go.id/Details/38712/uu-no-28-tahun-2014",
       sourceHost: "peraturan.bpk.go.id"
     },
     {
@@ -224,7 +224,7 @@ const DISCOVERED_MAPPING = {
       number: "20",
       year: 2016,
       jurisdiction: "ID",
-      sourceUrl: "https://peraturan.bpk.go.id/Details/37629/uu-no-20-tahun-2016",
+      sourceUrl: "https://peraturan.bpk.go.id/Details/37595/uu-no-20-tahun-2016",
       sourceHost: "peraturan.bpk.go.id"
     }
   ],
@@ -235,7 +235,7 @@ const DISCOVERED_MAPPING = {
       number: "1",
       year: 2023,
       jurisdiction: "ID",
-      sourceUrl: "https://peraturan.bpk.go.id/Details/232049/uu-no-1-tahun-2023",
+      sourceUrl: "https://peraturan.bpk.go.id/Details/234935/uu-no-1-tahun-2023",
       sourceHost: "peraturan.bpk.go.id"
     }
   ],
