@@ -1,4 +1,5 @@
 import { db } from "@/lib/db";
+import { headers } from "next/headers";
 
 // Lightweight audit logging + structured console logging.
 // In production you'd ship these to a log aggregator.
@@ -27,18 +28,41 @@ export async function audit(
   } = {}
 ) {
   const level = opts.level ?? "info";
+  const enrichedMeta = { ...opts.meta };
+  let resolvedIp = opts.ip ?? null;
+
+  // Auto-enrich logs with location and user-agent from headers if available
+  try {
+    const h = headers(); // Next.js 14 headers() is synchronous
+    const userAgent = h.get("user-agent");
+    const country = h.get("x-vercel-ip-country") || h.get("cf-ipcountry");
+    const city = h.get("x-vercel-ip-city") || h.get("cf-ipcity");
+    const forwardedFor = h.get("x-forwarded-for");
+
+    if (userAgent) enrichedMeta.userAgent = userAgent;
+    if (country) enrichedMeta.country = country;
+    if (city) enrichedMeta.city = city;
+    
+    if (!resolvedIp && forwardedFor) {
+      resolvedIp = forwardedFor.split(",")[0].trim();
+    }
+  } catch {
+    // Ignore error if headers() is called outside a valid request context (e.g. cron)
+  }
+
   consoleLog(level, action, {
     userId: opts.userId ?? null,
-    ip: opts.ip ?? null,
-    ...opts.meta,
+    ip: resolvedIp,
+    ...enrichedMeta,
   });
+
   try {
     await db.auditLog.create({
       data: {
         action,
         userId: opts.userId ?? null,
-        ip: opts.ip ?? null,
-        meta: opts.meta ? JSON.stringify(opts.meta) : null,
+        ip: resolvedIp,
+        meta: Object.keys(enrichedMeta).length > 0 ? JSON.stringify(enrichedMeta) : null,
       },
     });
   } catch (e) {
