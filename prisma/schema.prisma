@@ -83,6 +83,7 @@ model LegalReferenceCache {
   query           String
   effort          String
   content         String
+  contentBytes    Int      @default(0)
   sources         String?
   latencyMs       Int?
   hitCount        Int      @default(0)

@@ -2761,6 +2761,48 @@ Stage Summary:
 - Cache ini tidak menyimpan dokumen user, sehingga lebih aman secara privasi daripada
   global cache dokumen/kontrak.
 
+---
+Task ID: 51
+Agent: main (Codex) - Legal Reference Cache Storage Guard
+
+Task: Membatasi pertumbuhan global legal reference cache di Turso dan mengklarifikasi
+kuota free-tier storage.
+
+Work Log:
+- Mengecek pricing Turso terbaru dari halaman resmi; free tier saat ini tercatat 5GB
+  storage, bukan 10GB.
+- Menetapkan batas default cache legal reference di bawah free tier: `4_000_000_000`
+  bytes via `LEGAL_REFERENCE_CACHE_MAX_BYTES`.
+- Menambahkan catatan di kode: set `LEGAL_REFERENCE_CACHE_MAX_BYTES=10000000000`
+  hanya jika plan database memang mendukung 10GB atau lebih.
+- Menambahkan kolom `contentBytes` ke model `LegalReferenceCache`.
+- Menambahkan helper `estimateResearchCacheBytes()` untuk memperkirakan ukuran query,
+  content, dan sources yang disimpan.
+- Menambahkan pruning otomatis `enforceLegalReferenceCacheLimit()`:
+  * menghitung total `contentBytes`.
+  * jika melewati batas, menghapus row tertua/least recently hit sampai kembali di bawah
+    limit.
+- Memperbarui migration script legal reference cache:
+  * membuat kolom `contentBytes` pada tabel lama.
+  * backfill estimasi ukuran untuk row lama.
+- Menjalankan migration script; local dan Turso siap.
+- Catatan token: user menyebut token baru, tetapi nilai token baru tidak diberikan di chat.
+  Token Turso sebaiknya diperbarui di Koyeb Environment Variables (`TURSO_AUTH_TOKEN`)
+  dan `.env` lokal, bukan di-commit ke repo.
+
+Verification:
+- `bun test src/lib/research-cache.test.ts` -> 4 pass.
+- `DATABASE_URL="file:./build.db" bunx prisma generate` -> pass.
+- `node scripts/apply-legal-reference-cache-schema.mjs` -> local and turso schema ready.
+- `bun run lint` -> pass.
+- `DATABASE_URL="file:./build.db" TURSO_DATABASE_URL="" TURSO_AUTH_TOKEN="" JWT_SECRET="build-time-only-placeholder-change-in-runtime" bun run build` -> pass.
+
+Stage Summary:
+- Legal reference cache tetap disimpan di Turso, tetapi sekarang punya batas pertumbuhan
+  otomatis berbasis estimasi byte.
+- Default limit sengaja konservatif untuk free-tier 5GB; 10GB bisa dipakai lewat env hanya
+  jika kuota/plan Turso mendukung.
+
 
 
 

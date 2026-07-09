@@ -20,6 +20,7 @@ const statements = [
     "query" TEXT NOT NULL,
     "effort" TEXT NOT NULL,
     "content" TEXT NOT NULL,
+    "contentBytes" INTEGER NOT NULL DEFAULT 0,
     "sources" TEXT,
     "latencyMs" INTEGER,
     "hitCount" INTEGER NOT NULL DEFAULT 0,
@@ -35,6 +36,18 @@ async function applyLegalReferenceCacheSchema(client, label) {
   for (const statement of statements) {
     await client.execute(statement);
   }
+  const tableInfo = await client.execute('PRAGMA table_info("LegalReferenceCache")');
+  const columnNames = new Set(tableInfo.rows.map((row) => String(row.name)));
+  if (!columnNames.has("contentBytes")) {
+    await client.execute(
+      `ALTER TABLE "LegalReferenceCache" ADD COLUMN "contentBytes" INTEGER NOT NULL DEFAULT 0`,
+    );
+  }
+  await client.execute(
+    `UPDATE "LegalReferenceCache"
+     SET "contentBytes" = length(coalesce("query", '')) + length(coalesce("content", '')) + length(coalesce("sources", ''))
+     WHERE "contentBytes" = 0`,
+  );
   console.log(`${label}: legal reference cache schema ready`);
 }
 

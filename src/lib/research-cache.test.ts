@@ -1,6 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import {
   buildResearchCacheKey,
+  estimateResearchCacheBytes,
   isResearchCacheFresh,
   normalizeResearchQuery,
 } from "./research-cache";
@@ -48,5 +49,15 @@ describe("research cache helpers", () => {
         ttlMs: 2 * 60 * 60 * 1000,
       }),
     ).toBe(false);
+  });
+
+  test("estimates cache bytes from query, content, and sources", () => {
+    expect(
+      estimateResearchCacheBytes({
+        query: "abc",
+        content: "12345",
+        sources: [{ title: "UU", url: "https://peraturan.bpk.go.id/" }],
+      }),
+    ).toBeGreaterThan(8);
   });
 });
