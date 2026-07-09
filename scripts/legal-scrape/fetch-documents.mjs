@@ -40,7 +40,44 @@ async function downloadDocument(doc) {
   const detailsRes = await fetchWithRetry(doc.sourceUrl);
   const html = await detailsRes.text();
 
-  // Find PDF download link in BPK Details page HTML
+  // 1. Validation: Verify that the BPK page title matches target regulation characteristics
+  const titleMatch = html.match(/<title>([^<]+)<\/title>/i);
+  const pageTitle = titleMatch ? titleMatch[1].trim() : "";
+  if (doc.type && doc.type !== "KUHPerdata") {
+    const cleanType = doc.type.toLowerCase();
+    const cleanNumber = doc.number ? doc.number.toString() : "";
+    const cleanYear = doc.year ? doc.year.toString() : "";
+    const lowerTitle = pageTitle.toLowerCase();
+    
+    const isMatching = lowerTitle.includes(cleanType) && 
+                       (!cleanNumber || lowerTitle.includes(cleanNumber)) && 
+                       (!cleanYear || lowerTitle.includes(cleanYear));
+    if (!isMatching) {
+      throw new Error(`BPK Page Title mismatch! Expected to find characteristics of "${doc.type} ${doc.number || ""} ${doc.year || ""}" in title, but got "${pageTitle}"`);
+    }
+  }
+
+  // 2. Parse legalStatus & amendedBy relationship
+  let legalStatus = "ACTIVE";
+  let amendedBy = null;
+  const htmlLower = html.toLowerCase();
+  
+  if (htmlLower.includes("dicabut oleh") || htmlLower.includes("tidak berlaku") || htmlLower.includes("status: dicabut")) {
+    legalStatus = "REVOKED";
+  } else if (htmlLower.includes("diubah oleh") || htmlLower.includes("status: diubah")) {
+    legalStatus = "AMENDED";
+    const amendedMatch = html.match(/(?:diubah oleh|status: diubah oleh)[^<>]*?<a[^>]*?>([^<>]+)<\/a>/i) ||
+                         html.match(/(?:diubah oleh|status: diubah oleh)\s*:\s*([^<>,\n\r]+)/i);
+    if (amendedMatch) {
+      amendedBy = amendedMatch[1].replace(/\s+/g, " ").trim();
+    }
+  }
+  
+  if (legalStatus === "ACTIVE" && (htmlLower.includes("dicabut") || htmlLower.includes("diubah") || htmlLower.includes("mencabut"))) {
+    legalStatus = "NEEDS_VERIFICATION";
+  }
+
+  // 3. Find PDF download link in BPK Details page HTML
   const downloadMatch = html.match(/href="(\/Download\/[^"]+)"/);
   if (!downloadMatch) {
     throw new Error(`No download PDF link found on page: ${doc.sourceUrl}`);
@@ -70,11 +107,12 @@ async function downloadDocument(doc) {
     downloadUrl,
     fetchTimestamp: new Date().toISOString(),
     contentHash,
-    status: "ACTIVE"
+    legalStatus,
+    amendedBy
   };
   
   writeFileSync(metaPath, JSON.stringify(metadata, null, 2), "utf8");
-  console.log(`[Success] Saved: ${doc.title} (Hash: ${contentHash.slice(0, 8)})`);
+  console.log(`[Success] Saved: ${doc.title} (Status: ${legalStatus}, Hash: ${contentHash.slice(0, 8)})`);
 }
 
 async function main() {
