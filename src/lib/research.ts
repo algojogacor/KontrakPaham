@@ -3,6 +3,7 @@ import {
   getCachedLegalResearch,
   saveLegalResearchCache,
 } from "@/lib/research-cache";
+import { searchLegalCorpus } from "@/lib/legal-corpus";
 
 export type ResearchEffort = "standard" | "deep" | "exhaustive";
 export type ResearchPlan = "FREE" | "LITE" | "PRO" | "ADMIN" | string;
@@ -167,6 +168,20 @@ export async function buildLegalResearchContext(contractText: string, plan: Rese
     const researchPlan = await chooseResearchPlan(contractText, plan);
     const tPlannerDone = Date.now();
     console.log(`[TIMING] research_planner_total: ${tPlannerDone - tResearch0}ms | effort=${researchPlan.effort}`);
+
+    const localCorpus = await searchLegalCorpus(`${researchPlan.query}\n\n${compactContract(contractText)}`);
+    if (localCorpus && localCorpus.confidence !== "low") {
+      console.log(`[TIMING] legal_corpus HIT: ${localCorpus.latencyMs}ms | confidence=${localCorpus.confidence}`);
+      return {
+        enabled: true,
+        effort: researchPlan.effort,
+        query: researchPlan.query,
+        content: `Database pasal lokal sebagai sumber utama:\n\n${localCorpus.content}`,
+        sources: localCorpus.sources,
+        latencyMs: localCorpus.latencyMs,
+        warning: "Konteks hukum diambil dari database pasal lokal; You.com tidak dipanggil karena confidence cukup.",
+      };
+    }
 
     const cached = await getCachedLegalResearch(researchPlan);
     if (cached) {
