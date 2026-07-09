@@ -4,6 +4,7 @@ import {
   extractLegalIssueSignals,
   normalizeLegalSearchText,
   scoreLegalArticle,
+  parseStoredTags,
 } from "./legal-corpus";
 
 describe("legal corpus helpers", () => {
@@ -73,5 +74,14 @@ describe("legal corpus helpers", () => {
     expect(context.content).toContain("UU Perlindungan Konsumen Pasal 18");
     expect(context.content).toContain("https://peraturan.bpk.go.id/Details/45288/uu-no-8-tahun-1999");
     expect(context.sources[0]?.url).toContain("peraturan.bpk.go.id");
+  });
+
+  test("parses article tags from stored JSON", () => {
+    const row = {
+      tags: '["denda","klausul_baku"]',
+      normalizedText: "denda klausul baku",
+    };
+
+    expect(parseStoredTags(row.tags)).toEqual(["denda", "klausul_baku"]);
   });
 });

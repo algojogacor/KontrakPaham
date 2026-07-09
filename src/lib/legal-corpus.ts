@@ -1,5 +1,6 @@
 import { LEGAL_TAG_DEFINITIONS } from "@/lib/legal-taxonomy";
 import type { ResearchSource } from "@/lib/research";
+import { db } from "@/lib/db";
 
 export interface LegalIssueSignals {
   normalizedQuery: string;
@@ -112,5 +113,76 @@ export function buildLegalCorpusContext(results: LegalCorpusResult[]): LegalCorp
     sources,
     latencyMs: 0,
     confidence: confidenceFromScore(bestScore),
+  };
+}
+
+export function parseStoredTags(value: string | null): string[] {
+  if (!value) return [];
+  try {
+    const parsed = JSON.parse(value);
+    return Array.isArray(parsed) ? parsed.map(String).filter(Boolean) : [];
+  } catch {
+    return [];
+  }
+}
+
+export async function searchLegalCorpus(text: string, limit = 6): Promise<LegalCorpusContext | null> {
+  const started = Date.now();
+  const signals = extractLegalIssueSignals(text);
+  if (!signals.tags.length && !signals.keywords.length) return null;
+
+  const tokens = [...new Set([...signals.tags, ...signals.keywords.map(normalizeLegalSearchText)])]
+    .filter((token) => token.length >= 3)
+    .slice(0, 24);
+
+  const indexRows = await db.legalArticleIndex.findMany({
+    where: {
+      OR: [
+        { token: { in: tokens } },
+        { tag: { in: signals.tags } },
+      ],
+    },
+    include: {
+      article: {
+        include: { document: true },
+      },
+    },
+    take: 80,
+  });
+
+  const byArticle = new Map<string, LegalCorpusResult & { tags: string[]; normalizedText: string }>();
+  for (const row of indexRows) {
+    const article = row.article;
+    const tags = parseStoredTags(article.tags);
+    const existing = byArticle.get(article.id);
+    const baseScore = scoreLegalArticle(
+      { tags, normalizedText: article.normalizedText },
+      signals,
+    ) + row.weight;
+
+    if (!existing || baseScore > existing.score) {
+      byArticle.set(article.id, {
+        documentTitle: article.document.title,
+        articleNumber: article.articleNumber,
+        articleText: article.text,
+        plainSummary: article.plainSummary,
+        sourceUrl: article.sourceUrl || article.document.sourceUrl,
+        score: baseScore,
+        tags,
+        normalizedText: article.normalizedText,
+      });
+    }
+  }
+
+  const results = [...byArticle.values()]
+    .sort((a, b) => b.score - a.score)
+    .slice(0, limit);
+
+  if (!results.length) return null;
+  const context = buildLegalCorpusContext(results);
+  return {
+    ...context,
+    query: signals.normalizedQuery,
+    latencyMs: Date.now() - started,
   };
 }
