@@ -14,6 +14,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { ContractLoading } from "@/components/app/contract-loading";
+import { MascotViewer } from "@/components/app/mascot-viewer";
 import { ViewShell } from "@/components/app/view-shell";
 import { api, friendlyError } from "@/lib/api-client";
 import { SAMPLE_CONTRACTS, type SampleContract } from "@/lib/content";
@@ -187,14 +188,27 @@ export function SamplesView() {
         ))}
       </div>
 
-      <Card className="mt-8 border-primary/20 bg-primary/5">
-        <CardContent className="p-6 text-center">
-          <p className="text-sm text-muted-foreground">
-            Punya kontrak sendiri untuk dianalisis?{" "}
-            <button onClick={() => setView(user ? "analyze" : "signup")} className="font-semibold text-primary hover:underline">
-              {user ? "Unggah kontrak Anda" : "Daftar & mulai"}
-            </button>
-          </p>
+      <Card className="mt-8 overflow-hidden border-primary/20 bg-primary/5">
+        <CardContent className="flex items-center justify-center gap-4 p-5 text-center sm:justify-between sm:text-left">
+          <MascotViewer
+            compact
+            model="light"
+            interactive={false}
+            className="hidden h-20 w-24 shrink-0 sm:block"
+            label="Maskot KontrakPaham memegang kontrak"
+          />
+          <div className="min-w-0">
+            <p className="font-display text-lg font-semibold text-ink">Sudah siap uji kontrak sendiri?</p>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Unggah dokumen Anda setelah mencoba contoh, lalu bandingkan risiko dan saran tindakan.
+            </p>
+          </div>
+          <Button onClick={() => setView(user ? "analyze" : "signup")} className="hidden shrink-0 rounded-full sm:inline-flex">
+            {user ? "Unggah kontrak" : "Daftar & mulai"}
+          </Button>
+          <button onClick={() => setView(user ? "analyze" : "signup")} className="font-semibold text-primary hover:underline sm:hidden">
+            {user ? "Unggah kontrak Anda" : "Daftar & mulai"}
+          </button>
         </CardContent>
       </Card>
     </ViewShell>

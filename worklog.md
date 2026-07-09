@@ -3231,3 +3231,38 @@ Stage Summary:
 - UI utama sekarang memakai navigation drawer kanan dan visual analysis ribbon yang lebih
   menyatu, tanpa sticker-floating yang dominan.
 - Loading, feature section, dan samples page sudah lebih rapi untuk mobile/touch.
+
+---
+Task ID: 62
+Agent: main (Codex) - GLB Mascot Integration
+
+Task: Memasang asset GLB maskot banteng KontrakPaham ke UI, memastikan maskot dipakai
+di konteks yang natural dan bukan hanya landing page.
+
+Work Log:
+- Menambahkan dependency `three` dan `@types/three`.
+- Menyalin GLB maskot light/premium ke `public/models/`.
+- Menambahkan `MascotViewer` client component berbasis Three.js + `GLTFLoader`:
+  * dynamic import agar bundle awal tetap ringan.
+  * fallback visual jika WebGL/model gagal dimuat.
+  * idle motion, reduced-motion awareness, dan drag-to-rotate untuk konteks interaktif.
+  * cleanup renderer, geometry, dan material saat unmount.
+- Mengganti mascot CSS lama pada `LegalDeskScene` menjadi GLB viewer.
+- Memakai maskot pada hero/analysis ribbon, global/contract loading, dan CTA halaman
+  contoh kontrak dengan ukuran kecil agar tidak terasa memaksa.
+- Membersihkan CSS `.guardian-seal` lama dan menyesuaikan responsive mobile.
+- Mempertahankan logo PNG brand concept di navbar dari asset brand yang sudah dipilih.
+- Tidak menyentuh artifact untracked legal corpus/scrape di `data/legal-raw/`,
+  `image/`, dan `scripts/legal-scrape/`.
+
+Verification:
+- `bun run lint` -> pass.
+- Production build dengan placeholder env -> pass.
+- Playwright CLI screenshot desktop dan mobile pada server production lokal
+  `http://127.0.0.1:3010/` -> canvas `.mascot-viewer__canvas` muncul dan GLB render
+  non-blank tanpa layout overlap.
+
+Stage Summary:
+- Maskot GLB sudah aktif sebagai pendamping visual produk, bukan dekorasi sticker.
+- Asset model tersedia sebagai light dan premium; UI saat ini memakai versi light untuk
+  performa web.

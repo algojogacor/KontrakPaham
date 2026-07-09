@@ -1,5 +1,6 @@
 import { FileText, Scale } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { MascotViewer } from "@/components/app/mascot-viewer";
 
 export function LegalDeskScene({
   compact = false,
@@ -14,7 +15,7 @@ export function LegalDeskScene({
     return (
       <div className={cn("analysis-ribbon-scene analysis-ribbon-scene--compact relative mx-auto h-[132px] w-[250px]", className)} aria-hidden="true">
         <div className="analysis-ribbon-shell">
-          <GuardianSeal compact />
+          <MascotViewer compact model="light" interactive={false} className="analysis-ribbon-mascot analysis-ribbon-mascot--compact" />
           <div className="analysis-ribbon-track">
             <div className="analysis-ribbon-line" />
             <div className="analysis-ribbon-fields">
@@ -71,32 +72,12 @@ export function LegalDeskScene({
         </div>
 
         <div className="analysis-ribbon-side">
-          <GuardianSeal />
+          <MascotViewer model="light" className="analysis-ribbon-mascot" />
           <div className="analysis-ribbon-source">
             <Scale className="h-4 w-4 text-primary" />
             <span>Konteks pasal lokal ikut dibaca saat analisis.</span>
           </div>
         </div>
-      </div>
-    </div>
-  );
-}
-
-function GuardianSeal({ compact = false }: { compact?: boolean }) {
-  return (
-    <div className={cn("guardian-seal", compact ? "guardian-seal--compact" : "")}>
-      <div className="guardian-seal__head">
-        <span className="guardian-seal__horn guardian-seal__horn--left" />
-        <span className="guardian-seal__horn guardian-seal__horn--right" />
-        <span className="guardian-seal__ear guardian-seal__ear--left" />
-        <span className="guardian-seal__ear guardian-seal__ear--right" />
-        <span className="guardian-seal__eye guardian-seal__eye--left" />
-        <span className="guardian-seal__eye guardian-seal__eye--right" />
-        <span className="guardian-seal__muzzle" />
-      </div>
-      <div className="guardian-seal__base">
-        <span />
-        <span />
       </div>
     </div>
   );

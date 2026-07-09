@@ -96,9 +96,13 @@ export function SiteNav() {
     <header className="sticky top-0 z-40 w-full px-3 py-2">
       <div className="glass mx-auto flex h-16 max-w-6xl items-center justify-between rounded-[1.35rem] border-border/70 px-3 shadow-soft sm:px-4">
         <button onClick={() => setView(user ? "dashboard" : "home")} className="nav-brand group flex items-center gap-2.5">
-          <div className="nav-brand__mark relative flex h-9 w-9 items-center justify-center rounded-xl bg-ink text-background shadow-soft">
-            <span className="font-display text-lg font-bold leading-none">K</span>
-            <span className="absolute -bottom-0.5 left-1.5 right-1.5 h-0.5 rounded-full bg-amber-400" />
+          <div className="nav-brand__mark relative flex h-11 w-11 items-center justify-center overflow-hidden rounded-2xl border border-border bg-card shadow-soft">
+            <img
+              src="/brand/kontrakpaham-logo-concept-256.png"
+              alt=""
+              className="h-full w-full object-cover"
+              aria-hidden="true"
+            />
           </div>
           <div className="flex flex-col leading-none">
             <span className="font-display text-base font-semibold tracking-tight text-ink">
