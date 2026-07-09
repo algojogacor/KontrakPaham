@@ -3111,6 +3111,33 @@ Stage Summary:
 - Database pasal lokal kini siap digunakan di produksi.
 - Google Drive OAuth refresh token telah terverifikasi dan terintegrasi di env.
 
+---
+Task ID: 60
+Agent: main (Antigravity) - SQLite FTS5 Search Migration
+
+Task: Meningkatkan performa pencarian legal corpus menggunakan SQLite FTS5 virtual table dengan external-content mode, otomatisasi sinkronisasi via database triggers, dan optimasi query menggunakan ranking BM25.
+
+Work Log:
+- Memverifikasi dukungan FTS5 pada instance database local SQLite dan remote Turso menggunakan scratch script.
+- Memodifikasi `scripts/apply-legal-corpus-schema.mjs` dan `scripts/apply-core-schema.mjs` untuk menambahkan pembuatan virtual table `LegalArticleFts` dan trigger otomatis (`AFTER INSERT`, `AFTER DELETE`, `AFTER UPDATE` pada tabel `LegalArticle`).
+- Menambahkan data migration idempotent pada script schema untuk mengindeks data yang sudah ada ke FTS5.
+- Menjalankan migrasi skema baru ke local SQLite dan remote Turso.
+- Menulis ulang fungsi `searchLegalCorpus` di `src/lib/legal-corpus.ts` untuk menggunakan query raw `MATCH` + `bm25` (rank) via Prisma `$queryRaw` dan menyaring data di tingkat database (mencegah loading seluruh data ke RAM).
+- Menghitung latency pencarian (sebelum vs sesudah) menggunakan benchmark script.
+- Menambahkan test baru di `src/lib/legal-corpus.test.ts` untuk memverifikasi fungsionalitas dan latency query FTS5.
+
+Verification:
+- Menjalankan benchmark script:
+  * Latency Sebelum FTS5 (JOIN-based): 297.28ms
+  * Latency Setelah FTS5: 101.58ms (~66% peningkatan performa)
+- Menjalankan `bun test src/lib/legal-corpus.test.ts` -> 7/7 tests passed (termasuk assertion latency lokal < 200ms).
+- Menjalankan `bun run lint` -> Passed.
+- Menjalankan `bun run build` -> Next.js production build compiled successfully.
+
+Stage Summary:
+- Pencarian legal corpus sekarang jauh lebih cepat dan efisien, sepenuhnya berjalan di tingkat SQLite/Turso FTS5 tanpa menaikkan penggunaan RAM di aplikasi.
+- Semua trigger sinkronisasi otomatis bekerja di tingkat database sehingga penambahan/pembaruan artikel hukum akan langsung terindeks.
+
 
 
 
