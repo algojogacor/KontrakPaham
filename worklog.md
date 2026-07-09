@@ -3047,6 +3047,71 @@ Stage Summary:
   callback/code untuk ditukar menjadi `GOOGLE_DRIVE_REFRESH_TOKEN`.
 - Setelah refresh token didapat, env yang sama perlu disalin ke Koyeb.
 
+---
+Task ID: 58
+Agent: main (Codex) - Google Drive Refresh Token and Folder Verification
+
+Task: Menukar OAuth callback code menjadi refresh token, menyimpan konfigurasi lokal,
+dan memverifikasi akses folder Google Drive archive.
+
+Work Log:
+- Menerima OAuth callback URL dari user dan memperlakukannya sebagai secret karena
+  authorization code bersifat sensitif dan sekali pakai.
+- Menjalankan `scripts/google-drive-oauth.mjs --callback` untuk menukar code menjadi
+  `GOOGLE_DRIVE_REFRESH_TOKEN`.
+- Menyimpan `GOOGLE_DRIVE_REFRESH_TOKEN` dan `GOOGLE_DRIVE_SCOPE` ke `.env` lokal.
+- Tidak menulis refresh token ke git/worklog.
+- Menambahkan `scripts/google-drive-verify.mjs`:
+  * refresh access token dari refresh token.
+  * membaca metadata folder archive.
+  * memverifikasi permission `canAddChildren` dan `canEdit`.
+- Menjalankan verifikasi terhadap folder `KontrakPaham Drive Archive`.
+- Memperbarui checklist planning legal corpus:
+  * Step refresh token dan folder verification ditandai selesai.
+
+Verification:
+- `node scripts/google-drive-verify.mjs` -> folder `KontrakPaham Drive Archive`
+  terbaca, `canAddChildren: true`, `canEdit: true`.
+- `bun run lint` -> pass.
+
+Stage Summary:
+- Akses API Google Drive untuk folder archive sudah valid secara lokal.
+- Env Google Drive yang perlu disalin ke Koyeb:
+  * `GOOGLE_DRIVE_CLIENT_ID`.
+  * `GOOGLE_DRIVE_CLIENT_SECRET`.
+  * `GOOGLE_DRIVE_REFRESH_TOKEN`.
+  * `GOOGLE_DRIVE_SCOPE`.
+  * `GOOGLE_DRIVE_ARCHIVE_FOLDER_ID`.
+  * `GOOGLE_DRIVE_REDIRECT_URI`.
+
+---
+Task ID: 59
+Agent: main (Antigravity) - Legal Corpus Database Index Implementation
+
+Task: Mengimplementasikan database pasal lokal (legal corpus) sebagai sumber utama sebelum riset eksternal (You.com).
+
+Work Log:
+- Membuat unit test di `src/lib/legal-corpus.test.ts` untuk helper ekstraksi isu hukum, normalisasi query, scoring pasal, dan formatting context.
+- Menambahkan model taxonomy komprehensif di `src/lib/legal-taxonomy.ts` yang mencakup 17 area hukum dengan alias Bahasa Indonesia (formal & kasual).
+- Mengimplementasikan helper ekstraksi, normalisasi, dan scoring di `src/lib/legal-corpus.ts`.
+- Menambahkan model Prisma (`LegalDocument`, `LegalArticle`, `LegalArticleIndex`) di `prisma/schema.prisma`.
+- Membuat script migrasi database `scripts/apply-legal-corpus-schema.mjs` dan mendaftarkan tabel baru ke `scripts/apply-core-schema.mjs`.
+- Menjalankan migrasi database ke lokal SQLite dan database Turso remote.
+- Membuat helper seed `src/lib/legal-corpus-seed.ts` dan script seed `scripts/seed-legal-corpus.mjs` lalu menjalankan seeding data pasal awal (UU Perlindungan Konsumen & KUHPerdata).
+- Mengintegrasikan pencarian database pasal lokal ke engine riset hukum di `src/lib/research.ts` (mencari pasal lokal terlebih dahulu; You.com hanya digunakan jika confidence pencarian lokal rendah).
+- Membuat helper konfigurasi Google Drive `src/lib/google-drive-archive.ts`.
+
+Verification:
+- Menjalankan `bun test src/lib/legal-corpus.test.ts` -> 6/6 tests passed.
+- Menjalankan `bun test src/lib/research-cache.test.ts` -> 4/4 tests passed.
+- Menjalankan `bun run lint` -> Passed.
+- Menjalankan `bun run build` -> Next.js production build compiled successfully.
+
+Stage Summary:
+- Database pasal lokal kini siap digunakan di produksi.
+- Google Drive OAuth refresh token telah terverifikasi dan terintegrasi di env.
+
+
 
 
 

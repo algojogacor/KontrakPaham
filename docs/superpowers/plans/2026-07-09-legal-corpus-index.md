@@ -116,6 +116,8 @@ The `Desktop app` route is easier for getting a refresh token locally. The `Web 
   - OAuth client and file metadata helper for archive-only use.
 - Optional create: `scripts/google-drive-oauth.mjs`
   - One-time local OAuth helper to obtain refresh token.
+- Optional create: `scripts/google-drive-verify.mjs`
+  - Verify OAuth refresh token and archive folder permissions.
 - Modify: `worklog.md`
   - Record each completed implementation task.
 
@@ -209,13 +211,13 @@ describe("legal corpus helpers", () => {
 });
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `bun test src/lib/legal-corpus.test.ts`
 
 Expected: FAIL because `src/lib/legal-corpus.ts` does not exist.
 
-- [ ] **Step 3: Commit failing tests**
+- [x] **Step 3: Commit failing tests**
 
 ```bash
 git add src/lib/legal-corpus.test.ts
@@ -230,7 +232,7 @@ git commit -m "test: define legal corpus retrieval helpers"
 - Create: `src/lib/legal-taxonomy.ts`
 - Create: `src/lib/legal-corpus.ts`
 
-- [ ] **Step 1: Create comprehensive taxonomy module**
+- [x] **Step 1: Create comprehensive taxonomy module**
 
 Create `src/lib/legal-taxonomy.ts`:
 
@@ -380,7 +382,7 @@ export const LEGAL_TAG_DEFINITIONS: LegalTagDefinition[] = [
 ];
 ```
 
-- [ ] **Step 2: Implement helper module**
+- [x] **Step 2: Implement helper module**
 
 ```ts
 import { LEGAL_TAG_DEFINITIONS } from "@/lib/legal-taxonomy";
@@ -501,13 +503,13 @@ export function buildLegalCorpusContext(results: LegalCorpusResult[]): LegalCorp
 }
 ```
 
-- [ ] **Step 3: Run helper tests**
+- [x] **Step 3: Run helper tests**
 
 Run: `bun test src/lib/legal-corpus.test.ts`
 
 Expected: PASS.
 
-- [ ] **Step 4: Commit helper implementation**
+- [x] **Step 4: Commit helper implementation**
 
 ```bash
 git add src/lib/legal-taxonomy.ts src/lib/legal-corpus.ts src/lib/legal-corpus.test.ts
@@ -523,7 +525,7 @@ git commit -m "feat: add legal corpus retrieval helpers"
 - Modify: `scripts/apply-core-schema.mjs`
 - Create: `scripts/apply-legal-corpus-schema.mjs`
 
-- [ ] **Step 1: Add Prisma models**
+- [x] **Step 1: Add Prisma models**
 
 Add these models to `prisma/schema.prisma`:
 
@@ -584,7 +586,7 @@ model LegalArticleIndex {
 }
 ```
 
-- [ ] **Step 2: Write idempotent schema script**
+- [x] **Step 2: Write idempotent schema script**
 
 Create `scripts/apply-legal-corpus-schema.mjs`:
 
@@ -679,11 +681,11 @@ if (process.env.TURSO_DATABASE_URL && process.env.TURSO_AUTH_TOKEN) {
 }
 ```
 
-- [ ] **Step 3: Add the same table statements to `scripts/apply-core-schema.mjs`**
+- [x] **Step 3: Add the same table statements to `scripts/apply-core-schema.mjs`**
 
 Add legal corpus table/index statements near the other core schema statements so new databases are bootstrapped completely.
 
-- [ ] **Step 4: Run migration script**
+- [x] **Step 4: Run migration script**
 
 Run: `node scripts/apply-legal-corpus-schema.mjs`
 
@@ -694,13 +696,13 @@ local: legal corpus schema ready
 turso: legal corpus schema ready
 ```
 
-- [ ] **Step 5: Generate Prisma client**
+- [x] **Step 5: Generate Prisma client**
 
 Run: `bunx prisma generate`
 
 Expected: Prisma Client generated successfully.
 
-- [ ] **Step 6: Commit schema**
+- [x] **Step 6: Commit schema**
 
 ```bash
 git add prisma/schema.prisma scripts/apply-core-schema.mjs scripts/apply-legal-corpus-schema.mjs
@@ -715,7 +717,7 @@ git commit -m "feat: add legal corpus schema"
 - Create: `src/lib/legal-corpus-seed.ts`
 - Create: `scripts/seed-legal-corpus.mjs`
 
-- [ ] **Step 1: Create seed data helper**
+- [x] **Step 1: Create seed data helper**
 
 Create `src/lib/legal-corpus-seed.ts`:
 
@@ -825,7 +827,7 @@ export async function seedLegalArticles(items: SeedLegalArticleInput[]) {
 }
 ```
 
-- [ ] **Step 2: Create seed script**
+- [x] **Step 2: Create seed script**
 
 Create `scripts/seed-legal-corpus.mjs`:
 
@@ -866,13 +868,13 @@ await seedLegalArticles([
 console.log("Legal corpus seed complete.");
 ```
 
-- [ ] **Step 3: Run seed script**
+- [x] **Step 3: Run seed script**
 
 Run: `bun scripts/seed-legal-corpus.mjs`
 
 Expected: `Legal corpus seed complete.`
 
-- [ ] **Step 4: Commit seed support**
+- [x] **Step 4: Commit seed support**
 
 ```bash
 git add src/lib/legal-corpus-seed.ts scripts/seed-legal-corpus.mjs
@@ -887,7 +889,7 @@ git commit -m "feat: seed initial legal corpus"
 - Modify: `src/lib/legal-corpus.ts`
 - Modify: `src/lib/legal-corpus.test.ts`
 
-- [ ] **Step 1: Add failing test for result formatting from DB-like rows**
+- [x] **Step 1: Add failing test for result formatting from DB-like rows**
 
 Append to `src/lib/legal-corpus.test.ts`:
 
@@ -902,13 +904,13 @@ test("parses article tags from stored JSON", () => {
 });
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `bun test src/lib/legal-corpus.test.ts`
 
 Expected: FAIL because `parseStoredTags` is not exported.
 
-- [ ] **Step 3: Implement `parseStoredTags` and `searchLegalCorpus`**
+- [x] **Step 3: Implement `parseStoredTags` and `searchLegalCorpus`**
 
 Add to `src/lib/legal-corpus.ts`:
 
@@ -987,13 +989,13 @@ export async function searchLegalCorpus(text: string, limit = 6): Promise<LegalC
 }
 ```
 
-- [ ] **Step 4: Run tests**
+- [x] **Step 4: Run tests**
 
 Run: `bun test src/lib/legal-corpus.test.ts`
 
 Expected: PASS.
 
-- [ ] **Step 5: Commit search integration**
+- [x] **Step 5: Commit search integration**
 
 ```bash
 git add src/lib/legal-corpus.ts src/lib/legal-corpus.test.ts
@@ -1007,7 +1009,7 @@ git commit -m "feat: search legal corpus index"
 **Files:**
 - Modify: `src/lib/research.ts`
 
-- [ ] **Step 1: Add legal corpus import**
+- [x] **Step 1: Add legal corpus import**
 
 Add:
 
@@ -1015,7 +1017,7 @@ Add:
 import { searchLegalCorpus } from "@/lib/legal-corpus";
 ```
 
-- [ ] **Step 2: Search corpus before You.com**
+- [x] **Step 2: Search corpus before You.com**
 
 Inside `buildLegalResearchContext`, after the research plan is chosen and before `getCachedLegalResearch(researchPlan)`, add:
 
@@ -1035,11 +1037,11 @@ Inside `buildLegalResearchContext`, after the research plan is chosen and before
     }
 ```
 
-- [ ] **Step 3: Keep additional research behavior**
+- [x] **Step 3: Keep additional research behavior**
 
 Confirm the existing flow still calls `getCachedLegalResearch(researchPlan)` and You.com after a low-confidence corpus miss. You.com should be described as additional/freshness research, not the primary source.
 
-- [ ] **Step 4: Run focused tests**
+- [x] **Step 4: Run focused tests**
 
 Run:
 
@@ -1049,7 +1051,7 @@ bun test src/lib/legal-corpus.test.ts src/lib/research-cache.test.ts
 
 Expected: PASS.
 
-- [ ] **Step 5: Run app checks**
+- [x] **Step 5: Run app checks**
 
 Run:
 
@@ -1059,7 +1061,7 @@ bun run lint
 
 Expected: PASS.
 
-- [ ] **Step 6: Commit research integration**
+- [x] **Step 6: Commit research integration**
 
 ```bash
 git add src/lib/research.ts
@@ -1073,6 +1075,7 @@ git commit -m "feat: use local legal corpus before web research"
 **Files:**
 - Create: `src/lib/google-drive-archive.ts`
 - Create: `scripts/google-drive-oauth.mjs`
+- Create: `scripts/google-drive-verify.mjs`
 - Modify: `.env.example` if it exists in this repo at implementation time.
 - Modify: `worklog.md`
 
@@ -1098,7 +1101,28 @@ node scripts/google-drive-oauth.mjs --code "PASTE_CODE_OR_CALLBACK_URL"
 
 The script reads Google OAuth settings from `.env`, prints a consent URL, and exchanges the callback `code` for `GOOGLE_DRIVE_REFRESH_TOKEN`.
 
-- [ ] **Step 3: Create archive helper**
+- [x] **Step 3: Store refresh token locally and verify Drive folder access**
+
+`GOOGLE_DRIVE_REFRESH_TOKEN` was obtained via OAuth consent and stored only in `.env`.
+
+Created `scripts/google-drive-verify.mjs` to refresh an access token and verify the configured archive folder:
+
+```bash
+node scripts/google-drive-verify.mjs
+```
+
+Expected verified output:
+
+```json
+{
+  "name": "KontrakPaham Drive Archive",
+  "mimeType": "application/vnd.google-apps.folder",
+  "canAddChildren": true,
+  "canEdit": true
+}
+```
+
+- [x] **Step 4: Create archive helper**
 
 Create `src/lib/google-drive-archive.ts`:
 
@@ -1118,11 +1142,11 @@ export function googleDriveArchiveWarning() {
 }
 ```
 
-- [ ] **Step 4: Defer upload implementation until OAuth is available**
+- [x] **Step 5: Defer upload implementation until OAuth is available**
 
 Do not call Drive API from the analyze hot path. Add upload/download only after the OAuth refresh token is available and tested locally.
 
-- [ ] **Step 5: Commit archive config helper**
+- [x] **Step 6: Commit archive config helper**
 
 ```bash
 git add src/lib/google-drive-archive.ts worklog.md
@@ -1136,7 +1160,7 @@ git commit -m "chore: document google drive archive configuration"
 **Files:**
 - Modify: `worklog.md`
 
-- [ ] **Step 1: Run all focused tests**
+- [x] **Step 1: Run all focused tests**
 
 ```bash
 bun test src/lib/legal-corpus.test.ts src/lib/research-cache.test.ts src/lib/analysis-cache.test.ts
@@ -1144,7 +1168,7 @@ bun test src/lib/legal-corpus.test.ts src/lib/research-cache.test.ts src/lib/ana
 
 Expected: PASS.
 
-- [ ] **Step 2: Run lint**
+- [x] **Step 2: Run lint**
 
 ```bash
 bun run lint
@@ -1152,7 +1176,7 @@ bun run lint
 
 Expected: PASS.
 
-- [ ] **Step 3: Run production build with build placeholders**
+- [x] **Step 3: Run production build with build placeholders**
 
 PowerShell:
 
@@ -1166,7 +1190,7 @@ bun run build
 
 Expected: PASS.
 
-- [ ] **Step 4: Update `worklog.md`**
+- [x] **Step 4: Update `worklog.md`**
 
 Record:
 
@@ -1176,7 +1200,7 @@ Record:
 - Tests and build commands.
 - Any Koyeb env changes needed.
 
-- [ ] **Step 5: Commit final docs**
+- [x] **Step 5: Commit final docs**
 
 ```bash
 git add worklog.md
