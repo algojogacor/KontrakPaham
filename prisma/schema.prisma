@@ -227,3 +227,59 @@ model AuditLog {
   @@index([createdAt])
   @@index([userId])
 }
+
+model LegalDocument {
+  id              String   @id @default(cuid())
+  title           String
+  type            String
+  number          String?
+  year            Int?
+  jurisdiction    String   @default("ID")
+  sourceUrl       String?
+  sourceHost      String?
+  status          String   @default("ACTIVE")
+  driveFileId     String?
+  contentHash     String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  articles LegalArticle[]
+
+  @@index([type, year])
+  @@index([sourceHost])
+}
+
+model LegalArticle {
+  id              String   @id @default(cuid())
+  documentId      String
+  articleNumber   String
+  title           String?
+  text            String
+  plainSummary    String?
+  tags            String
+  normalizedText  String
+  sourceUrl       String?
+  contentHash     String   @unique
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  document LegalDocument @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  indexRows LegalArticleIndex[]
+
+  @@index([documentId, articleNumber])
+}
+
+model LegalArticleIndex {
+  id         String @id @default(cuid())
+  articleId  String
+  token      String
+  tag        String?
+  weight     Int    @default(1)
+
+  article LegalArticle @relation(fields: [articleId], references: [id], onDelete: Cascade)
+
+  @@index([token])
+  @@index([tag])
+  @@unique([articleId, token])
+}
+

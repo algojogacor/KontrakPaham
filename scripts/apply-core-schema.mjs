@@ -154,10 +154,59 @@ const statements = [
     "ip" TEXT,
     "meta" TEXT,
     "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT "AuditLog_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User" ("id") ON DELETE SET NULL ON UPDATE CASCADE
   )`,
   `CREATE INDEX IF NOT EXISTS "AuditLog_createdAt_idx" ON "AuditLog"("createdAt")`,
   `CREATE INDEX IF NOT EXISTS "AuditLog_userId_idx" ON "AuditLog"("userId")`,
+
+  `CREATE TABLE IF NOT EXISTS "LegalDocument" (
+    "id" TEXT NOT NULL PRIMARY KEY,
+    "title" TEXT NOT NULL,
+    "type" TEXT NOT NULL,
+    "number" TEXT,
+    "year" INTEGER,
+    "jurisdiction" TEXT NOT NULL DEFAULT 'ID',
+    "sourceUrl" TEXT,
+    "sourceHost" TEXT,
+    "status" TEXT NOT NULL DEFAULT 'ACTIVE',
+    "driveFileId" TEXT,
+    "contentHash" TEXT,
+    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+  )`,
+  `CREATE INDEX IF NOT EXISTS "LegalDocument_type_year_idx" ON "LegalDocument"("type", "year")`,
+  `CREATE INDEX IF NOT EXISTS "LegalDocument_sourceHost_idx" ON "LegalDocument"("sourceHost")`,
+
+  `CREATE TABLE IF NOT EXISTS "LegalArticle" (
+    "id" TEXT NOT NULL PRIMARY KEY,
+    "documentId" TEXT NOT NULL,
+    "articleNumber" TEXT NOT NULL,
+    "title" TEXT,
+    "text" TEXT NOT NULL,
+    "plainSummary" TEXT,
+    "tags" TEXT NOT NULL,
+    "normalizedText" TEXT NOT NULL,
+    "sourceUrl" TEXT,
+    "contentHash" TEXT NOT NULL,
+    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT "LegalArticle_documentId_fkey" FOREIGN KEY ("documentId") REFERENCES "LegalDocument" ("id") ON DELETE CASCADE ON UPDATE CASCADE
+  )`,
+  `CREATE UNIQUE INDEX IF NOT EXISTS "LegalArticle_contentHash_key" ON "LegalArticle"("contentHash")`,
+  `CREATE INDEX IF NOT EXISTS "LegalArticle_documentId_articleNumber_idx" ON "LegalArticle"("documentId", "articleNumber")`,
+
+  `CREATE TABLE IF NOT EXISTS "LegalArticleIndex" (
+    "id" TEXT NOT NULL PRIMARY KEY,
+    "articleId" TEXT NOT NULL,
+    "token" TEXT NOT NULL,
+    "tag" TEXT,
+    "weight" INTEGER NOT NULL DEFAULT 1,
+    CONSTRAINT "LegalArticleIndex_articleId_fkey" FOREIGN KEY ("articleId") REFERENCES "LegalArticle" ("id") ON DELETE CASCADE ON UPDATE CASCADE
+  )`,
+  `CREATE INDEX IF NOT EXISTS "LegalArticleIndex_token_idx" ON "LegalArticleIndex"("token")`,
+  `CREATE INDEX IF NOT EXISTS "LegalArticleIndex_tag_idx" ON "LegalArticleIndex"("tag")`,
+  `CREATE UNIQUE INDEX IF NOT EXISTS "LegalArticleIndex_articleId_token_key" ON "LegalArticleIndex"("articleId", "token")`,
 ];
 
 async function applyCoreSchema(client, label) {
