@@ -301,7 +301,7 @@ const featureItems: Array<{
   marker: string;
 }> = [
   { icon: ScanText, title: "OCR untuk PDF scan", desc: "Foto atau scan kontrak lama dibaca otomatis tanpa mengetik ulang.", status: "terbaca", marker: "Halaman scan" },
-  { icon: FileText, title: "Klausul asli + bahasa awam", desc: "Teks asli berdampingan dengan penjelasan yang bisa dipakai bicara.", status: "diterjemahkan", marker: "Pasal 4" },
+  { icon: FileText, title: "Klausul asli + penjelasan sederhana", desc: "Teks asli berdampingan dengan penjelasan yang bisa dipakai bicara.", status: "diterjemahkan", marker: "Pasal 4" },
   { icon: AlertTriangle, title: "Tingkat risiko dan urgensi", desc: "Temuan diberi prioritas agar Anda tahu mana yang harus dinego dulu.", status: "diprioritaskan", marker: "Risiko tinggi" },
   { icon: FileDown, title: "Export PDF rapi", desc: "Laporan bisa dibagikan ke keluarga, penjamin, atau pihak terkait.", status: "siap export", marker: "Report" },
   { icon: History, title: "Riwayat dan chat tersimpan", desc: "Hasil analisis dan tanya lanjutan tetap bisa dibuka kembali.", status: "tersimpan", marker: "Arsip akun" },
@@ -317,9 +317,9 @@ function ClauseAnatomyFeatures() {
       <div className="max-w-2xl">
         <SectionEyebrow>Fitur</SectionEyebrow>
         <h2 className="mt-3 font-display text-3xl font-semibold leading-tight tracking-tight text-ink sm:text-4xl">
-          Dibuat untuk orang awam,
+          Bahasa kontrak yang rumit,
           <br />
-          <span className="text-ink-soft">bukan untuk developer.</span>
+          <span className="text-ink-soft">dibuat lebih mudah dipahami.</span>
         </h2>
       </div>
 

@@ -3347,3 +3347,24 @@ Verification:
 
 Stage Summary:
 - Browser tab/sidebar/PWA icon sekarang diarahkan ke logo KontrakPaham, bukan logo Z lama.
+
+---
+Task ID: 66
+Agent: main (Codex) - Feature Copy Tone Adjustment
+
+Task: Mengganti copy "Dibuat untuk orang awam, bukan untuk developer" karena terasa
+meremehkan pengguna non-teknis.
+
+Work Log:
+- Mengganti headline fitur menjadi "Bahasa kontrak yang rumit, dibuat lebih mudah
+  dipahami."
+- Mengganti label fitur "Klausul asli + bahasa awam" menjadi "Klausul asli +
+  penjelasan sederhana" agar nadanya lebih netral dan menghargai pengguna.
+
+Verification:
+- `bun run lint` -> pass.
+- Production build dengan placeholder env -> pass.
+
+Stage Summary:
+- Copy section fitur sekarang menekankan kemudahan memahami kontrak, bukan
+  membandingkan kelompok pengguna.
