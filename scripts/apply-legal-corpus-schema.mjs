@@ -58,6 +58,31 @@ const statements = [
   `CREATE INDEX IF NOT EXISTS "LegalArticleIndex_token_idx" ON "LegalArticleIndex"("token")`,
   `CREATE INDEX IF NOT EXISTS "LegalArticleIndex_tag_idx" ON "LegalArticleIndex"("tag")`,
   `CREATE UNIQUE INDEX IF NOT EXISTS "LegalArticleIndex_articleId_token_key" ON "LegalArticleIndex"("articleId", "token")`,
+  `CREATE VIRTUAL TABLE IF NOT EXISTS "LegalArticleFts" USING fts5(
+    "text",
+    "plainSummary",
+    "tags",
+    "normalizedText",
+    content='LegalArticle',
+    content_rowid='rowid'
+  )`,
+  `CREATE TRIGGER IF NOT EXISTS "LegalArticle_ai" AFTER INSERT ON "LegalArticle" BEGIN
+    INSERT INTO "LegalArticleFts"("rowid", "text", "plainSummary", "tags", "normalizedText")
+    VALUES (new."rowid", new."text", new."plainSummary", new."tags", new."normalizedText");
+  END;`,
+  `CREATE TRIGGER IF NOT EXISTS "LegalArticle_ad" AFTER DELETE ON "LegalArticle" BEGIN
+    INSERT INTO "LegalArticleFts"("LegalArticleFts", "rowid", "text", "plainSummary", "tags", "normalizedText")
+    VALUES ('delete', old."rowid", old."text", old."plainSummary", old."tags", old."normalizedText");
+  END;`,
+  `CREATE TRIGGER IF NOT EXISTS "LegalArticle_au" AFTER UPDATE ON "LegalArticle" BEGIN
+    INSERT INTO "LegalArticleFts"("LegalArticleFts", "rowid", "text", "plainSummary", "tags", "normalizedText")
+    VALUES ('delete', old."rowid", old."text", old."plainSummary", old."tags", old."normalizedText");
+    INSERT INTO "LegalArticleFts"("rowid", "text", "plainSummary", "tags", "normalizedText")
+    VALUES (new."rowid", new."text", new."plainSummary", new."tags", new."normalizedText");
+  END;`,
+  `INSERT INTO "LegalArticleFts"("rowid", "text", "plainSummary", "tags", "normalizedText")
+   SELECT "rowid", "text", "plainSummary", "tags", "normalizedText" FROM "LegalArticle"
+   WHERE "rowid" NOT IN (SELECT "rowid" FROM "LegalArticleFts")`
 ];
 
 async function apply(client, label) {
