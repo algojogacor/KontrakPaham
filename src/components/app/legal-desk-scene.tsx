@@ -1,6 +1,5 @@
-import { FileText, Scale } from "lucide-react";
+import { AlertTriangle, FileText, Scale } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { MascotViewer } from "@/components/app/mascot-viewer";
 
 export function LegalDeskScene({
   compact = false,
@@ -15,7 +14,7 @@ export function LegalDeskScene({
     return (
       <div className={cn("analysis-ribbon-scene analysis-ribbon-scene--compact relative mx-auto h-[132px] w-[250px]", className)} aria-hidden="true">
         <div className="analysis-ribbon-shell">
-          <MascotViewer compact model="light" interactive={false} className="analysis-ribbon-mascot analysis-ribbon-mascot--compact" />
+          <MascotPortrait compact />
           <div className="analysis-ribbon-track">
             <div className="analysis-ribbon-line" />
             <div className="analysis-ribbon-fields">
@@ -49,11 +48,18 @@ export function LegalDeskScene({
           </div>
 
           <div className="analysis-ribbon-document__body">
-            <span className="w-24 bg-ink/25" />
-            <span className="w-full" />
-            <span className="w-11/12" />
-            <span className="analysis-ribbon-highlight w-8/12" />
-            <span className="w-10/12" />
+            <div className="analysis-ribbon-clause">
+              <span className="analysis-ribbon-clause__label">Pasal 4 - Biaya sewa</span>
+              <span>Penyewa wajib membayar sewa kamar setiap tanggal 5.</span>
+            </div>
+            <div className="analysis-ribbon-clause">
+              <span className="analysis-ribbon-clause__label">Pasal 7 - Denda</span>
+              <span className="analysis-ribbon-highlight">Denda keterlambatan 5% per hari dari total sewa.</span>
+            </div>
+            <div className="analysis-ribbon-note">
+              <AlertTriangle className="h-3.5 w-3.5" />
+              <span>Risiko tinggi: angka denda perlu dinegosiasikan.</span>
+            </div>
           </div>
 
           <div className="analysis-ribbon-track analysis-ribbon-track--wide">
@@ -72,12 +78,49 @@ export function LegalDeskScene({
         </div>
 
         <div className="analysis-ribbon-side">
-          <MascotViewer model="light" className="analysis-ribbon-mascot" />
+          <MascotPortrait />
           <div className="analysis-ribbon-source">
             <Scale className="h-4 w-4 text-primary" />
             <span>Konteks pasal lokal ikut dibaca saat analisis.</span>
           </div>
         </div>
+      </div>
+    </div>
+  );
+}
+
+function MascotPortrait({ compact = false }: { compact?: boolean }) {
+  return (
+    <div className={cn("mascot-portrait", compact ? "mascot-portrait--compact" : "")}>
+      <span className="mascot-portrait__horn mascot-portrait__horn--left" />
+      <span className="mascot-portrait__horn mascot-portrait__horn--right" />
+      <div className="mascot-portrait__head">
+        <span className="mascot-portrait__hair mascot-portrait__hair--one" />
+        <span className="mascot-portrait__hair mascot-portrait__hair--two" />
+        <span className="mascot-portrait__ear mascot-portrait__ear--left" />
+        <span className="mascot-portrait__ear mascot-portrait__ear--right" />
+        <span className="mascot-portrait__brow mascot-portrait__brow--left" />
+        <span className="mascot-portrait__brow mascot-portrait__brow--right" />
+        <span className="mascot-portrait__eye mascot-portrait__eye--left" />
+        <span className="mascot-portrait__eye mascot-portrait__eye--right" />
+        <span className="mascot-portrait__snout">
+          <span />
+          <span />
+        </span>
+        <span className="mascot-portrait__smile" />
+      </div>
+      <div className="mascot-portrait__body">
+        <span className="mascot-portrait__collar" />
+        <span className="mascot-portrait__folder">
+          <span />
+          <span />
+          <span />
+        </span>
+        <span className="mascot-portrait__hand mascot-portrait__hand--left" />
+        <span className="mascot-portrait__hand mascot-portrait__hand--right" />
+      </div>
+      <div className="mascot-portrait__base">
+        <span />
       </div>
     </div>
   );

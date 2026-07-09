@@ -3266,3 +3266,36 @@ Stage Summary:
 - Maskot GLB sudah aktif sebagai pendamping visual produk, bukan dekorasi sticker.
 - Asset model tersedia sebagai light dan premium; UI saat ini memakai versi light untuk
   performa web.
+
+---
+Task ID: 63
+Agent: main (Codex) - Mascot and Contract Scene Correction
+
+Task: Mengoreksi hero visual setelah feedback bahwa GLB low-poly tidak sesuai ilustrasi
+maskot target dan dokumen `kontrak-sewa.pdf` terlihat kosong.
+
+Work Log:
+- Mengidentifikasi root cause: GLB yang tersedia adalah pseudo-3D low-poly, sehingga
+  ketika dipakai besar di hero tidak mendekati referensi maskot glossy/front-facing.
+- Mengganti mascot hero/loading scene dari GLB kecil menjadi `MascotPortrait` berbasis
+  CSS/HTML yang front-facing, membawa folder kontrak, dan lebih dekat ke referensi.
+- Mempertahankan GLB untuk konteks kecil/interaktif lain, bukan sebagai visual hero utama.
+- Mengisi mock document `kontrak-sewa.pdf` dengan teks pasal contoh:
+  * Pasal 4 - Biaya sewa.
+  * Pasal 7 - Denda.
+  * Highlight `Denda keterlambatan 5% per hari dari total sewa.`
+  * Callout risiko tinggi yang menjelaskan angka denda perlu dinegosiasikan.
+- Merapikan spacing scene desktop dan responsive mobile agar maskot tidak menumpuk
+  dengan dokumen atau sumber hukum.
+
+Verification:
+- `bun run lint` -> pass.
+- Production build dengan placeholder env -> pass.
+- Playwright CLI screenshot desktop/mobile pada server production lokal:
+  * desktop memperlihatkan maskot front-facing dan teks kontrak terbaca.
+  * mobile first viewport tetap fokus ke headline/CTA agar tidak sesak.
+
+Stage Summary:
+- Hero visual sekarang tidak lagi terlihat seperti GLB kecil yang salah orientasi.
+- Dokumen contoh tidak kosong; ia menampilkan konten kontrak dan highlight risiko yang
+  lebih komunikatif.
