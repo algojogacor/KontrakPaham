@@ -2900,6 +2900,35 @@ Stage Summary:
 - Database baru belum memuat history analisis lama; jika history lama perlu dipertahankan,
   perlu migrasi remote-to-remote dari database lama sebelum switch final production.
 
+---
+Task ID: 54
+Agent: main (Codex) - JWT Secret Rotation and Google One Storage Feasibility
+
+Task: Menjawab kelayakan memakai Google One/Drive storage dan membuat JWT secret yang
+lebih proper untuk disamakan antara lokal dan Koyeb.
+
+Work Log:
+- Membuat JWT secret baru dengan `crypto.randomBytes(48).toString("base64url")`.
+- Memperbarui `JWT_SECRET` di `.env` lokal agar nilainya sama dengan yang akan dipakai
+  di Koyeb.
+- Tidak menuliskan nilai JWT secret ke worklog karena termasuk secret runtime.
+- Menilai Google One/Google Drive:
+  * Secara teknis bisa dipakai lewat Google Drive API untuk menyimpan file/blob.
+  * Tidak ideal sebagai database atau cache hot-path karena latensi, API quota/rate limit,
+    auth/refresh-token handling, dan sifatnya consumer drive, bukan managed object storage
+    produksi.
+  * Paling aman dipakai sebagai cold archive/backup untuk dump database, export analisis,
+    atau snapshot cache lama.
+
+Verification:
+- JWT secret lokal berhasil diperbarui di `.env`.
+
+Stage Summary:
+- Untuk Koyeb, `JWT_SECRET` perlu diisi manual dengan nilai yang sama seperti `.env` lokal
+  terbaru.
+- Google One/Drive bisa dimanfaatkan, tetapi sebaiknya bukan pengganti Turso untuk data
+  transaksional app.
+
 
 
 
