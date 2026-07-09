@@ -1,11 +1,12 @@
 "use client";
 
-import { MascotPortrait } from "@/components/app/legal-desk-scene";
+import { Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { MascotPortrait } from "@/components/app/mascot-system";
 
 export function ContractLoading({
-  title = "Membaca kontrak...",
-  detail = "Sistem sedang menyiapkan dokumen dan konteks akun Anda.",
+  title = "Sedang membaca pasal satu per satu...",
+  detail = "Harap tunggu sebentar. Ini butuh beberapa detik.",
   compact = true,
   className,
 }: {
@@ -15,34 +16,23 @@ export function ContractLoading({
   className?: string;
 }) {
   return (
-    <div className={cn("flex flex-col items-center justify-center text-center", compact ? "gap-3" : "gap-5", className)}>
-      <ContractLoadingMark compact={compact} />
-      <div>
-        <p className="font-display text-lg font-semibold text-ink">{title}</p>
-        <p className="mt-1 max-w-sm text-sm leading-relaxed text-muted-foreground">{detail}</p>
+    <div className={cn("flex flex-col items-center justify-center text-center animate-in fade-in duration-500", compact ? "gap-3" : "gap-8 min-h-[300px]", className)}>
+      <div className="relative">
+        <div className="absolute inset-0 bg-primary/10 blur-[40px] rounded-full" />
+        
+        <div className={cn("relative mx-auto animate-pulse", compact ? "w-[76px] h-[104px]" : "w-[146px] h-[202px]")}>
+          <MascotPortrait scale={compact ? 0.6 : 1} className="origin-center mascot-portrait--loading" />
+        </div>
       </div>
-    </div>
-  );
-}
 
-function ContractLoadingMark({ compact }: { compact: boolean }) {
-  return (
-    <div className={cn("contract-loading-mark", compact ? "contract-loading-mark--compact" : "")} aria-hidden="true">
-      <div className="contract-loading-mark__card">
-        <div className="contract-loading-mark__paper">
-          <span className="contract-loading-mark__title">kontrak.pdf</span>
-          <span />
-          <span />
-          <span />
-        </div>
-        <MascotPortrait className="mascot-portrait--loading" />
-        <div className="contract-loading-mark__steps">
-          <span />
-          <span />
-          <span />
-          <span />
-        </div>
-        <div className="contract-loading-mark__scan" />
+      <div className="max-w-xs mx-auto">
+        <h3 className={cn("font-serif font-bold text-foreground", compact ? "text-base" : "text-xl")}>
+          {title}
+        </h3>
+        <p className="mt-2 text-sm text-muted-foreground flex items-center justify-center gap-2">
+          <Loader2 className="h-3.5 w-3.5 animate-spin" />
+          {detail}
+        </p>
       </div>
     </div>
   );

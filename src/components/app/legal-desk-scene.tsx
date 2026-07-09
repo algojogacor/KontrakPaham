@@ -1,5 +1,6 @@
 import { AlertTriangle, FileText, Scale } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { MascotPortrait } from "@/components/app/mascot-system";
 
 export function LegalDeskScene({
   compact = false,
@@ -14,7 +15,7 @@ export function LegalDeskScene({
     return (
       <div className={cn("analysis-ribbon-scene analysis-ribbon-scene--compact relative mx-auto h-[132px] w-[250px]", className)} aria-hidden="true">
         <div className="analysis-ribbon-shell">
-          <MascotPortrait compact />
+          <MascotPortrait className="mascot-portrait--compact" />
           <div className="analysis-ribbon-track">
             <div className="analysis-ribbon-line" />
             <div className="analysis-ribbon-fields">
@@ -84,43 +85,6 @@ export function LegalDeskScene({
             <span>Konteks pasal lokal ikut dibaca saat analisis.</span>
           </div>
         </div>
-      </div>
-    </div>
-  );
-}
-
-export function MascotPortrait({ compact = false, className }: { compact?: boolean; className?: string }) {
-  return (
-    <div className={cn("mascot-portrait", compact ? "mascot-portrait--compact" : "", className)}>
-      <span className="mascot-portrait__horn mascot-portrait__horn--left" />
-      <span className="mascot-portrait__horn mascot-portrait__horn--right" />
-      <div className="mascot-portrait__head">
-        <span className="mascot-portrait__hair mascot-portrait__hair--one" />
-        <span className="mascot-portrait__hair mascot-portrait__hair--two" />
-        <span className="mascot-portrait__ear mascot-portrait__ear--left" />
-        <span className="mascot-portrait__ear mascot-portrait__ear--right" />
-        <span className="mascot-portrait__brow mascot-portrait__brow--left" />
-        <span className="mascot-portrait__brow mascot-portrait__brow--right" />
-        <span className="mascot-portrait__eye mascot-portrait__eye--left" />
-        <span className="mascot-portrait__eye mascot-portrait__eye--right" />
-        <span className="mascot-portrait__snout">
-          <span />
-          <span />
-        </span>
-        <span className="mascot-portrait__smile" />
-      </div>
-      <div className="mascot-portrait__body">
-        <span className="mascot-portrait__collar" />
-        <span className="mascot-portrait__folder">
-          <span />
-          <span />
-          <span />
-        </span>
-        <span className="mascot-portrait__hand mascot-portrait__hand--left" />
-        <span className="mascot-portrait__hand mascot-portrait__hand--right" />
-      </div>
-      <div className="mascot-portrait__base">
-        <span />
       </div>
     </div>
   );

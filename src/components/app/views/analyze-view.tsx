@@ -22,6 +22,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { ContractLoading } from "@/components/app/contract-loading";
+import { MascotBubble } from "@/components/app/mascot-system";
 import { ViewShell } from "@/components/app/view-shell";
 import { api, friendlyError } from "@/lib/api-client";
 import { useApp } from "@/lib/store";
@@ -168,6 +169,9 @@ export function AnalyzeView() {
       ) : (
         <Card className="border-border/70 bg-card/90 shadow-soft-lg">
           <CardContent className="p-5 sm:p-6">
+            <div className="mb-6 flex justify-center">
+              <MascotBubble text="Unggah draf kontrakmu. Aku bantu sisir klausul mana saja yang butuh perhatian khusus." />
+            </div>
             <Tabs value={tab} onValueChange={(v) => setTab(v as "text" | "file")}>
               <TabsList className="grid h-auto w-full grid-cols-2 rounded-xl bg-muted/70 p-1">
                 <TabsTrigger value="text" className="gap-1.5 rounded-lg">

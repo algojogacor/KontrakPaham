@@ -31,6 +31,7 @@ import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { RiskPill } from "@/components/app/badges";
 import { EmptyState } from "@/components/app/empty-state";
+import { MascotEmptyState } from "@/components/app/mascot-system";
 import { ViewShell } from "@/components/app/view-shell";
 import { api, friendlyError } from "@/lib/api-client";
 import { useApp } from "@/lib/store";
@@ -140,10 +141,9 @@ export function HistoryView() {
             </Card>
           ))
         ) : !items || items.length === 0 ? (
-          <EmptyState
-            icon={FileSearch}
+          <MascotEmptyState
             title="Belum ada analisis"
-            desc="Mulai analisis kontrak pertama Anda: unggah PDF/DOCX atau tempel teks."
+            description="Mulai analisis kontrak pertama Anda: unggah PDF/DOCX atau tempel teks."
             action={<Button onClick={() => setView("analyze")} className="gap-1.5"><Plus className="h-4 w-4" /> Analisis sekarang</Button>}
           />
         ) : filtered?.length === 0 ? (

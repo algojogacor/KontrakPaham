@@ -103,23 +103,23 @@ export interface UserDto {
   createdAt: string;
 }
 
-export const CATEGORY_META: Record<string, { label: string; emoji: string; description: string }> = {
-  JANGKA_WAKTU: { label: "Jangka Waktu", emoji: "⏳", description: "Lama berlakunya perjanjian & perpanjangan otomatis" },
-  DENDA_SANKSI: { label: "Denda & Sanksi", emoji: "💸", description: "Besaran denda, bunga, dan kewajiban jika melanggar" },
-  KLAUSUL_SEPIHAK: { label: "Klausul Sepihak", emoji: "⚖️", description: "Ketentuan yang menguntungkan satu pihak secara tidak adil" },
-  PENGALIHAN_RISIKO: { label: "Pengalihan Risiko", emoji: "🔄", description: "Risiko dipindahkan sepenuhnya ke Anda" },
-  KETENTUAN_PEMUTUSAN: { label: "Pemutusan Kontrak", emoji: "✂️", description: "Syarat & prosedur mengakhiri perjanjian" },
-  KEWAJIBAN_PEMBAYARAN: { label: "Kewajiban Bayar", emoji: "🧾", description: "Jadwal, metode, & konsekuensi pembayaran" },
-  HAK_KEPEMILIKAN: { label: "Hak & Kepemilikan", emoji: "🔑", description: "Siapa memiliki apa setelah & selama kontrak" },
-  KERAHASIAAN: { label: "Kerahasiaan", emoji: "🔒", description: "Kewajiban menjaga rahasia & cakupannya" },
-  PENYELESAIAN_SENGKETA: { label: "Penyelesaian Sengketa", emoji: "🤝", description: "Cara menyelesaikan konflik (mediasi/arbitrase/pengadilan)" },
-  FORUM_HUKUM: { label: "Forum Hukum", emoji: "🏛️", description: "Pengadilan/hukum mana yang berlaku" },
-  FORCE_MAJEUR: { label: "Force Majeure", emoji: "🌪️", description: "Keadaan kahar di luar kendali pihak" },
-  PERUBAHAN_KLAUSUL: { label: "Perubahan Klausul", emoji: "📝", description: "Hak mengubah syarat sepihak" },
-  TANGGUNG_JAWAB: { label: "Tanggung Jawab", emoji: "🛡️", description: "Batas tanggung jawab & ganti rugi" },
-  DATA_PRIBADI: { label: "Data Pribadi", emoji: "🗂️", description: "Pengumpulan & penggunaan data Anda" },
-  KLAUSUL_ABNORMAL: { label: "Klausul Abnormal", emoji: "⚠️", description: "Klausul ganjil/di luar kebiasaan" },
-  LAIN_LAIN: { label: "Lain-lain", emoji: "📌", description: "Catatan lain yang perlu diperhatikan" },
+export const CATEGORY_META: Record<string, { label: string; emoji: string; description: string; mascotText?: string }> = {
+  JANGKA_WAKTU: { label: "Jangka Waktu", emoji: "⏳", description: "Lama berlakunya perjanjian & perpanjangan otomatis", mascotText: "Perhatikan batas waktunya. Kalau otomatis diperpanjang, pastikan kamu gampang buat batalin!" },
+  DENDA_SANKSI: { label: "Denda & Sanksi", emoji: "💸", description: "Besaran denda, bunga, dan kewajiban jika melanggar", mascotText: "Aduh, dendanya wajar nggak nih? Coba negosiasikan maksimal penaltinya biar aman." },
+  KLAUSUL_SEPIHAK: { label: "Klausul Sepihak", emoji: "⚖️", description: "Ketentuan yang menguntungkan satu pihak secara tidak adil", mascotText: "Hmm, klausul ini kelihatan berat sebelah. Kamu juga berhak dapat keadilan lho!" },
+  PENGALIHAN_RISIKO: { label: "Pengalihan Risiko", emoji: "🔄", description: "Risiko dipindahkan sepenuhnya ke Anda", mascotText: "Hati-hati! Kalau ada apa-apa, kamu yang tanggung semua. Jangan sampai setuju kalau bukan salahmu." },
+  KETENTUAN_PEMUTUSAN: { label: "Pemutusan Kontrak", emoji: "✂️", description: "Syarat & prosedur mengakhiri perjanjian", mascotText: "Cek baik-baik. Kalau kamu mau putus kontrak duluan, prosesnya susah nggak?" },
+  KEWAJIBAN_PEMBAYARAN: { label: "Kewajiban Bayar", emoji: "🧾", description: "Jadwal, metode, & konsekuensi pembayaran", mascotText: "Catat jadwal bayarnya ya. Dan cek apakah ada biaya tersembunyi yang nggak dibilang di awal." },
+  HAK_KEPEMILIKAN: { label: "Hak & Kepemilikan", emoji: "🔑", description: "Siapa memiliki apa setelah & selama kontrak", mascotText: "Pastikan aset atau hak kekayaan intelektualmu nggak diambil diam-diam sama pihak sana." },
+  KERAHASIAAN: { label: "Kerahasiaan", emoji: "🔒", description: "Kewajiban menjaga rahasia & cakupannya", mascotText: "Kalau ada poin kerahasiaan, pastikan batas waktunya logis. Nggak mungkin rahasia selamanya kan?" },
+  PENYELESAIAN_SENGKETA: { label: "Penyelesaian Sengketa", emoji: "🤝", description: "Cara menyelesaikan konflik (mediasi/arbitrase/pengadilan)", mascotText: "Mediasi musyawarah selalu lebih baik dan murah daripada langsung seret ke pengadilan." },
+  FORUM_HUKUM: { label: "Forum Hukum", emoji: "🏛️", description: "Pengadilan/hukum mana yang berlaku", mascotText: "Pilih hukum dan pengadilan di kotamu biar nggak repot kalau sampai harus sidang." },
+  FORCE_MAJEUR: { label: "Force Majeure", emoji: "🌪️", description: "Keadaan kahar di luar kendali pihak", mascotText: "Kejadian luar biasa (bencana/pandemi) harus bisa membebaskanmu dari denda keterlambatan." },
+  PERUBAHAN_KLAUSUL: { label: "Perubahan Klausul", emoji: "📝", description: "Hak mengubah syarat sepihak", mascotText: "Wah, mereka bisa ubah sepihak? Pastikan kamu harus diinfokan dan setuju dulu!" },
+  TANGGUNG_JAWAB: { label: "Tanggung Jawab", emoji: "🛡️", description: "Batas tanggung jawab & ganti rugi", mascotText: "Pastikan ada batas maksimal (cap) ganti rugi. Jangan mau disuruh ganti tanpa batas." },
+  DATA_PRIBADI: { label: "Data Pribadi", emoji: "🗂️", description: "Pengumpulan & penggunaan data Anda", mascotText: "Data pribadimu berharga. Jangan kasih izin sebar data kalau nggak relevan sama layanannya." },
+  KLAUSUL_ABNORMAL: { label: "Klausul Abnormal", emoji: "⚠️", description: "Klausul ganjil/di luar kebiasaan", mascotText: "Klausul ini nggak umum ada di kontrak sejenis. Sebaiknya kamu tanyain langsung maksudnya." },
+  LAIN_LAIN: { label: "Lain-lain", emoji: "📌", description: "Catatan lain yang perlu diperhatikan", mascotText: "Poin ini agak beda. Kalau ragu, mending tanyakan langsung atau minta saran legal." },
 };
 
 export function toAnalysisDto(a: {

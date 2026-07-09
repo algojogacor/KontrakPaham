@@ -25,6 +25,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { MascotToast, MascotBubble } from "@/components/app/mascot-system";
 import { SeverityBadge, UrgencyBadge, ActionTypeBadge, RiskPill, ConfidenceBar } from "@/components/app/badges";
 import { ConsultationCard } from "@/components/app/consultation-card";
 import { CATEGORY_META } from "@/lib/types";
@@ -240,7 +241,11 @@ export function ResultView() {
   };
 
   return (
-    <div className="mx-auto max-w-4xl px-4 py-8">
+    <div className="mx-auto max-w-4xl px-4 py-8 relative">
+      {counts.KRITIS > 0 && (
+        <MascotToast id={`result-toast-${a.id}`} text={`Ada ${counts.KRITIS} poin KRITIS yang sangat perlu diperhatikan.`} delayMs={1500} />
+      )}
+      
       {/* Top bar */}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <Button variant="ghost" size="sm" className="gap-1" onClick={() => setView("history")}>
@@ -899,6 +904,14 @@ ${finding.recommendation}`;
           </div>
         </AccordionTrigger>
         <AccordionContent className="px-4 pb-5 sm:px-5">
+          {defaultOpen && (
+            <div className="mb-5 animate-in slide-in-from-left-4 fade-in duration-500 delay-200">
+              <MascotBubble 
+                text={meta.mascotText || "Perhatikan baik-baik klausul ini ya! Jangan sampai merugikanmu."} 
+                className="transform scale-90 origin-left"
+              />
+            </div>
+          )}
           <div className="grid gap-4 md:grid-cols-2">
             {/* Original */}
             <div className="rounded-lg border bg-muted/30 p-4">

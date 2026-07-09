@@ -98,9 +98,9 @@ export function SiteNav() {
         <button onClick={() => setView(user ? "dashboard" : "home")} className="nav-brand group flex items-center gap-2.5">
           <div className="nav-brand__mark relative flex h-11 w-11 items-center justify-center overflow-hidden rounded-2xl border border-border bg-card shadow-soft">
             <img
-              src="/brand/kontrakpaham-logo-concept-256.png"
+              src="/brand/kontrakpaham-logo-transparent.png"
               alt=""
-              className="h-full w-full object-cover"
+              className="h-8 w-8 object-contain"
               aria-hidden="true"
             />
           </div>
