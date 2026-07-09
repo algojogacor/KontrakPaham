@@ -3145,3 +3145,46 @@ Stage Summary:
 
 
 
+
+---
+Task ID: auto
+Agent: main (Antigravity) — pasal.id Legal Corpus Fetch
+Date: 2026-07-09 05:47
+
+Task: Mengambil semua artikel hukum dari pasal.id API (token pool 4 token).
+
+Work Log:
+- Token pool 4 token aktif dengan round-robin rotation.
+- FRBR URI dibangun otomatis dari type/number/year; fallback ke /search.
+- Upsert LegalDocument + LegalArticle ke SQLite/Turso via Prisma.
+- FTS5 triggers otomatis mengindeks artikel baru.
+
+Hasil: 22/22 dokumen berhasil, 2419 pasal tersimpan.
+
+Detail:
+- ✅ Undang-Undang Nomor 1 Tahun 2023 tentang Kitab Undang-Undang Hukum Pidana — 623 pasal
+- ✅ Undang-Undang Nomor 8 Tahun 1999 tentang PERLINDUNGAN KONSUMEN — 41 pasal
+- ✅ Undang-Undang Nomor 7 Tahun 2011 tentang Mata Uang — 16 pasal
+- ✅ Undang-Undang Nomor 30 Tahun 1999 tentang Arbitrase dan Alternatif Penyelesaian Sengketa — 35 pasal
+- ✅ Undang-Undang Nomor 27 Tahun 2022 tentang PELINDUNGAN DATA PRIBADI — 35 pasal
+- ✅ Undang-Undang Nomor 11 Tahun 2008 tentang INFORMASI DAN TRANSAKSI ELEKTRONIK — 21 pasal
+- ✅ Undang-Undang Nomor 1 Tahun 2024 tentang PERUBAHAN KEDUA ATAS UNDANG-UNDANG NOMOR 11 TAHUN 2008 TENTANG INFORMASI DAN TRANSAKSI ELEKTRONIK — 5 pasal
+- ✅ Peraturan Pemerintah Nomor 71 Tahun 2019 tentang PENYELENGGARAAN SISTEM DAN TRANSAKSI ELEKTRONIK — 26 pasal
+- ✅ Undang-Undang Nomor 13 Tahun 2003 tentang KETENAGAKERJAAN — 65 pasal
+- ✅ Undang-Undang Nomor 6 Tahun 2023 tentang PENETAPAN PERATURAN PEMERINTAH PENGGANTI UNDANG-UNDANG NOMOR 2 TAHUN 2022 TENTANG CIPTA KERJA MENJADI UNDANG-UNDANG — 369 pasal
+- ✅ Peraturan Pemerintah Nomor 44 Tahun 1994 tentang PENGHUNIAN RUMAH OLEH BUKAN PEMILIK — 10 pasal
+- ✅ Undang-Undang Nomor 42 Tahun 1999 tentang Jaminan Fidusia — 23 pasal
+- ✅ Undang-Undang Nomor 4 Tahun 1996 tentang Hak Tanggungan Atas Tanah Beserta Benda-benda yang Berkaitan dengan Tanah — 14 pasal
+- ✅ Undang-Undang Nomor 21 Tahun 2011 tentang OTORITAS JASA KEUANGAN — 25 pasal
+- ✅ Undang-Undang Nomor 4 Tahun 2023 tentang PENGEMBANGAN DAN PENGUATAN SEKTOR KEUANGAN — 301 pasal
+- ✅ Undang-Undang Nomor 40 Tahun 2007 tentang PERSEROAN TERBATAS — 29 pasal
+- ✅ Peraturan Pemerintah Nomor 42 Tahun 2007 tentang WARALABA — 9 pasal
+- ✅ Undang-Undang Nomor 28 Tahun 2014 tentang HAK CIPTA — 57 pasal
+- ✅ Undang-Undang Nomor 20 Tahun 2016 tentang Merek Dan Indikasi Geografis — 46 pasal
+- ✅ Undang-Undang Nomor 1 Tahun 2023 tentang Kitab Undang-Undang Hukum Pidana — 623 pasal
+- ✅ Peraturan Pemerintah Nomor 30 Tahun 2004 tentang JABATAN NOTARIS — 36 pasal
+- ✅ Undang-Undang Nomor 2 Tahun 2014 tentang PERUBAHAN ATAS UNDANG-UNDANG NOMOR 30 TAHUN 2004 TENTANG JABATAN NOTARIS — 10 pasal
+
+Stage Summary:
+- Corpus hukum diambil langsung dari pasal.id API (structured), bukan scraping BPK.
+- Tidak ada PDF download, tidak ada regex parser, tidak ada ID hunting.

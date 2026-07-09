@@ -66,7 +66,7 @@ const DISCOVERED_MAPPING = {
       number: "30",
       year: 1999,
       jurisdiction: "ID",
-      sourceUrl: "https://peraturan.bpk.go.id/Details/45361/uu-no-30-tahun-1999",
+      sourceUrl: "https://peraturan.bpk.go.id/Details/45348/uu-no-30-tahun-1999",
       sourceHost: "peraturan.bpk.go.id"
     }
   ],
