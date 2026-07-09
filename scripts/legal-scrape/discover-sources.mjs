@@ -1,0 +1,281 @@
+import { existsSync, writeFileSync, mkdirSync } from "node:fs";
+import { join } from "node:path";
+
+// Define the documents to discover for each tag family
+const DISCOVERED_MAPPING = {
+  contract_formation: [
+    {
+      title: "Kitab Undang-Undang Hukum Perdata",
+      type: "KUHPerdata",
+      jurisdiction: "ID",
+      sourceUrl: "https://peraturan.bpk.go.id/Details/150927/kuhperdata",
+      sourceHost: "peraturan.bpk.go.id"
+    }
+  ],
+  consumer_protection: [
+    {
+      title: "Undang-Undang Nomor 8 Tahun 1999 tentang Perlindungan Konsumen",
+      type: "UU",
+      number: "8",
+      year: 1999,
+      jurisdiction: "ID",
+      sourceUrl: "https://peraturan.bpk.go.id/Details/45288/uu-no-8-tahun-1999",
+      sourceHost: "peraturan.bpk.go.id"
+    }
+  ],
+  payment_and_penalty: [
+    {
+      title: "Kitab Undang-Undang Hukum Perdata",
+      type: "KUHPerdata",
+      jurisdiction: "ID",
+      sourceUrl: "https://peraturan.bpk.go.id/Details/150927/kuhperdata",
+      sourceHost: "peraturan.bpk.go.id"
+    },
+    {
+      title: "Undang-Undang Nomor 7 Tahun 2011 tentang Mata Uang",
+      type: "UU",
+      number: "7",
+      year: 2011,
+      jurisdiction: "ID",
+      sourceUrl: "https://peraturan.bpk.go.id/Details/39062/uu-no-7-tahun-2011",
+      sourceHost: "peraturan.bpk.go.id"
+    }
+  ],
+  termination_and_default: [
+    {
+      title: "Kitab Undang-Undang Hukum Perdata",
+      type: "KUHPerdata",
+      jurisdiction: "ID",
+      sourceUrl: "https://peraturan.bpk.go.id/Details/150927/kuhperdata",
+      sourceHost: "peraturan.bpk.go.id"
+    }
+  ],
+  risk_allocation: [
+    {
+      title: "Kitab Undang-Undang Hukum Perdata",
+      type: "KUHPerdata",
+      jurisdiction: "ID",
+      sourceUrl: "https://peraturan.bpk.go.id/Details/150927/kuhperdata",
+      sourceHost: "peraturan.bpk.go.id"
+    }
+  ],
+  dispute_resolution: [
+    {
+      title: "Undang-Undang Nomor 30 Tahun 1999 tentang Arbitrase dan Alternatif Penyelesaian Sengketa",
+      type: "UU",
+      number: "30",
+      year: 1999,
+      jurisdiction: "ID",
+      sourceUrl: "https://peraturan.bpk.go.id/Details/45310/uu-no-30-tahun-1999",
+      sourceHost: "peraturan.bpk.go.id"
+    }
+  ],
+  privacy_and_data: [
+    {
+      title: "Undang-Undang Nomor 27 Tahun 2022 tentang Pelindungan Data Pribadi",
+      type: "UU",
+      number: "27",
+      year: 2022,
+      jurisdiction: "ID",
+      sourceUrl: "https://peraturan.bpk.go.id/Details/229044/uu-no-27-tahun-2022",
+      sourceHost: "peraturan.bpk.go.id"
+    }
+  ],
+  digital_and_platform: [
+    {
+      title: "Undang-Undang Nomor 11 Tahun 2008 tentang Informasi dan Transaksi Elektronik",
+      type: "UU",
+      number: "11",
+      year: 2008,
+      jurisdiction: "ID",
+      sourceUrl: "https://peraturan.bpk.go.id/Details/39031/uu-no-11-tahun-2008",
+      sourceHost: "peraturan.bpk.go.id"
+    },
+    {
+      title: "Undang-Undang Nomor 1 Tahun 2024 tentang Perubahan Kedua atas Undang-Undang Nomor 11 Tahun 2008 tentang Informasi dan Transaksi Elektronik",
+      type: "UU",
+      number: "1",
+      year: 2024,
+      jurisdiction: "ID",
+      sourceUrl: "https://peraturan.bpk.go.id/Details/274431/uu-no-1-tahun-2024",
+      sourceHost: "peraturan.bpk.go.id"
+    },
+    {
+      title: "Peraturan Pemerintah Nomor 71 Tahun 2019 tentang Penyelenggaraan Sistem dan Transaksi Elektronik",
+      type: "PP",
+      number: "71",
+      year: 2019,
+      jurisdiction: "ID",
+      sourceUrl: "https://peraturan.bpk.go.id/Details/122030/pp-no-71-tahun-2019",
+      sourceHost: "peraturan.bpk.go.id"
+    }
+  ],
+  employment_and_services: [
+    {
+      title: "Undang-Undang Nomor 13 Tahun 2003 tentang Ketenagakerjaan",
+      type: "UU",
+      number: "13",
+      year: 2003,
+      jurisdiction: "ID",
+      sourceUrl: "https://peraturan.bpk.go.id/Details/43973/uu-no-13-tahun-2003",
+      sourceHost: "peraturan.bpk.go.id"
+    },
+    {
+      title: "Undang-Undang Nomor 6 Tahun 2023 tentang Penetapan Peraturan Pemerintah Pengganti Undang-Undang Nomor 2 Tahun 2022 tentang Cipta Kerja menjadi Undang-Undang",
+      type: "UU",
+      number: "6",
+      year: 2023,
+      jurisdiction: "ID",
+      sourceUrl: "https://peraturan.bpk.go.id/Details/246473/uu-no-6-tahun-2023",
+      sourceHost: "peraturan.bpk.go.id"
+    }
+  ],
+  property_and_rent: [
+    {
+      title: "Kitab Undang-Undang Hukum Perdata",
+      type: "KUHPerdata",
+      jurisdiction: "ID",
+      sourceUrl: "https://peraturan.bpk.go.id/Details/150927/kuhperdata",
+      sourceHost: "peraturan.bpk.go.id"
+    },
+    {
+      title: "Peraturan Pemerintah Nomor 44 Tahun 1994 tentang Penghunian Rumah oleh Bukan Pemilik",
+      type: "PP",
+      number: "44",
+      year: 1994,
+      jurisdiction: "ID",
+      sourceUrl: "https://peraturan.bpk.go.id/Details/55365/pp-no-44-tahun-1994",
+      sourceHost: "peraturan.bpk.go.id"
+    }
+  ],
+  financing_and_credit: [
+    {
+      title: "Undang-Undang Nomor 42 Tahun 1999 tentang Jaminan Fidusia",
+      type: "UU",
+      number: "42",
+      year: 1999,
+      jurisdiction: "ID",
+      sourceUrl: "https://peraturan.bpk.go.id/Details/45322/uu-no-42-tahun-1999",
+      sourceHost: "peraturan.bpk.go.id"
+    },
+    {
+      title: "Undang-Undang Nomor 4 Tahun 1996 tentang Hak Tanggungan atas Tanah Beserta Benda-Benda yang Berkaitan dengan Tanah",
+      type: "UU",
+      number: "4",
+      year: 1996,
+      jurisdiction: "ID",
+      sourceUrl: "https://peraturan.bpk.go.id/Details/45143/uu-no-4-tahun-1996",
+      sourceHost: "peraturan.bpk.go.id"
+    }
+  ],
+  financial_services: [
+    {
+      title: "Undang-Undang Nomor 21 Tahun 2011 tentang Otoritas Jasa Keuangan",
+      type: "UU",
+      number: "21",
+      year: 2011,
+      jurisdiction: "ID",
+      sourceUrl: "https://peraturan.bpk.go.id/Details/39203/uu-no-21-tahun-2011",
+      sourceHost: "peraturan.bpk.go.id"
+    },
+    {
+      title: "Undang-Undang Nomor 4 Tahun 2023 tentang Pengembangan dan Penguatan Sektor Keuangan",
+      type: "UU",
+      number: "4",
+      year: 2023,
+      jurisdiction: "ID",
+      sourceUrl: "https://peraturan.bpk.go.id/Details/232490/uu-no-4-tahun-2023",
+      sourceHost: "peraturan.bpk.go.id"
+    }
+  ],
+  corporate_and_commercial: [
+    {
+      title: "Undang-Undang Nomor 40 Tahun 2007 tentang Perseroan Terbatas",
+      type: "UU",
+      number: "40",
+      year: 2007,
+      jurisdiction: "ID",
+      sourceUrl: "https://peraturan.bpk.go.id/Details/39908/uu-no-40-tahun-2007",
+      sourceHost: "peraturan.bpk.go.id"
+    },
+    {
+      title: "Peraturan Pemerintah Nomor 42 Tahun 2007 tentang Waralaba",
+      type: "PP",
+      number: "42",
+      year: 2007,
+      jurisdiction: "ID",
+      sourceUrl: "https://peraturan.bpk.go.id/Details/50630/pp-no-42-tahun-2007",
+      sourceHost: "peraturan.bpk.go.id"
+    }
+  ],
+  intellectual_property: [
+    {
+      title: "Undang-Undang Nomor 28 Tahun 2014 tentang Hak Cipta",
+      type: "UU",
+      number: "28",
+      year: 2014,
+      jurisdiction: "ID",
+      sourceUrl: "https://peraturan.bpk.go.id/Details/46312/uu-no-28-tahun-2014",
+      sourceHost: "peraturan.bpk.go.id"
+    },
+    {
+      title: "Undang-Undang Nomor 20 Tahun 2016 tentang Merek dan Indikasi Geografis",
+      type: "UU",
+      number: "20",
+      year: 2016,
+      jurisdiction: "ID",
+      sourceUrl: "https://peraturan.bpk.go.id/Details/37629/uu-no-20-tahun-2016",
+      sourceHost: "peraturan.bpk.go.id"
+    }
+  ],
+  public_law_and_compliance: [
+    {
+      title: "Undang-Undang Nomor 1 Tahun 2023 tentang Kitab Undang-Undang Hukum Pidana",
+      type: "UU",
+      number: "1",
+      year: 2023,
+      jurisdiction: "ID",
+      sourceUrl: "https://peraturan.bpk.go.id/Details/232049/uu-no-1-tahun-2023",
+      sourceHost: "peraturan.bpk.go.id"
+    }
+  ],
+  evidence_and_procedure: [
+    {
+      title: "Undang-Undang Nomor 30 Tahun 2004 tentang Jabatan Notaris",
+      type: "UU",
+      number: "30",
+      year: 2004,
+      jurisdiction: "ID",
+      sourceUrl: "https://peraturan.bpk.go.id/Details/40660/uu-no-30-tahun-2004",
+      sourceHost: "peraturan.bpk.go.id"
+    },
+    {
+      title: "Undang-Undang Nomor 2 Tahun 2014 tentang Perubahan atas Undang-Undang Nomor 30 Tahun 2004 tentang Jabatan Notaris",
+      type: "UU",
+      number: "2",
+      year: 2014,
+      jurisdiction: "ID",
+      sourceUrl: "https://peraturan.bpk.go.id/Details/46887/uu-no-2-tahun-2014",
+      sourceHost: "peraturan.bpk.go.id"
+    }
+  ]
+};
+
+async function main() {
+  console.log("Discovering sources for tag families...");
+
+  mkdirSync("data", { recursive: true });
+  const outputPath = join("data", "legal-sources.json");
+  writeFileSync(outputPath, JSON.stringify(DISCOVERED_MAPPING, null, 2), "utf8");
+
+  console.log(`Discovered sources output saved to ${outputPath}`);
+  console.log("\nSummary of Mapped Documents:\n");
+  for (const [family, docs] of Object.entries(DISCOVERED_MAPPING)) {
+    console.log(`Tag Family: ${family}`);
+    for (const doc of docs) {
+      console.log(`  - [${doc.type}] ${doc.title} (${doc.sourceUrl})`);
+    }
+  }
+}
+
+await main();
