@@ -2803,6 +2803,43 @@ Stage Summary:
 - Default limit sengaja konservatif untuk free-tier 5GB; 10GB bisa dipakai lewat env hanya
   jika kuota/plan Turso mendukung.
 
+---
+Task ID: 52
+Agent: main (Codex) - Turso Token Check and Storage Options
+
+Task: Mengecek token Turso baru dari user, memastikan apakah bisa dipakai untuk database
+production, dan menilai opsi storage/free-tier lain.
+
+Work Log:
+- Menerima token baru dari user dan memperlakukannya sebagai secret.
+- Mengecek token melalui Turso Platform API tanpa menampilkan token.
+- Token valid untuk organization slug `aryariap`.
+- Mengecek daftar database di org `aryariap`; hasilnya kosong.
+- Mencoba generate database auth token untuk tebakan database lama gagal 404 karena token
+  baru tidak punya akses ke org/database lama.
+- Tidak mengganti `TURSO_AUTH_TOKEN` aplikasi karena token baru adalah platform/API token
+  untuk org kosong, bukan database auth token libSQL untuk database production saat ini.
+- Mengecek pricing terbaru:
+  * Turso Free saat ini 5GB storage, 100 databases, 500M reads/month, 10M writes/month.
+  * Supabase Free membatasi database size 500MB sebelum read-only mode.
+  * Neon pricing resmi memakai storage usage pricing; free cocok untuk prototyping, tetapi
+    storage gratisnya tidak lebih menarik untuk workload cache besar dibanding Turso Free.
+- Kesimpulan storage: untuk cache legal reference, Turso tetap pilihan free-tier paling cocok
+  saat ini karena 5GB storage dan sudah terintegrasi dengan app/libSQL.
+- Menilai opsi hybrid banyak akun: tidak direkomendasikan karena rapuh secara operasional,
+  berpotensi melanggar spirit/terms free-tier, dan menambah kompleksitas routing data.
+
+Verification:
+- `GET https://api.turso.tech/v1/organizations` dengan token baru -> org `aryariap`.
+- `GET https://api.turso.tech/v1/organizations/aryariap/databases` -> `databases: []`.
+- Generate token untuk database lama via org lama -> 404, sehingga tidak dipakai.
+
+Stage Summary:
+- Token baru belum bisa menggantikan credential runtime app sampai ada database baru di org
+  itu atau token dari org database production lama diberikan.
+- Jika ingin pindah ke org/token baru, langkah aman berikutnya adalah create database baru,
+  apply schema, migrate data dari database lama, lalu update Koyeb env.
+
 
 
 
