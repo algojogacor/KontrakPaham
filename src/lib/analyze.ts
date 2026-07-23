@@ -201,7 +201,7 @@ export async function analyzeContract(
         notes: [
           ...("content" in research && research.content
             ? [
-                `Riset hukum You.com dipakai (${"effort" in research ? research.effort : "n/a"}, ${"latencyMs" in research ? research.latencyMs : "-"} ms).`,
+                `${research.warning?.toLowerCase().includes("database pasal lokal") ? "Korpus pasal lokal dipakai" : "Riset hukum eksternal dipakai"} (${"effort" in research ? research.effort : "n/a"}, ${"latencyMs" in research ? research.latencyMs : "-"} ms).`,
               ]
             : research.warning
               ? [research.warning]

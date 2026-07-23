@@ -3563,3 +3563,25 @@ Verification:
 
 Stage Summary:
 - The LLM engine is now fully Anthropic-compatible and the Admin Center offers a streamlined, testable developer experience for multi-provider configurations.
+
+---
+Task ID: 75
+Agent: main (Codex) - Bound synchronous research latency for contract analysis
+
+Task: Fix production 504 responses when ADMIN/PRO analysis enters the research path while Quick Mode remains healthy.
+
+Work Log:
+- Moved confident local legal-corpus lookup ahead of the research planner so common contract issues do not incur a second LLM request.
+- Added an 8-second planner timeout with a deterministic official-source query fallback.
+- Capped synchronous research to the configured maximum effort (standard by default) and a 20-second external Research API timeout; the existing longer provider-specific values remain available for a future background-job flow.
+- Corrected analysis notes so local legal-corpus context is not mislabeled as You.com research.
+- Added a regression test covering the local-corpus fast path for an ADMIN analysis.
+
+Verification:
+- `bun test src/lib/research.test.ts src/lib/legal-corpus.test.ts src/lib/research-cache.test.ts` -> 12 passed.
+- `bun run lint` -> passed.
+- `bun run build` -> passed.
+- `bunx tsc --noEmit` still reports pre-existing repository errors outside this change; no new error was reported for the modified research path.
+
+Stage Summary:
+- Research mode remains enabled, but synchronous `/api/analyze` no longer waits for multi-minute exhaustive research and can gracefully fall back when the planner or external research service is slow.
