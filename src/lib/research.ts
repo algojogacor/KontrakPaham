@@ -63,9 +63,23 @@ function capEffortForPlan(effort: ResearchEffort, plan: ResearchPlan): ResearchE
 }
 
 function effortTimeoutMs(effort: ResearchEffort) {
-  if (effort === "exhaustive") return Number(process.env.YOU_RESEARCH_EXHAUSTIVE_TIMEOUT_MS || 240_000);
-  if (effort === "deep") return Number(process.env.YOU_RESEARCH_DEEP_TIMEOUT_MS || 150_000);
-  return Number(process.env.YOU_RESEARCH_STANDARD_TIMEOUT_MS || 90_000);
+  const configured = effort === "exhaustive"
+    ? Number(process.env.YOU_RESEARCH_EXHAUSTIVE_TIMEOUT_MS || 240_000)
+    : effort === "deep"
+      ? Number(process.env.YOU_RESEARCH_DEEP_TIMEOUT_MS || 150_000)
+      : Number(process.env.YOU_RESEARCH_STANDARD_TIMEOUT_MS || 90_000);
+  // /api/analyze is a synchronous request behind a proxy. Do not let a
+  // multi-minute research job consume the whole request window.
+  return Math.min(configured, Number(process.env.YOU_RESEARCH_SYNC_TIMEOUT_MS || 20_000));
+}
+
+function researchEffortRank(effort: ResearchEffort) {
+  return { standard: 1, deep: 2, exhaustive: 3 }[effort];
+}
+
+function capSynchronousEffort(effort: ResearchEffort) {
+  const configured = normalizeEffort(process.env.YOU_RESEARCH_SYNC_MAX_EFFORT || "standard");
+  return researchEffortRank(effort) <= researchEffortRank(configured) ? effort : configured;
 }
 
 function compactContract(text: string) {
@@ -74,15 +88,22 @@ function compactContract(text: string) {
 
 async function chooseResearchPlan(contractText: string, plan: ResearchPlan): Promise<{ effort: ResearchEffort; query: string }> {
   const t0 = Date.now();
-  const completion = await createChatCompletion([
-    {
-      role: "system",
-      content:
-        "Anda memilih kebutuhan riset hukum terkini untuk analisis kontrak Indonesia. Balas hanya JSON valid. research_effort hanya boleh: standard, deep, exhaustive. Jangan pernah pilih ulow atau lite. FREE selalu standard. LITE maksimal deep. PRO/ADMIN boleh exhaustive bila benar-benar perlu.",
-    },
-    {
-      role: "user",
-      content: `Kontrak berikut akan dianalisis. Paket user: ${plan}. Tentukan research_effort dan query riset hukum yang paling berguna.
+  const fallback = {
+    effort: capSynchronousEffort("standard"),
+    query: withOfficialSourceInstruction(
+      "aturan hukum Indonesia terbaru terkait klausul kontrak, denda, pemutusan sepihak, perlindungan konsumen, dan pelindungan data pribadi",
+    ),
+  };
+  try {
+    const completion = await createChatCompletion([
+      {
+        role: "system",
+        content:
+          "Anda memilih kebutuhan riset hukum terkini untuk analisis kontrak Indonesia. Balas hanya JSON valid. research_effort hanya boleh: standard, deep, exhaustive. Jangan pernah pilih ulow atau lite. FREE selalu standard. LITE maksimal deep. PRO/ADMIN boleh exhaustive bila benar-benar perlu.",
+      },
+      {
+        role: "user",
+        content: `Kontrak berikut akan dianalisis. Paket user: ${plan}. Tentukan research_effort dan query riset hukum yang paling berguna.
 
 Aturan:
 - standard: isu kontrak umum, cukup cek aturan/praktik umum.
@@ -97,20 +118,24 @@ Balas JSON:
 
 KONTRAK:
 ${compactContract(contractText)}`,
-    },
-  ], undefined, "research_planner");
-  console.log(`[TIMING] research_planner: ${Date.now() - t0}ms | plan=${plan}`);
-  const parsed = parseJson(completion.content);
-  const effort = capEffortForPlan(normalizeEffort(parsed?.research_effort), plan);
-  console.log(`[TIMING] research_planner_effort: chosen=${parsed?.research_effort} capped=${effort} plan=${plan}`);
-  return {
-    effort,
-    query: withOfficialSourceInstruction(
-      typeof parsed?.query === "string" && parsed.query.trim()
-        ? parsed.query.trim()
-        : "aturan hukum Indonesia terbaru terkait klausul kontrak, denda, pemutusan sepihak, dan perlindungan konsumen",
-    ),
-  };
+      },
+    ], AbortSignal.timeout(Number(process.env.YOU_RESEARCH_PLANNER_TIMEOUT_MS || 8_000)), "research_planner");
+    console.log(`[TIMING] research_planner: ${Date.now() - t0}ms | plan=${plan}`);
+    const parsed = parseJson(completion.content);
+    const effort = capSynchronousEffort(capEffortForPlan(normalizeEffort(parsed?.research_effort), plan));
+    console.log(`[TIMING] research_planner_effort: chosen=${parsed?.research_effort} capped=${effort} plan=${plan}`);
+    return {
+      effort,
+      query: withOfficialSourceInstruction(
+        typeof parsed?.query === "string" && parsed.query.trim()
+          ? parsed.query.trim()
+          : fallback.query,
+      ),
+    };
+  } catch (error) {
+    console.log(`[TIMING] research_planner FALLBACK: ${Date.now() - t0}ms | reason=${(error as Error).message.slice(0, 120)}`);
+    return fallback;
+  }
 }
 
 function withOfficialSourceInstruction(query: string) {
@@ -159,12 +184,29 @@ function buildResearchContextText(content: string, sources: ResearchSource[]) {
 export async function buildLegalResearchContext(contractText: string, plan: ResearchPlan = "FREE"): Promise<LegalResearchContext> {
   if (process.env.YOU_RESEARCH_ENABLED === "false") return { enabled: false };
   const apiKey = process.env.YOU_API_KEY;
-  if (!apiKey) return { enabled: false, warning: "YOU_API_KEY belum dikonfigurasi." };
 
   const tResearch0 = Date.now();
   console.log(`[TIMING] research_phase START | plan=${plan}`);
 
   try {
+    // The local legal corpus is the fast research path. Search it before the
+    // planner so common contract issues do not wait for a second LLM call.
+    const directLocalCorpus = await searchLegalCorpus(compactContract(contractText));
+    if (directLocalCorpus && directLocalCorpus.confidence !== "low") {
+      console.log(`[TIMING] legal_corpus DIRECT HIT: ${directLocalCorpus.latencyMs}ms | confidence=${directLocalCorpus.confidence}`);
+      return {
+        enabled: true,
+        effort: "standard",
+        query: directLocalCorpus.query,
+        content: `Database pasal lokal sebagai sumber utama:\n\n${directLocalCorpus.content}`,
+        sources: directLocalCorpus.sources,
+        latencyMs: directLocalCorpus.latencyMs,
+        warning: "Konteks hukum diambil dari database pasal lokal; planner dan You.com tidak dipanggil karena confidence cukup.",
+      };
+    }
+
+    if (!apiKey) return { enabled: false, warning: "YOU_API_KEY belum dikonfigurasi." };
+
     const researchPlan = await chooseResearchPlan(contractText, plan);
     const tPlannerDone = Date.now();
     console.log(`[TIMING] research_planner_total: ${tPlannerDone - tResearch0}ms | effort=${researchPlan.effort}`);
